@@ -1,0 +1,9 @@
+cdk.out
+node_modules
+*.d.ts
+*.js
+*.cjs
+dist
+./custom-auth/**/*
+./lib/**/*
+./react/**/*

@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "files": ["./custom-auth/index.ts"]
+}

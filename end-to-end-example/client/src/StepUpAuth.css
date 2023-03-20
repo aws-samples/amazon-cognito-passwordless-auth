@@ -1,0 +1,43 @@
+.step-up-auth-main {
+  position: relative;
+}
+
+.step-up-auth-container {
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.step-up-auth-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.step-up-auth-buttons button {
+  flex-grow: 1;
+}
+
+.step-up-auth-title {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.otp-form {
+  display: flex;
+  gap: 1rem;
+}
+
+#sms-otp {
+  width: 6rem;
+}
+
+.step-up-auth-error {
+  position: absolute;
+  color: red;
+  bottom: -2.5rem;
+  text-align: center;
+  width: 100%;
+}

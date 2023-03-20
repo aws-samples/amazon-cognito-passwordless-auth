@@ -1,0 +1,10 @@
+node_modules
+cdk.context.json
+*.d.ts
+
+cdk.out
+.nyc_output
+dist
+./custom-auth/**/*
+./lib/**/*
+./react/**/*

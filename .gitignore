@@ -1,0 +1,9 @@
+node_modules
+cdk.context.json
+*.d.ts
+cdk.out
+*.tgz
+dist
+./custom-auth/**/*
+./lib/**/*
+./react/**/*

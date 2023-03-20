@@ -1,0 +1,27 @@
+{
+  "name": "amazon-cognito-passwordless-auth-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "install-passwordless-local": "npm remove amazon-cognito-passwordless-auth && npm i ../.. --install-links"
+  },
+  "dependencies": {
+    "@cloudscape-design/global-styles": "^1.0.7",
+    "amazon-cognito-passwordless-auth": "^0.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^3.1.0",
+    "s3-spa-upload": "^2.0.4",
+    "typescript": "^5.0.2",
+    "vite": "^4.2.0"
+  }
+}

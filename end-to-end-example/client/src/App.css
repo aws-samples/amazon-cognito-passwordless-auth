@@ -1,0 +1,21 @@
+#root {
+  width: 100%;
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+  height: -webkit-fill-available;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.passwordless-main-container {
+  height: 100% !important;
+  height: -webkit-fill-available !important;
+}

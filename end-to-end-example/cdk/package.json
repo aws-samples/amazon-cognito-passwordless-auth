@@ -1,0 +1,26 @@
+{
+  "name": "amazon-cognito-passwordless-auth-cdk",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "install-passwordless-local": "npm remove amazon-cognito-passwordless-auth && npm i ../.. --install-links"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.114",
+    "@types/node": "^18.15.3",
+    "@types/tap": "^15.0.8",
+    "esbuild": "^0.17.12",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.2"
+  },
+  "dependencies": {
+    "amazon-cognito-passwordless-auth": "^0.2.1",
+    "aws-cdk-lib": "^2.69.0",
+    "cdk-nag": "^2.23.4",
+    "constructs": "^10.1.283"
+  }
+}
