@@ -18,7 +18,7 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
-    "amazon-cognito-passwordless-auth": "^0.2.1",
+    "amazon-cognito-passwordless-auth": "^0.2.2",
     "aws-cdk-lib": "^2.69.0",
     "cdk-nag": "^2.23.4",
     "constructs": "^10.1.283"
