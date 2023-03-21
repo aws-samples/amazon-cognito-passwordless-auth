@@ -7,7 +7,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "install-passwordless-local": "npm remove amazon-cognito-passwordless-auth && npm i ../.. --install-links"
+    "install-passwordless-local": "rm -rf node_modules/amazon-cognito-passwordless-auth && npm i ../.. --install-links --no-save"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.114",
