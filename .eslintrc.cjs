@@ -18,7 +18,7 @@ module.exports = {
     getReactOverrides("client"),
     getReactOverrides("end-to-end-example/client"),
   ],
-  plugins: ["@typescript-eslint", "header"],
+  plugins: ["@typescript-eslint", "header", "import"],
   root: true,
 };
 
@@ -33,6 +33,7 @@ function rules() {
       "error",
       { allowNullish: true },
     ],
+    "import/extensions": ["error", "ignorePackages"],
   };
 }
 
@@ -86,6 +87,6 @@ function getReactOverrides(basedir) {
       ...rules(),
       "react/react-in-jsx-scope": "off",
     },
-    plugins: ["react", "@typescript-eslint", "header"],
+    plugins: ["react", "@typescript-eslint", "header", "import"],
   };
 }

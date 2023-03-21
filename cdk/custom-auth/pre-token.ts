@@ -14,7 +14,7 @@
  */
 
 import { PreTokenGenerationTriggerHandler } from "aws-lambda";
-import { logger, UserFacingError } from "./common";
+import { logger, UserFacingError } from "./common.js";
 
 const CLIENT_METADATA_PERSISTED_KEYS =
   process.env.CLIENT_METADATA_PERSISTED_KEYS?.split(",").map((key) =>

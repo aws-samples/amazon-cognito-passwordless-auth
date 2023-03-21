@@ -12,19 +12,19 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { configure } from "./config";
-import { IdleState, BusyState, TokensFromSignIn, busyState } from "./model";
+import { configure } from "./config.js";
+import { IdleState, BusyState, TokensFromSignIn, busyState } from "./model.js";
 import {
   assertIsChallengeResponse,
   assertIsAuthenticatedResponse,
   isChallengeResponse,
   initiateAuth,
   respondToAuthChallenge,
-} from "./cognito-api";
-import { defaultTokensCb } from "./common";
-import { parseJwtPayload } from "./util";
-import { CognitoIdTokenPayload } from "./jwt-model";
-import { retrieveTokens } from "./storage";
+} from "./cognito-api.js";
+import { defaultTokensCb } from "./common.js";
+import { parseJwtPayload } from "./util.js";
+import { CognitoIdTokenPayload } from "./jwt-model.js";
+import { retrieveTokens } from "./storage.js";
 
 export function stepUpAuthenticationWithSmsOtp({
   username,

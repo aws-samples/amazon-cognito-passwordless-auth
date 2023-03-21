@@ -12,10 +12,10 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-export { Fido2Toast, Passwordless } from "./components";
+export { Fido2Toast, Passwordless } from "./components.js";
 export {
   PasswordlessContextProvider,
   useAwaitableState,
   useLocalUserCache,
   usePasswordless,
-} from "./hooks";
+} from "./hooks.js";

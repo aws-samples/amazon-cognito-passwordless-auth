@@ -17,7 +17,7 @@ import {
   DefineAuthChallengeTriggerHandler,
   DefineAuthChallengeTriggerEvent,
 } from "aws-lambda";
-import { logger } from "./common";
+import { logger } from "./common.js";
 
 export const handler: DefineAuthChallengeTriggerHandler = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));

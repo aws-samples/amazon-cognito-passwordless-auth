@@ -12,16 +12,16 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { configure } from "./config";
-import { IdleState, BusyState, TokensFromSignIn } from "./model";
+import { configure } from "./config.js";
+import { IdleState, BusyState, TokensFromSignIn } from "./model.js";
 import {
   initiateAuth,
   respondToAuthChallenge,
   assertIsChallengeResponse,
   handleAuthResponse,
-} from "./cognito-api";
-import { defaultTokensCb } from "./common";
-import { bufferFromBase64, bufferToBase64 } from "./util";
+} from "./cognito-api.js";
+import { defaultTokensCb } from "./common.js";
+import { bufferFromBase64, bufferToBase64 } from "./util.js";
 
 let _CONSTANTS: { g: bigint; N: bigint; k: bigint } | undefined;
 async function getConstants() {

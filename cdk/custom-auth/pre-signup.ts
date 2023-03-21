@@ -14,7 +14,7 @@
  */
 
 import { PreSignUpTriggerHandler } from "aws-lambda";
-import { logger } from "./common";
+import { logger } from "./common.js";
 
 export const handler: PreSignUpTriggerHandler = async (event) => {
   logger.info("Pre-signup: auto confirming user ...");

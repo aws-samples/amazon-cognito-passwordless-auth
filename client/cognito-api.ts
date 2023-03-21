@@ -12,9 +12,9 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { parseJwtPayload, throwIfNot2xx } from "./util";
-import { configure } from "./config";
-import { retrieveTokens } from "./storage";
+import { parseJwtPayload, throwIfNot2xx } from "./util.js";
+import { configure } from "./config.js";
+import { retrieveTokens } from "./storage.js";
 
 const AWS_REGION_REGEXP = /^[a-z]{2}-[a-z]+-\d$/;
 

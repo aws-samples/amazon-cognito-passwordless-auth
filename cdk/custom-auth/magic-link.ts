@@ -36,7 +36,7 @@ import {
   logger,
   UserFacingError,
   handleConditionalCheckFailedException,
-} from "./common";
+} from "./common.js";
 
 let config = {
   magicLinkEnabled: !!process.env.MAGIC_LINK_ENABLED,

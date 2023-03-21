@@ -12,23 +12,23 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { IdleState, BusyState, busyState, TokensFromSignIn } from "./model";
-import { defaultTokensCb } from "./common";
+import { IdleState, BusyState, busyState, TokensFromSignIn } from "./model.js";
+import { defaultTokensCb } from "./common.js";
 import {
   assertIsChallengeResponse,
   assertIsAuthenticatedResponse,
   initiateAuth,
   respondToAuthChallenge,
   Session,
-} from "./cognito-api";
+} from "./cognito-api.js";
 import {
   parseJwtPayload,
   currentBrowserLocationWithoutFragmentIdentifier,
   removeFragmentIdentifierFromBrowserLocation,
   bufferFromBase64Url,
-} from "./util";
-import { configure } from "./config";
-import { CognitoIdTokenPayload } from "./jwt-model";
+} from "./util.js";
+import { configure } from "./config.js";
+import { CognitoIdTokenPayload } from "./jwt-model.js";
 
 export const requestSignInLink = ({
   usernameOrAlias,

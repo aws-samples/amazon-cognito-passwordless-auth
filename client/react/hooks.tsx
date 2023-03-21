@@ -12,9 +12,9 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { signOut } from "../common";
-import { parseJwtPayload, setTimeoutWallClock } from "../util";
-import { signInWithLink, requestSignInLink } from "../magic-link";
+import { signOut } from "../common.js";
+import { parseJwtPayload, setTimeoutWallClock } from "../util.js";
+import { signInWithLink, requestSignInLink } from "../magic-link.js";
 import {
   fido2CreateCredential,
   fido2DeleteCredential,
@@ -22,15 +22,18 @@ import {
   fido2UpdateCredential,
   StoredCredential,
   authenticateWithFido2,
-} from "../fido2";
-import { authenticateWithSRP } from "../srp";
-import { authenticateWithPlaintextPassword } from "../plaintext";
-import { stepUpAuthenticationWithSmsOtp } from "../sms-otp-stepup";
-import { configure } from "../config";
-import { retrieveTokens, storeTokens, TokensFromStorage } from "../storage";
-import { BusyState, IdleState, busyState } from "../model";
-import { scheduleRefresh, refreshTokens } from "../refresh";
-import { CognitoAccessTokenPayload, CognitoIdTokenPayload } from "../jwt-model";
+} from "../fido2.js";
+import { authenticateWithSRP } from "../srp.js";
+import { authenticateWithPlaintextPassword } from "../plaintext.js";
+import { stepUpAuthenticationWithSmsOtp } from "../sms-otp-stepup.js";
+import { configure } from "../config.js";
+import { retrieveTokens, storeTokens, TokensFromStorage } from "../storage.js";
+import { BusyState, IdleState, busyState } from "../model.js";
+import { scheduleRefresh, refreshTokens } from "../refresh.js";
+import {
+  CognitoAccessTokenPayload,
+  CognitoIdTokenPayload,
+} from "../jwt-model.js";
 import React, {
   useState,
   useEffect,

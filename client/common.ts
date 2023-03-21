@@ -12,17 +12,17 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { revokeToken } from "./cognito-api";
-import { configure } from "./config";
-import { retrieveTokens, storeTokens } from "./storage";
+import { revokeToken } from "./cognito-api.js";
+import { configure } from "./config.js";
+import { retrieveTokens, storeTokens } from "./storage.js";
 import {
   TokensFromRefresh,
   TokensFromSignIn,
   BusyState,
   IdleState,
   busyState,
-} from "./model";
-import { scheduleRefresh } from "./refresh";
+} from "./model.js";
+import { scheduleRefresh } from "./refresh.js";
 
 /** The default tokens callback stores tokens in storage and reschedules token refresh */
 export const defaultTokensCb = async ({

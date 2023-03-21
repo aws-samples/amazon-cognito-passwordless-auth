@@ -14,10 +14,10 @@
  */
 
 import { VerifyAuthChallengeResponseTriggerHandler } from "aws-lambda";
-import * as fido2 from "./fido2";
-import * as smsOtpStepUp from "./sms-otp-stepup";
-import * as magicLink from "./magic-link";
-import { logger, UserFacingError } from "./common";
+import * as fido2 from "./fido2.js";
+import * as smsOtpStepUp from "./sms-otp-stepup.js";
+import * as magicLink from "./magic-link.js";
+import { logger, UserFacingError } from "./common.js";
 
 export const handler: VerifyAuthChallengeResponseTriggerHandler = async (
   event

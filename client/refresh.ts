@@ -12,11 +12,11 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { configure } from "./config";
-import { TokensFromRefresh } from "./model";
-import { retrieveTokens, TokensFromStorage } from "./storage";
-import { initiateAuth } from "./cognito-api";
-import { setTimeoutWallClock } from "./util";
+import { configure } from "./config.js";
+import { TokensFromRefresh } from "./model.js";
+import { retrieveTokens, TokensFromStorage } from "./storage.js";
+import { initiateAuth } from "./cognito-api.js";
+import { setTimeoutWallClock } from "./util.js";
 
 let schedulingRefresh: ReturnType<typeof _scheduleRefresh> | undefined =
   undefined;

@@ -28,7 +28,7 @@ import {
   logger,
   handleConditionalCheckFailedException,
   UserFacingError,
-} from "./common";
+} from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: {

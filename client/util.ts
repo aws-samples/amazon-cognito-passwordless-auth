@@ -12,7 +12,10 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { CognitoAccessTokenPayload, CognitoIdTokenPayload } from "./jwt-model";
+import {
+  CognitoAccessTokenPayload,
+  CognitoIdTokenPayload,
+} from "./jwt-model.js";
 
 export async function throwIfNot2xx(res: Response) {
   if (res.status >= 200 && res.status < 300) {

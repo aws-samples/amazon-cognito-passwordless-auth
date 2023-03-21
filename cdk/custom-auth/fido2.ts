@@ -25,7 +25,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { randomBytes, JsonWebKey } from "crypto";
 import { createVerify, createHash, createPublicKey } from "crypto";
-import { logger, UserFacingError, determineUserHandle } from "./common";
+import { logger, UserFacingError, determineUserHandle } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 interface StoredCredential {

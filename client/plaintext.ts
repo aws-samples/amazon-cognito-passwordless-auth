@@ -12,10 +12,10 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { configure } from "./config";
-import { IdleState, BusyState, TokensFromSignIn } from "./model";
-import { initiateAuth, handleAuthResponse } from "./cognito-api";
-import { defaultTokensCb } from "./common";
+import { configure } from "./config.js";
+import { IdleState, BusyState, TokensFromSignIn } from "./model.js";
+import { initiateAuth, handleAuthResponse } from "./cognito-api.js";
+import { defaultTokensCb } from "./common.js";
 
 export function authenticateWithPlaintextPassword({
   username,

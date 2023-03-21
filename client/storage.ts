@@ -12,9 +12,12 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { parseJwtPayload } from "./util";
-import { configure } from "./config";
-import { CognitoIdTokenPayload, CognitoAccessTokenPayload } from "./jwt-model";
+import { parseJwtPayload } from "./util.js";
+import { configure } from "./config.js";
+import {
+  CognitoIdTokenPayload,
+  CognitoAccessTokenPayload,
+} from "./jwt-model.js";
 
 export interface TokensToStore {
   accessToken: string;

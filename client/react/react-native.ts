@@ -20,10 +20,10 @@ import {
   fido2UpdateCredential,
   fido2DeleteCredential,
   authenticateWithFido2,
-} from "../fido2";
-import { configure as _configure, Config } from "../config";
+} from "../fido2.js";
+import { configure as _configure, Config } from "../config.js";
 
-import { retrieveTokens } from "../storage";
+import { retrieveTokens } from "../storage.js";
 export {
   fido2ListCredentials,
   fido2UpdateCredential,
@@ -42,13 +42,13 @@ export {
   updateUserAttributes,
   verifyUserAttribute,
   getUserAttributeVerificationCode,
-} from "../cognito-api";
-export { authenticateWithPlaintextPassword } from "../plaintext";
-import { parseJwtPayload } from "../util";
+} from "../cognito-api.js";
+export { authenticateWithPlaintextPassword } from "../plaintext.js";
+import { parseJwtPayload } from "../util.js";
 import {
   usePasswordless as _usePasswordless,
   PasswordlessContextProvider,
-} from "./hooks";
+} from "./hooks.js";
 
 export { PasswordlessContextProvider };
 

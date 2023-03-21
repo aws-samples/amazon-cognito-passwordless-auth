@@ -20,7 +20,7 @@ import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 import { randomInt } from "crypto";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { SimpleJwksCache } from "aws-jwt-verify/jwk";
-import { logger, UserFacingError } from "./common";
+import { logger, UserFacingError } from "./common.js";
 
 let config = {
   smsOtpStepUpEnabled: !!process.env.SMS_OTP_STEP_UP_ENABLED,

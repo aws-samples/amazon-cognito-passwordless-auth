@@ -12,10 +12,14 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { configure } from "../config";
+import { configure } from "../config.js";
 import React, { useState, useEffect } from "react";
-import { usePasswordless, useAwaitableState, useLocalUserCache } from "./hooks";
-import { timeAgo } from "../util";
+import {
+  usePasswordless,
+  useAwaitableState,
+  useLocalUserCache,
+} from "./hooks.js";
+import { timeAgo } from "../util.js";
 
 const FlexContainer = (props: { children: React.ReactNode }) => {
   return <div className="passwordless-main-container">{props.children}</div>;
