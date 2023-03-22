@@ -73,7 +73,15 @@ function StepUpAuth() {
         <div>
           Enter a Consent ID. You can make one up,
           <br /> but let's pretend there's a transaction backend that generated
-          it:
+          it.
+          <br /> (Also see:{" "}
+          <a
+            href="https://github.com/aws-samples/amazon-cognito-passwordless-auth/blob/main/SMS-OTP-STEPUP.md#step-up-authentication-with-sms-one-time-password"
+            target="_blank"
+          >
+            explanation of the step up procedure
+          </a>
+          )
         </div>
         <input
           type={"text"}
