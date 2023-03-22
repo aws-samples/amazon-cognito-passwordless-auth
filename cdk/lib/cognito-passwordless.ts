@@ -263,7 +263,9 @@ export class Passwordless extends Construct {
         new cdk.aws_iam.PolicyStatement({
           effect: cdk.aws_iam.Effect.ALLOW,
           resources: [
-            `arn:${cdk.Aws.PARTITION}:ses:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:identity/*`,
+            `arn:${cdk.Aws.PARTITION}:ses:${
+              props.magicLink.sesRegion ?? cdk.Aws.REGION
+            }:${cdk.Aws.ACCOUNT_ID}:identity/*`,
           ],
           actions: ["ses:SendEmail"],
         })
