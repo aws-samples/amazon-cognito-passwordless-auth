@@ -255,10 +255,10 @@ class MemoryStorage {
     return this.memory.get(key);
   }
   setItem(key, value) {
-    return this.memory.set(key, value);
+    this.memory.set(key, value);
   }
   removeItem(key) {
-    return this.memory.delete(key);
+    this.memory.delete(key);
   }
 }
 
