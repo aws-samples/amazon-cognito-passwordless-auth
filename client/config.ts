@@ -81,8 +81,10 @@ export function configure(config?: Config) {
   return config_;
 }
 
+type Maybe<T> = T | undefined | null;
+
 export interface CustomStorage {
-  getItem: (key: string) => string | null | Promise<string | null>;
+  getItem: (key: string) => Maybe<string> | Promise<Maybe<string>>;
   setItem: (key: string, value: string) => void | Promise<void>;
   removeItem: (key: string) => void | Promise<void>;
 }
