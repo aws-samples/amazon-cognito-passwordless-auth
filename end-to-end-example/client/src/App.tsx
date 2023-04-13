@@ -45,7 +45,12 @@ function App() {
     signInStatus === "SIGNING_IN" ||
     !tokensParsed
   ) {
-    return <Passwordless />;
+    return <Passwordless brand={{
+      /* REPLACE THE LINES BELOW WITH YOUR OWN BRAND ASSETS */
+      backgroundImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Manhattan_in_the_distance_%28Unsplash%29.jpg/2880px-Manhattan_in_the_distance_%28Unsplash%29.jpg',
+      customerName: 'Amazon Web Services',
+      customerLogoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png'
+    }}/>;
   }
 
   return (
