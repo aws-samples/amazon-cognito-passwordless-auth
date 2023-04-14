@@ -26,7 +26,11 @@ import {
   DeleteCommand,
   PutCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import {
+  SESClient,
+  SendEmailCommand,
+  MessageRejected,
+} from "@aws-sdk/client-ses";
 import {
   KMSClient,
   SignCommand,
@@ -103,7 +107,7 @@ export async function addChallengeToEvent(
     !redirectUri ||
     !requireConfig("allowedOrigins").includes(new URL(redirectUri).href)
   ) {
-    throw new Error(`Invalid redirectUri: ${redirectUri}`);
+    throw new UserFacingError(`Invalid redirectUri: ${redirectUri}`);
   }
   // Send challenge with new secret login code
   await createAndSendMagicLink(event, {
@@ -159,28 +163,38 @@ async function sendEmailWithLink({
     subject: { charSet: string; data: string };
   };
 }) {
-  await ses.send(
-    new SendEmailCommand({
-      Destination: { ToAddresses: [emailAddress] },
-      Message: {
-        Body: {
-          Html: {
-            Charset: content.html.charSet,
-            Data: content.html.data,
+  await ses
+    .send(
+      new SendEmailCommand({
+        Destination: { ToAddresses: [emailAddress] },
+        Message: {
+          Body: {
+            Html: {
+              Charset: content.html.charSet,
+              Data: content.html.data,
+            },
+            Text: {
+              Charset: content.text.charSet,
+              Data: content.text.data,
+            },
           },
-          Text: {
-            Charset: content.text.charSet,
-            Data: content.text.data,
+          Subject: {
+            Charset: content.subject.charSet,
+            Data: content.subject.data,
           },
         },
-        Subject: {
-          Charset: content.subject.charSet,
-          Data: content.subject.data,
-        },
-      },
-      Source: requireConfig("sesFromAddress"),
-    })
-  );
+        Source: requireConfig("sesFromAddress"),
+      })
+    )
+    .catch((err) => {
+      if (
+        err instanceof MessageRejected &&
+        err.message.includes("Email address is not verified")
+      ) {
+        throw new UserFacingError("Email address is not verified");
+      }
+      throw err;
+    });
 }
 
 async function createAndSendMagicLink(
