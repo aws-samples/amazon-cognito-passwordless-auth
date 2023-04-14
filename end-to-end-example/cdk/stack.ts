@@ -237,7 +237,7 @@ export function cloudfrontServedEmptySpaBucket(
             securityHeadersBehavior: {
               contentSecurityPolicy: {
                 contentSecurityPolicy:
-                  "default-src 'self'; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com",
+                  "default-src 'self'; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.amazoncognito.com; img-src *;",
                 override: true,
               },
               contentTypeOptions: {
