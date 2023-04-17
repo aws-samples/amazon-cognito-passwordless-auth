@@ -19,13 +19,16 @@ import { Passwordless } from "amazon-cognito-passwordless-auth/cdk";
 import { AwsSolutionsChecks, NagSuppressions } from "cdk-nag";
 import * as fs from "fs";
 import * as path from "path";
+
+/** Get custom config from env var file */
+const { sesFromAddress, stackName } = readEnvFile();
+
 class End2EndExampleStack extends cdk.Stack {
   passwordless: Passwordless;
   constructor(scope?: Construct, id?: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     const spa = cloudfrontServedEmptySpaBucket(this, "ExampleSpa");
-    const { sesFromAddress } = readEnvFile();
     this.passwordless = new Passwordless(this, "Passwordless", {
       allowedOrigins: [
         "http://localhost:5173",
@@ -86,7 +89,7 @@ class End2EndExampleStack extends cdk.Stack {
 }
 
 const app = new cdk.App();
-const stack = new End2EndExampleStack(app, "passwordless-end-to-end-example");
+const stack = new End2EndExampleStack(app, stackName);
 
 NagSuppressions.addResourceSuppressions(
   [stack.passwordless],
@@ -164,7 +167,7 @@ NagSuppressions.addResourceSuppressions(
 );
 NagSuppressions.addResourceSuppressionsByPath(
   stack,
-  "/passwordless-end-to-end-example/UserPoolPasswordless/smsRole/Resource",
+  "/" + stackName + "/UserPoolPasswordless/smsRole/Resource",
   [
     {
       id: "AwsSolutions-IAM5",
