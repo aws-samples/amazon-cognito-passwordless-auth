@@ -12,7 +12,9 @@ Prerequisites:
 Steps to deploy:
 
 1. Switch to directory containing this README (end-to-end-example/cdk)
-1. Copy file `.env` to `.env.local` and then edit `.env.local` and enter the e-mail adress you want to send the Magic Links from.
+1. Copy file `.env` to `.env.local` and then edit `.env.local` and
+   - enter the e-mail adress you want to send the Magic Links from.
+   - define a stack name that is unique to your AWS environment
 1. Run `npm install`
 1. Bootstrap CDK with `npx cdk bootstrap`
 1. Deploy the stack `npx cdk deploy`
