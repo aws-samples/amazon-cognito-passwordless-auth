@@ -324,5 +324,14 @@ function readEnvFile() {
       "Failed to read CDK_STACK_SES_FROM_ADDRESS config from .env file"
     );
   }
-  return { sesFromAddress };
+  const stackName =
+    tryReadEntry(".env.local", "CDK_STACK_NAME") ??
+    tryReadEntry(".env", "CDK_STACK_NAME");
+  if (!stackName) {
+    throw new Error(
+      "Failed to read CDK_STACK_NAME config from .env file"
+    );
+  }
+
+  return { sesFromAddress, stackName };
 }
