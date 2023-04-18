@@ -12,6 +12,12 @@ The reference implementation of each of these auth methods uses several AWS reso
 
 **IMPORTANT**: This AWS Solution is for demonstration purposes and uses several AWS resources, it is intended for developers with moderate to advanced AWS knowledge. If you plan to use these methods in production, you need to review, adjust and extend the sample code as necessary for your requirements.
 
+## Video Introduction
+
+Here's a short (11m41s) video that explains and demonstrates the solution:
+
+[![Solution Intro on YouTube](https://img.youtube.com/vi/hY54Zy-l6hc/0.jpg)](https://www.youtube.com/watch?v=hY54Zy-l6hc)
+
 ## FIDO2 / WebAuthn
 
 This solution includes components that implement FIDO2 authentication, i.e. sign with Face, Touch, YubiKey, etc.:
