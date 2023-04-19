@@ -54,6 +54,7 @@ let config = {
   kmsKeyId: process.env.KMS_KEY_ID,
   dynamodbSecretsTableName: process.env.DYNAMODB_SECRETS_TABLE,
   emailMasker: maskEmail,
+  emailSender: sendEmailWithLink,
   salt: process.env.STACK_ID,
   contentCreator: createEmailContent,
   notNowMsg:
@@ -272,7 +273,7 @@ async function createAndSendMagicLink(
   if (event.request.userNotFound) {
     return;
   }
-  await sendEmailWithLink({
+  await config.emailSender({
     emailAddress: event.request.userAttributes.email,
     content: await config.contentCreator.call(undefined, {
       secretLoginLink,
