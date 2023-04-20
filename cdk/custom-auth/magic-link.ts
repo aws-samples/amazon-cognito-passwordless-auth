@@ -43,7 +43,7 @@ import {
 } from "./common.js";
 
 let config = {
-  /** Should Magic Link sign-in be enabled? */
+  /** Should Magic Link sign-in be enabled? If set to false, clients cannot sign-in with magic links (an error is shown instead when they request a magic link) */
   magicLinkEnabled: !!process.env.MAGIC_LINK_ENABLED,
   /** Number of seconds a Magic Link should be valid */
   secondsUntilExpiry: Number(process.env.SECONDS_UNTIL_EXPIRY || 60 * 15),
