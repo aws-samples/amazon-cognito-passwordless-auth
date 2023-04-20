@@ -43,19 +43,33 @@ import {
 } from "./common.js";
 
 let config = {
+  /** Should Magic Link sign-in be enabled? If set to false, clients cannot sign-in with magic links (an error is shown instead when they request a magic link) */
   magicLinkEnabled: !!process.env.MAGIC_LINK_ENABLED,
+  /** Number of seconds a Magic Link should be valid */
   secondsUntilExpiry: Number(process.env.SECONDS_UNTIL_EXPIRY || 60 * 15),
+  /** Number of seconds that must lapse between unused Magic Links (to prevent misuse) */
   minimumSecondsBetween: Number(process.env.MIN_SECONDS_BETWEEN || 60 * 1),
+  /** The origins that are allowed to be used in the Magic Links */
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
     .map((url) => url.href),
+  /** The e-mail address that Magic Links will be sent from */
   sesFromAddress: process.env.SES_FROM_ADDRESS,
+  /** The Amazon SES region */
   sesRegion: process.env.SES_REGION || process.env.AWS_REGION,
+  /** KMS Key ID to use for generating Magic Links (signatures) */
   kmsKeyId: process.env.KMS_KEY_ID,
+  /** The name of the DynamoDB table where (hashes of) Magic Links will be stored */
   dynamodbSecretsTableName: process.env.DYNAMODB_SECRETS_TABLE,
+  /** Function to mask the e-mail address that will be visible in the public challenge parameters */
   emailMasker: maskEmail,
+  /** Function that will send the actual Magic Link e-mails */
+  emailSender: sendEmailWithLink,
+  /** A salt to use for storing hashes of magic links in the DynamoDB table */
   salt: process.env.STACK_ID,
+  /** Function to create the content of the Magic Link e-mails */
   contentCreator: createEmailContent,
+  /** Error message that will be shown to the client, if the client requests a Magic Link but isn't allowed to yet */
   notNowMsg:
     "We can't send you a magic link right now, please try again in a minute",
 };
@@ -272,7 +286,7 @@ async function createAndSendMagicLink(
   if (event.request.userNotFound) {
     return;
   }
-  await sendEmailWithLink({
+  await config.emailSender({
     emailAddress: event.request.userAttributes.email,
     content: await config.contentCreator.call(undefined, {
       secretLoginLink,
