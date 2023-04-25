@@ -73,10 +73,10 @@ export function determineUserHandle({
   sub,
   cognitoUsername,
 }: {
-  sub: string;
+  sub?: string; // maybe undefined if userNotFound is true
   cognitoUsername: string;
 }) {
-  if (isOpaqueIdentifier(cognitoUsername)) {
+  if (!sub || isOpaqueIdentifier(cognitoUsername)) {
     return cognitoUsername;
   }
   return sub;
