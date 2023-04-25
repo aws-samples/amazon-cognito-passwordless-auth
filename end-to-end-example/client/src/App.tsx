@@ -13,10 +13,7 @@
  * language governing permissions and limitations under the License.
  */
 import "./App.css";
-import {
-  usePasswordless,
-  Passwordless,
-} from "amazon-cognito-passwordless-auth/react";
+import { usePasswordless } from "amazon-cognito-passwordless-auth/react";
 import StepUpAuth from "./StepUpAuth";
 import { useState } from "react";
 
@@ -32,31 +29,10 @@ function App() {
   const [showStepUpAuth, setShowStepUpAuth] = useState(false);
   if (showStepUpAuth && signInStatus !== "SIGNED_IN") setShowStepUpAuth(false);
 
-  if (signInStatus === "REFRESHING_SIGN_IN" || signInStatus === "CHECKING") {
-    return (
-      <div className="app">
-        <div>One moment please while we verify your sign-in status</div>
-      </div>
-    );
-  }
-
-  if (
-    signInStatus === "NOT_SIGNED_IN" ||
-    signInStatus === "SIGNING_IN" ||
-    !tokensParsed
-  ) {
-    return <Passwordless brand={{
-      /* REPLACE THE LINES BELOW WITH YOUR OWN BRAND ASSETS */
-      backgroundImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Manhattan_in_the_distance_%28Unsplash%29.jpg/2880px-Manhattan_in_the_distance_%28Unsplash%29.jpg',
-      customerName: 'Amazon Web Services',
-      customerLogoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png'
-    }}/>;
-  }
-
   return (
     <div className="app">
       <div>This YOUR app</div>
-      <div>Hi there {tokensParsed.idToken.email as string}</div>
+      <div>Hi there {tokensParsed?.idToken.email}</div>
       <button
         onClick={() => {
           signOut();

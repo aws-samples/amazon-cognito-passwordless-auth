@@ -19,6 +19,7 @@ import "./index.css";
 import { Passwordless } from "amazon-cognito-passwordless-auth";
 import {
   PasswordlessContextProvider,
+  Passwordless as PasswordlessComponent,
   Fido2Toast,
 } from "amazon-cognito-passwordless-auth/react";
 import "amazon-cognito-passwordless-auth/passwordless.css";
@@ -40,9 +41,19 @@ Passwordless.configure({
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <PasswordlessContextProvider enableLocalUserCache={true}>
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
+    <PasswordlessComponent
+      brand={{
+        backgroundImageUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Manhattan_in_the_distance_%28Unsplash%29.jpg/2880px-Manhattan_in_the_distance_%28Unsplash%29.jpg",
+        customerName: "Amazon Web Services",
+        customerLogoUrl:
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png",
+      }}
+    >
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    </PasswordlessComponent>
     <Fido2Toast /> {/* Add Fido2Toast below App so it is rendered on top */}
   </PasswordlessContextProvider>
 );

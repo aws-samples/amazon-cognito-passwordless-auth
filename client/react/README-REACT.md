@@ -9,7 +9,7 @@ Client to use this library in React Applications:
 
 The easiest way to see it in action and play around is to deploy the [end-to-end example](../../end-to-end-example) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2, and SMS OTP Step Up Authentication.
 
-#### `<Passwordless />` login component. Shows the last 10 users that were signed in on this device:
+#### `<Passwordless />` login component. Shows the last user that was signed in on this device:
 
 <img src="../../drawings/passwordless-signin.png" alt="Passwordless Sign In" width="500px" />
 
@@ -66,8 +66,8 @@ npm install amazon-cognito-passwordless-auth
 
 A great way to learn how to use this library is to look at how we use it ourselves in the end-to-end example: [end-to-end-example/client](../../end-to-end-example/client)
 
-- In [main.tsx](../../end-to-end-example/client/src/main.tsx) we configure the library and wrap our own app with the `PasswordlesContextProvider`. Also we add the `<Fido2Toast />` container, to display the [FIDO2 "toast"](#fido2toast-component).
-- In [App.tsx](../../end-to-end-example/client/src/App.tsx) we use the `usePasswordless` hook to understand the user's sign-in status and render the `<Passwordless />` component in case the user is not yet signed in. The `<Passwordless />` component supports signing in with Magic Links and FIDO2.
+- In [main.tsx](../../end-to-end-example/client/src/main.tsx) we configure the library and wrap our own app with the `PasswordlesContextProvider` as well as with the `Passwordless` component. By wrapping our own app with the `Passwordless` component, our app will only show if the user is signed in, otherwise the `Passwordless` component shows to make the user sign in. Also we add the `<Fido2Toast />` container, to display the [FIDO2 "toast"](#fido2toast-component).
+- In [App.tsx](../../end-to-end-example/client/src/App.tsx) we use the `usePasswordless` hook to understand the user's sign-in status, provide a button to sign out, and toggle show/hide the authenticators manager (part of the [FIDO2 "toast"](#fido2toast-component)).
 - In [StepUpAuth.tsx](../../end-to-end-example/client/src/StepUpAuth.tsx) we show how to execute SMS OTP Step Up Authentication.
 
 #### Configuration
@@ -110,20 +110,68 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 ```
 
-Next, in your components, use the `usePasswordless` hook, and potentially the sample components:
+You can also wrap your app with the `Passwordless` component. In that case, your app will only show if the user is signed in, otherwise the `Passwordless` component shows to make the user sign in. If you're using the sample components, also include the CSS import:
 
 ```typescript
-import { usePasswordless, Passwordless } from "amazon-cognito-passwordless-auth/react";
+import {
+  PasswordlessContextProvider,
+  Passwordless as PasswordlessComponent,
+} from "amazon-cognito-passwordless-auth/react";
+import "amazon-cognito-passwordless-auth/passwordless.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <PasswordlessContextProvider>
+    <PasswordlessComponent
+      brand={{
+        backgroundImageUrl: "<url>",
+        customerName: "ACME corp.",
+        customerLogoUrl: "<url>",
+      }}
+    >
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    </PasswordlessComponent>
+  </PasswordlessContextProvider>
+);
+```
+
+Also, add the [FIDO2 "toast"](#fido2toast-component) to display the suggestion to enable FaceID/TouchID, and be able to show the authenticators manager:
+
+```typescript
+import {
+  PasswordlessContextProvider,
+  Passwordless as PasswordlessComponent,
+  Fido2Toast,
+} from "amazon-cognito-passwordless-auth/react";
+import "amazon-cognito-passwordless-auth/passwordless.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <PasswordlessContextProvider>
+    <PasswordlessComponent
+      brand={{
+        backgroundImageUrl: "<url>",
+        customerName: "ACME corp.",
+        customerLogoUrl: "<url>",
+      }}
+    >
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    </PasswordlessComponent>
+    <Fido2Toast />
+  </PasswordlessContextProvider>
+);
+```
+
+In your components, use the `usePasswordless` hook:
+
+```typescript
+import { usePasswordless } from "amazon-cognito-passwordless-auth/react";
 
 function MyComponent() {
   const { signInStatus, ... } = usePasswordless();
-  if (
-    signInStatus === "NOT_SIGNED_IN" ||
-    signInStatus === "SIGNING_IN" ||
-    !tokensParsed
-  ) {
-    return <Passwordless />;
-  }
+
   return <div>Your sign in status: {signInStatus}</div>;
 }
 ```
