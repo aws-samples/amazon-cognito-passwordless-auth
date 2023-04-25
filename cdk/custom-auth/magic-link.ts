@@ -205,7 +205,10 @@ async function sendEmailWithLink({
         err instanceof MessageRejected &&
         err.message.includes("Email address is not verified")
       ) {
-        throw new UserFacingError("Email address is not verified");
+        logger.error(err);
+        throw new UserFacingError(
+          "E-mail address must still be verified in the e-mail service"
+        );
       }
       throw err;
     });
