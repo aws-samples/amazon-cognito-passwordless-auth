@@ -167,7 +167,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 In your components, use the `usePasswordless` hook:
 
 ```typescript
-import { usePasswordless, Passwordless } from "amazon-cognito-passwordless-auth/react";
+import { usePasswordless } from "amazon-cognito-passwordless-auth/react";
 
 function MyComponent() {
   const { signInStatus, ... } = usePasswordless();
