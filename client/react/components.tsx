@@ -179,7 +179,7 @@ export const Passwordless = ({
   }
 
   if (signInStatus === "SIGNED_IN") {
-    if (children) return children;
+    if (children) return <>children</>;
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">

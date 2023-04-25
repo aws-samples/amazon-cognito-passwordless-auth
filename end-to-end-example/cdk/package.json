@@ -11,16 +11,16 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.114",
-    "@types/node": "^18.15.11",
+    "@types/node": "^18.16.0",
     "@types/tap": "^15.0.8",
-    "esbuild": "^0.17.16",
+    "esbuild": "^0.17.18",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "amazon-cognito-passwordless-auth": "^0.3.0",
-    "aws-cdk-lib": "^2.74.0",
-    "cdk-nag": "^2.25.11",
-    "constructs": "^10.1.310"
+    "amazon-cognito-passwordless-auth": "^0.4.0",
+    "aws-cdk-lib": "^2.76.0",
+    "cdk-nag": "^2.26.5",
+    "constructs": "^10.2.6"
   }
 }
