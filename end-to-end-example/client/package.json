@@ -12,17 +12,17 @@
   },
   "dependencies": {
     "@cloudscape-design/global-styles": "^1.0.8",
-    "amazon-cognito-passwordless-auth": "^0.3.0",
+    "amazon-cognito-passwordless-auth": "^0.4.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.0.2",
-    "@types/react": "^18.0.35",
+    "@types/react": "^18.0.38",
     "@types/react-dom": "^18.0.11",
-    "@vitejs/plugin-react": "^3.1.0",
+    "@vitejs/plugin-react": "^4.0.0",
     "s3-spa-upload": "^2.1.2",
     "typescript": "^5.0.4",
-    "vite": "^4.2.1"
+    "vite": "^4.3.1"
   }
 }
