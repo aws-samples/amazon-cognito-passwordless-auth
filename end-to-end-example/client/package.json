@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --force",
+    "dev:local": "vite --force --config vite.config.local.ts",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "install-passwordless-local": "rm -rf node_modules/amazon-cognito-passwordless-auth && npm i ../.. --install-links --no-save"

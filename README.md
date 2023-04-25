@@ -215,7 +215,7 @@ function MyComponent() {
 }
 ```
 
-See more examples and documentation here: [README-REACT.md](./client/react/README-REACT.md)
+This solution also includes sample React components, e.g. a prefab sample sign-in page. See examples and documentation here: [README-REACT.md](./client/react/README-REACT.md)
 
 ## Features
 

@@ -65,12 +65,19 @@ const FlexContainer = (props: {
   );
 };
 
-export const Passwordless = ({ brand }: { brand?: CustomBrand }) => {
+export const Passwordless = ({
+  brand,
+  children,
+}: {
+  brand?: CustomBrand;
+  children: React.ReactNode;
+}) => {
   const {
     requestSignInLink,
     lastError,
     authenticateWithFido2,
     busy,
+    signInStatus,
     signingInStatus,
     tokensParsed,
     signOut,
@@ -105,7 +112,7 @@ export const Passwordless = ({ brand }: { brand?: CustomBrand }) => {
     });
   }
 
-  if (lastSignedInUsers === undefined) {
+  if (signInStatus === "CHECKING" || !lastSignedInUsers) {
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">
@@ -113,7 +120,7 @@ export const Passwordless = ({ brand }: { brand?: CustomBrand }) => {
             src={spinner as string}
             className="passwordless-loading-spinner"
           />
-          <div>Loading, please wait...</div>
+          <div>Checking your sign-in status...</div>
         </div>
       </FlexContainer>
     );
@@ -127,7 +134,7 @@ export const Passwordless = ({ brand }: { brand?: CustomBrand }) => {
             src={spinner as string}
             className="passwordless-loading-spinner"
           />
-          <div>Checking the signing link...</div>
+          <div>Checking the sign-in link...</div>
         </div>
       </FlexContainer>
     );
@@ -171,7 +178,8 @@ export const Passwordless = ({ brand }: { brand?: CustomBrand }) => {
     );
   }
 
-  if (tokensParsed && tokensParsed.expireAt > new Date()) {
+  if (signInStatus === "SIGNED_IN") {
+    if (children) return children;
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">
