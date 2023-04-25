@@ -463,6 +463,12 @@ export class Passwordless extends Construct {
           requireLowercase: true,
           requireSymbols: true,
         },
+        signInAliases: {
+          username: false,
+          phone: false,
+          preferredUsername: false,
+          email: true,
+        },
         ...props.userPoolProps,
         lambdaTriggers: {
           ...props.userPoolProps?.lambdaTriggers,
