@@ -189,7 +189,7 @@ function StepUpAuth() {
               <br />
               Your Consent ID was added to your ID-token:{" "}
               <a
-                href={`https://jwtinspector.kevhak.people.aws.dev/inspect#id_token=${stepUpAuthIdToken}&tab=payload`}
+                href={`https://jwtinspector.kevhak.people.aws.dev/inspect#token=${stepUpAuthIdToken}&tab=payload`}
                 target="_blank"
               >
                 view
