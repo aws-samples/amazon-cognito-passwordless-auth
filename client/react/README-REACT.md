@@ -11,7 +11,7 @@ The easiest way to see it in action and play around is to deploy the [end-to-end
 
 #### `<Passwordless />` login component:
 
-Shows the last user that was signed in on this device, so that they may sign-in again without having to enter their username:
+A prefab sample login component, that supports signing in with FIDO2 and Magic Links. Shows the last user that was signed in on this device, so that they may sign-in again without having to enter their username:
 
 <img src="../../drawings/passwordless-signin.png" alt="Passwordless Sign In" width="500px" />
 
@@ -148,6 +148,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </PasswordlessComponent>
   </PasswordlessContextProvider>
 );
+```
+
+If you want to make the `Passwordless` component bigger or smaller, e.g. the size of the entire page, override the height and width of the `.passwordless-main-container` class in your own CSS definitions. For example:
+
+```
+.passwordless-main-container {
+  height: 100vh !important;
+}
 ```
 
 Also, add the [FIDO2 "toast"](#fido2toast-component) to display the suggestion to enable FaceID/TouchID, and be able to show the authenticators manager:
