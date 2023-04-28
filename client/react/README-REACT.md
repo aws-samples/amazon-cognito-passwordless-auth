@@ -9,9 +9,23 @@ Client to use this library in React Applications:
 
 The easiest way to see it in action and play around is to deploy the [end-to-end example](../../end-to-end-example) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2, and SMS OTP Step Up Authentication.
 
-#### `<Passwordless />` login component. Shows the last user that was signed in on this device:
+#### `<Passwordless />` login component:
+
+A prefab sample login component, that supports signing in with FIDO2 and Magic Links. Shows the last user that was signed in on this device, so that they may sign-in again without having to enter their username:
 
 <img src="../../drawings/passwordless-signin.png" alt="Passwordless Sign In" width="500px" />
+
+You should wrap your own in app in this component (as child):
+
+```jsx
+<Passwordless>
+  <App />
+</Passwordless>
+```
+
+The component will render your app (the child), instead of itself, once the user successfully signs in. If you don't wrap a child in this component and the user is signed in, it will render itself as a debug utility:
+
+<img src="../../drawings/passwordless-signed-in.png" alt="Passwordless Signed In" width="500px" />
 
 #### `<Fido2Toast />` component:
 
@@ -66,8 +80,8 @@ npm install amazon-cognito-passwordless-auth
 
 A great way to learn how to use this library is to look at how we use it ourselves in the end-to-end example: [end-to-end-example/client](../../end-to-end-example/client)
 
-- In [main.tsx](../../end-to-end-example/client/src/main.tsx) we configure the library and wrap our own app with the `PasswordlesContextProvider` as well as with the `Passwordless` component. By wrapping our own app with the `Passwordless` component, our app will only show if the user is signed in, otherwise the `Passwordless` component shows to make the user sign in. Also we add the `<Fido2Toast />` container, to display the [FIDO2 "toast"](#fido2toast-component).
-- In [App.tsx](../../end-to-end-example/client/src/App.tsx) we use the `usePasswordless` hook to understand the user's sign-in status, provide a button to sign out, and toggle show/hide the authenticators manager (part of the [FIDO2 "toast"](#fido2toast-component)).
+- In [main.tsx](../../end-to-end-example/client/src/main.tsx) we configure the library and wrap our own app with the `PasswordlesContextProvider` as well as with the `Passwordless` component. By wrapping our own app with the `Passwordless` component, our app will only show if the user is signed in, otherwise the `Passwordless` component shows to make the user sign in. Also we add the `<Fido2Toast />` container, to display the [FIDO2 "toast"](#fido2toast--component).
+- In [App.tsx](../../end-to-end-example/client/src/App.tsx) we use the `usePasswordless` hook to understand the user's sign-in status, provide a button to sign out, and toggle show/hide the authenticators manager (part of the [FIDO2 "toast"](#fido2toast--component)).
 - In [StepUpAuth.tsx](../../end-to-end-example/client/src/StepUpAuth.tsx) we show how to execute SMS OTP Step Up Authentication.
 
 #### Configuration
@@ -134,6 +148,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </PasswordlessComponent>
   </PasswordlessContextProvider>
 );
+```
+
+If you want to make the `Passwordless` component bigger or smaller, e.g. the size of the entire page, override the height and width of the `.passwordless-main-container` class in your own CSS definitions. For example:
+
+```
+.passwordless-main-container {
+  height: 100vh !important;
+}
 ```
 
 Also, add the [FIDO2 "toast"](#fido2toast-component) to display the suggestion to enable FaceID/TouchID, and be able to show the authenticators manager:

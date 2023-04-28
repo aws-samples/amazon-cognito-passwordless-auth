@@ -79,9 +79,12 @@ export const Passwordless = ({
     busy,
     signInStatus,
     signingInStatus,
+    tokens,
     tokensParsed,
     signOut,
     userVerifyingPlatformAuthenticatorAvailable,
+    toggleShowAuthenticatorManager,
+    showAuthenticatorManager,
   } = usePasswordless();
 
   const [newUsername, setNewUsername] = useState("");
@@ -178,21 +181,48 @@ export const Passwordless = ({
     );
   }
 
-  if (signInStatus === "SIGNED_IN") {
+  if (signInStatus === "SIGNED_IN" && tokens) {
     if (children) return <>{children}</>;
     return (
       <FlexContainer brand={brand}>
-        <div className="passwordless-flex">
+        <div className="passwordless-flex-col">
           <div>
             You&apos;re currently signed-in as:{" "}
-            {tokensParsed?.idToken.email as string}
+            <span className="passwordless-username">
+              {tokensParsed?.idToken.email as string}
+            </span>
           </div>
-          <button
-            className="passwordless-button passwordless-button-sign-out"
-            onClick={signOut}
-          >
-            Sign out
-          </button>
+          <div className="passwordless-flex">
+            <a
+              href={`https://jwtinspector.kevhak.people.aws.dev/inspect#token=${tokens.idToken}&tab=payload`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              ID token
+            </a>
+            <a
+              href={`https://jwtinspector.kevhak.people.aws.dev/inspect#token=${tokens.accessToken}&tab=payload`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Access token
+            </a>
+          </div>
+          <div className="passwordless-flex">
+            <button
+              className="passwordless-button passwordless-button-sign-out"
+              onClick={toggleShowAuthenticatorManager}
+              disabled={showAuthenticatorManager}
+            >
+              Manage authenticators
+            </button>
+            <button
+              className="passwordless-button passwordless-button-sign-out"
+              onClick={signOut}
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </FlexContainer>
     );
