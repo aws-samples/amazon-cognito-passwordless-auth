@@ -4,7 +4,7 @@ _**AWS Solution to implement Passwordless authenticaton with Amazon Cognito**_
 
 Passwordless authentication improves security, reduces friction and provides better user experience for end-users of customer facing applications. Amazon Cognito provides features to implement custom authentication flows, which can be used to expand authentication factors for your application. This solution demonstrates several patterns to support passwordless authentication and provides reference implementations for these methods:
 
-- **FIDO2**: aka **WebAuthn**, i.e. sign with Face, Touch, YubiKey, etc.
+- **FIDO2**: aka **WebAuthn**, i.e. sign with Face, Touch, YubiKey, etc. This includes support for **Passkeys**.
 - **Magic Link Sign In**: sign in with a one-time-use secret link that's emailed to you (and works across browsers).
 - **SMS based Step-Up auth**: let an already signed-in user verify their identity again with a SMS One-Time-Password (OTP) without requiring them to type in their password.
 
@@ -20,7 +20,7 @@ Here's a short (11m41s) video that explains and demonstrates the solution:
 
 ## FIDO2 / WebAuthn
 
-This solution includes components that implement FIDO2 authentication, i.e. sign with Face, Touch, YubiKey, etc.:
+This solution includes components that implement FIDO2 authentication, i.e. sign with Face, Touch, YubiKey, etc. This includes support for Passkeys:
 
 ![FIDO2 AWS Architecture](./drawings/fido2.png)
 

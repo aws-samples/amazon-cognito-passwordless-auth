@@ -1,7 +1,7 @@
 {
   "name": "amazon-cognito-passwordless-auth",
   "version": "0.5.0",
-  "description": "Passwordless authentication with Amazon Cognito: FIDO2 (WebAuthn), Magic Link, SMS OTP Step Up",
+  "description": "Passwordless authentication with Amazon Cognito: FIDO2 (WebAuthn, support for Passkeys), Magic Link, SMS OTP Step Up",
   "keywords": [
     "AWS",
     "Cognito",
@@ -9,7 +9,9 @@
     "Magic Link",
     "Passwordless",
     "SMS OTP",
-    "WebAuthn"
+    "WebAuthn",
+    "aws-cdk",
+    "passkeys"
   ],
   "license": "Apache-2.0",
   "author": {
