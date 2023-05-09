@@ -55,9 +55,9 @@ const FlexContainer = (props: {
           />
         )}
         {props.brand?.customerName && (
-          <h3 className="passwordless-text-center passwordless-customer-name">
+          <div className="passwordless-text-center passwordless-customer-name">
             {props.brand.customerName}
-          </h3>
+          </div>
         )}
         {props.children}
       </div>
@@ -242,7 +242,7 @@ export const Passwordless = ({
       {!isLoading && email && (
         <div>
           <div>
-            <h3 className="passwordless-email-title">{email}</h3>
+            <div className="passwordless-email-title">{email}</div>
             <p className="passwordless-flex passwordless-flex-vertical-buttons">
               {showFaceTouchOption && (
                 <button
@@ -323,7 +323,7 @@ export const Passwordless = ({
                   autoFocus
                 />
                 <button
-                  className="passwordless-button passwordless-button-sign-in"
+                  className="passwordless-button"
                   type="submit"
                   disabled={busy || !newUsername?.match(/^\S+@\S+\.\S+$/)}
                 >
@@ -368,7 +368,7 @@ export const Passwordless = ({
             disabled={busy}
           />
           <button
-            className="passwordless-button passwordless-button-sign-in"
+            className="passwordless-button"
             type="submit"
             disabled={busy || !newUsername?.match(/^\S+@\S+\.\S+$/)}
           >
