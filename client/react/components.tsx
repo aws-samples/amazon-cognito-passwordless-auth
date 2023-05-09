@@ -28,13 +28,6 @@ interface CustomBrand {
   customerLogoUrl?: string;
 }
 
-const LOADING_SIGNING_IN_STATUS = [
-  "SIGNIN_LINK_EXPIRED",
-  "REQUESTING_SIGNIN_LINK",
-  "STARTING_SIGN_IN_WITH_FIDO2",
-  "COMPLETING_SIGN_IN_WITH_FIDO2",
-];
-
 const FlexContainer = (props: {
   children: React.ReactNode;
   brand?: CustomBrand;
@@ -55,9 +48,9 @@ const FlexContainer = (props: {
           />
         )}
         {props.brand?.customerName && (
-          <h3 className="passwordless-text-center passwordless-customer-name">
+          <div className="passwordless-text-center passwordless-customer-name">
             {props.brand.customerName}
-          </h3>
+          </div>
         )}
         {props.children}
       </div>
@@ -115,7 +108,15 @@ export const Passwordless = ({
     });
   }
 
-  if (signInStatus === "CHECKING" || !lastSignedInUsers) {
+  if (signInStatus === "REFRESHING_SIGN_IN" && children) {
+    return <>{children}</>;
+  }
+
+  if (
+    signInStatus === "CHECKING" ||
+    signInStatus === "REFRESHING_SIGN_IN" ||
+    !lastSignedInUsers
+  ) {
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">
@@ -228,8 +229,6 @@ export const Passwordless = ({
     );
   }
 
-  const isLoading = LOADING_SIGNING_IN_STATUS.includes(signingInStatus);
-
   const user = lastSignedInUsers.at(0);
   const { email, credentials, useFido } = user ?? {};
   const showFaceTouchOption =
@@ -239,10 +238,10 @@ export const Passwordless = ({
 
   return (
     <FlexContainer brand={brand}>
-      {!isLoading && email && (
+      {signInStatus === "NOT_SIGNED_IN" && email && (
         <div>
           <div>
-            <h3 className="passwordless-email-title">{email}</h3>
+            <div className="passwordless-email-title">{email}</div>
             <p className="passwordless-flex passwordless-flex-vertical-buttons">
               {showFaceTouchOption && (
                 <button
@@ -311,7 +310,7 @@ export const Passwordless = ({
                 }}
               >
                 <label className="passwordless-input-label">
-                  Enter your email to sign in
+                  Enter your e-mail address to sign in:
                 </label>
                 <input
                   className="passwordless-email-input"
@@ -323,7 +322,7 @@ export const Passwordless = ({
                   autoFocus
                 />
                 <button
-                  className="passwordless-button passwordless-button-sign-in"
+                  className="passwordless-button"
                   type="submit"
                   disabled={busy || !newUsername?.match(/^\S+@\S+\.\S+$/)}
                 >
@@ -347,7 +346,7 @@ export const Passwordless = ({
           )}
         </div>
       )}
-      {!isLoading && !lastSignedInUsers.length && (
+      {signInStatus === "NOT_SIGNED_IN" && !lastSignedInUsers.length && (
         <form
           className="passwordless-flex passwordless-flex-justify-end"
           onSubmit={(e) => {
@@ -357,7 +356,7 @@ export const Passwordless = ({
           }}
         >
           <label className="passwordless-input-label">
-            Enter your email to sign in
+            Enter your e-mail address to sign in:
           </label>
           <input
             className="passwordless-email-input"
@@ -366,9 +365,10 @@ export const Passwordless = ({
             placeholder="E-mail"
             type="email"
             disabled={busy}
+            autoFocus
           />
           <button
-            className="passwordless-button passwordless-button-sign-in"
+            className="passwordless-button"
             type="submit"
             disabled={busy || !newUsername?.match(/^\S+@\S+\.\S+$/)}
           >

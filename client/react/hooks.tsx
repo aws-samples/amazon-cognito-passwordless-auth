@@ -139,11 +139,10 @@ function _usePasswordless() {
           accessToken: parseJwtPayload<CognitoAccessTokenPayload>(accessToken),
           expireAt,
         });
-        return newTokens;
       } else {
         setTokensParsed(undefined);
-        return undefined;
       }
+      return newTokens;
     });
   }, []);
   const [lastError, setLastError] = useState<Error>();
@@ -217,23 +216,23 @@ function _usePasswordless() {
 
   // If we have some tokens, but not all, attempt a refresh
   // (looks like e.g. a developer deleted some keys from storage)
-  useEffect(() => {
-    if (
-      tokens &&
-      (!tokens.idToken || !tokens.accessToken || !tokens.expireAt)
-    ) {
-      refreshTokens({
-        tokensCb: (newTokens) =>
-          newTokens &&
-          storeTokens(newTokens).then(() =>
-            setTokens((tokens) => ({ ...tokens, ...newTokens }))
-          ),
-        isRefreshingCb: setIsRefreshingTokens,
-      }).catch(() => {
-        setTokens(undefined);
-      });
-    }
-  }, [tokens, setTokens]);
+  if (
+    tokens &&
+    (!tokens.idToken || !tokens.accessToken || !tokens.expireAt) &&
+    !isRefreshingTokens &&
+    !isSchedulingRefresh
+  ) {
+    refreshTokens({
+      tokensCb: (newTokens) =>
+        newTokens &&
+        storeTokens(newTokens).then(() =>
+          setTokens((tokens) => ({ ...tokens, ...newTokens }))
+        ),
+      isRefreshingCb: setIsRefreshingTokens,
+    }).catch(() => {
+      setTokens(undefined);
+    });
+  }
 
   // At component mount, load tokens from storage
   useEffect(() => {
@@ -321,9 +320,7 @@ function _usePasswordless() {
     recheckSignInStatus; // dummy usage otherwise eslint complains we should remove it from the dep array
     return tokensParsed && tokensParsed.expireAt.valueOf() >= Date.now()
       ? ("SIGNED_IN" as const)
-      : tokensParsed &&
-        tokensParsed.expireAt.valueOf() < Date.now() &&
-        (isSchedulingRefresh || isRefreshingTokens)
+      : tokensParsed && (isSchedulingRefresh || isRefreshingTokens)
       ? ("REFRESHING_SIGN_IN" as const)
       : busyState
           .filter(
