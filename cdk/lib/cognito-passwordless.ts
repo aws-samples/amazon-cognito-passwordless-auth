@@ -38,9 +38,9 @@ export class Passwordless extends Construct {
     scope: Construct,
     id: string,
     props: {
-      /** Your existing User Pool, if you have one already */
+      /** Your existing User Pool, if you have one already. This User Pool will then be equipped for Passwordless: Lambda triggers will be added. If you don't provide an existing User Pool, one will be created for you */
       userPool?: cdk.aws_cognito.UserPool;
-      /** Your existing User Pool Clients, if you have them already */
+      /** Your existing User Pool Clients, if you have them already. If you don't provide an existing User Pool Client, one will be created for you */
       userPoolClients?: cdk.aws_cognito.UserPoolClient[];
       /** If you don't provide an existing User Pool, one will be created for you. Pass any properties you want for it, these will be merged with properties from this solution */
       userPoolProps?: Partial<cdk.aws_cognito.UserPoolProps>;
@@ -485,6 +485,30 @@ export class Passwordless extends Construct {
         mergedProps
       );
     } else {
+      props.userPool.addTrigger(
+        cdk.aws_cognito.UserPoolOperation.CREATE_AUTH_CHALLENGE,
+        this.createAuthChallengeFn
+      );
+      props.userPool.addTrigger(
+        cdk.aws_cognito.UserPoolOperation.DEFINE_AUTH_CHALLENGE,
+        this.defineAuthChallengeResponseFn
+      );
+      props.userPool.addTrigger(
+        cdk.aws_cognito.UserPoolOperation.VERIFY_AUTH_CHALLENGE_RESPONSE,
+        this.verifyAuthChallengeResponseFn
+      );
+      if (this.preSignUpFn) {
+        props.userPool.addTrigger(
+          cdk.aws_cognito.UserPoolOperation.PRE_SIGN_UP,
+          this.preSignUpFn
+        );
+      }
+      if (this.preTokenGenerationFn) {
+        props.userPool.addTrigger(
+          cdk.aws_cognito.UserPoolOperation.PRE_TOKEN_GENERATION,
+          this.preTokenGenerationFn
+        );
+      }
       this.userPool = props.userPool;
     }
     if (props.fido2) {
