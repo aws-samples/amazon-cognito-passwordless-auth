@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@cloudscape-design/global-styles": "^1.0.8",
-    "amazon-cognito-passwordless-auth": "^0.6.0",
+    "amazon-cognito-passwordless-auth": "^0.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
