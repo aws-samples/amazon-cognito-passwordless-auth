@@ -75,7 +75,6 @@ export const Passwordless = ({
     tokens,
     tokensParsed,
     signOut,
-    userVerifyingPlatformAuthenticatorAvailable,
     toggleShowAuthenticatorManager,
     showAuthenticatorManager,
   } = usePasswordless();
@@ -231,10 +230,6 @@ export const Passwordless = ({
 
   const user = lastSignedInUsers.at(0);
   const { email, credentials, useFido } = user ?? {};
-  const showFaceTouchOption =
-    useFido === "YES" &&
-    (userVerifyingPlatformAuthenticatorAvailable ||
-      fido2.authenticatorSelection?.userVerification !== "required");
 
   return (
     <FlexContainer brand={brand}>
@@ -243,7 +238,7 @@ export const Passwordless = ({
           <div>
             <div className="passwordless-email-title">{email}</div>
             <p className="passwordless-flex passwordless-flex-vertical-buttons">
-              {showFaceTouchOption && (
+              {useFido === "YES" && (
                 <button
                   className="passwordless-button passwordless-button-sign-in"
                   onClick={() => {
@@ -270,7 +265,7 @@ export const Passwordless = ({
               )}
               <button
                 className={`passwordless-button passwordless-button-sign-in ${
-                  showFaceTouchOption ? "passwordless-button-outlined" : ""
+                  useFido === "YES" ? "passwordless-button-outlined" : ""
                 }`}
                 onClick={() => !busy && requestSignInLink(email)}
                 disabled={busy}
