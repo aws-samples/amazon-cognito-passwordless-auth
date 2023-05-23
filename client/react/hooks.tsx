@@ -604,7 +604,6 @@ function _useLocalUserCache() {
     creatingCredential,
     fido2Credentials,
     signingInStatus,
-    userVerifyingPlatformAuthenticatorAvailable,
   } = usePasswordless();
   const idToken = tokensParsed?.idToken;
   const hasFido2Credentials = fido2Credentials && !!fido2Credentials.length;
@@ -681,16 +680,6 @@ function _useLocalUserCache() {
       if (!fido2) {
         throw new Error("Missing Fido2 config");
       }
-      if (
-        (!fido2.authenticatorSelection?.userVerification ||
-          fido2.authenticatorSelection.userVerification === "required") &&
-        !userVerifyingPlatformAuthenticatorAvailable
-      ) {
-        if (user.useFido === "NO") {
-          return "NO";
-        }
-        return "INDETERMINATE";
-      }
       if (hasFido2Credentials === undefined) {
         return "INDETERMINATE";
       }
@@ -716,7 +705,6 @@ function _useLocalUserCache() {
       hasFido2Credentials,
       fidoPreferenceOverride,
       justSignedInWithMagicLink,
-      userVerifyingPlatformAuthenticatorAvailable,
     ]
   );
 
