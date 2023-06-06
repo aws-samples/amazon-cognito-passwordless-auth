@@ -10,7 +10,7 @@
     "Passwordless",
     "SMS OTP",
     "WebAuthn",
-    "aws-cdk",
+    "awscdk",
     "passkeys"
   ],
   "license": "Apache-2.0",
