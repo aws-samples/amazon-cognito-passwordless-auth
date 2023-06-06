@@ -432,7 +432,9 @@ export const Passwordless = ({
             <div>Completing your sign-in...</div>
           </>
         )}
-        {lastError && <div>{lastError.message}</div>}
+        {lastError && (
+          <div className="passwordless-error">{lastError.message}</div>
+        )}
       </div>
     </FlexContainer>
   );
