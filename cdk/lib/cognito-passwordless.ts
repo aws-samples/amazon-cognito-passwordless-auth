@@ -289,7 +289,9 @@ export class Passwordless extends Construct {
           actions: ["kms:Sign"],
           conditions: {
             StringLike: {
-              "kms:RequestAlias": (key as cdk.aws_kms.IAlias).aliasName,
+              "kms:RequestAlias": (
+                key.node.defaultChild as cdk.aws_kms.CfnAlias
+              ).aliasName, // have to get the raw string like this to prevent a circulair dependency
             },
           },
         };
