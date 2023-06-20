@@ -18,6 +18,10 @@ Here's a short (11m41s) video that explains and demonstrates the solution:
 
 [![Solution Intro on YouTube](https://img.youtube.com/vi/hY54Zy-l6hc/0.jpg)](https://www.youtube.com/watch?v=hY54Zy-l6hc)
 
+## Self-paced Workshop
+
+The self-paced workshop (expected duration: 60 min.) will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
+
 ## FIDO2 / WebAuthn
 
 This solution includes components that implement FIDO2 authentication, i.e. sign with Face, Touch, YubiKey, etc. This includes support for Passkeys:
@@ -79,7 +83,9 @@ Also, make sure to install the peer dependencies you need (e.g. React, AWS CDK).
 
 ## Getting Started
 
-To play around with the library we recommend you deploy the [end-to-end example](./end-to-end-example/) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2.
+To play around with the solution, you can deploy the [end-to-end example](./end-to-end-example/) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2 (WebAuthn), and try SMS OTP Step Up authentication.
+
+For FIDO2 (WebAuthn) and Magic Links, the self-paced workshop (expected duration: 60 min.) provides a guided experience. It will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
 
 ## Basic Usage
 
