@@ -175,40 +175,40 @@ const { tokensParsed } = usePasswordless();
 
 ##### Create FIDO2 Credential
 
-[Please refer to the common ReactJS usage](./README.md/#create-fido2-credential)
+[Please refer to the common ReactJS usage](./README-REACT.md/#create-fido2-credential)
 
 #### LogIn with your FIDO2 Credential
 
-[Please refer to the common ReactJS usage](./README.md/#login-with-your-fido2-credential)
+[Please refer to the common ReactJS usage](./README-REACT.md/#login-with-your-fido2-credential)
 
 #### SignOut
 
-[Please refer to the common ReactJS usage](./README.md/#singout)
+[Please refer to the common ReactJS usage](./README-REACT.md/#signout)
 
 #### Refresh user data (aka: tokensParsed)
 
-[Please refer to the common ReactJS usage](./README.md/#refresh-user-data-aka-tokensparsed)
+[Please refer to the common ReactJS usage](./README-REACT.md/#refresh-user-data-aka-tokensparsed)
 
 #### List FIDO2 Credentials
 
-[Please refer to the common ReactJS usage](./README.md/#list-fido2-credentials)
+[Please refer to the common ReactJS usage](./README-REACT.md/#list-fido2-credentials)
 
 #### Delete FIDO2 Credential
 
-[Please refer to the common ReactJS usage](./README.md/#delete-fido2-credential)
+[Please refer to the common ReactJS usage](./README-REACT.md/#delete-fido2-credential)
 
 #### Update Cognito User Attributes
 
-[Please refer to the common ReactJS usage](./README.md/#update-cognito-user-attributes)
+[Please refer to the common ReactJS usage](./README-REACT.md/#update-cognito-user-attributes)
 
 #### Send the user attribute verification code
 
-[Please refer to the common ReactJS usage](./README.md/#send-the-user-attribute-verification-code)
+[Please refer to the common ReactJS usage](./README-REACT.md/#send-the-user-attribute-verification-code)
 
 #### Verify Cognito User Attribute
 
-[Please refer to the common ReactJS usage](./README.md/#verify-cognito-user-attribute)
+[Please refer to the common ReactJS usage](./README-REACT.md/#verify-cognito-user-attribute)
 
 #### Helpers
 
-[Please refer to the common ReactJS usage](./README.md/#helpers)
+[Please refer to the common ReactJS usage](./README-REACT.md/#helpers)
