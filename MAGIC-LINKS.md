@@ -153,6 +153,7 @@ sequenceDiagram
     participant CA as CreateAuthChallenge
     participant VA as VerifyAnswer
     participant KMS as AWS KMS
+    participant DDB as DynamoDB
     User->>BJS: Open magic link
     activate BJS
     activate User
@@ -176,6 +177,10 @@ sequenceDiagram
     Activate C
     C->>VA: Invoke
     Activate VA
+    VA->>DDB: Delete magic-link metadata w/ condition
+    Activate DDB
+    DDB->>VA: Deleted record (w/ KMS Key ID), exception, or null
+    Deactivate DDB
     VA->>KMS: Download public key
     Activate KMS
     KMS->>VA: Public key
