@@ -185,6 +185,8 @@ sequenceDiagram
     Activate KMS
     KMS->>VA: Public key
     Deactivate KMS
+    VA->>VA: Verify Signature
+    VA->>VA: Check magic link username, expiry, issuedAt
     VA->>C: Answer correct
     Deactivate VA
     C->>DA: Invoke
