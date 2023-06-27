@@ -22,8 +22,8 @@
     "url": "https://github.com/aws-samples/amazon-cognito-passwordless-auth",
     "type": "git"
   },
-  "main": "client/index.js",
-  "react-native": "client/react/react-native",
+  "main": "dist/client/index.js",
+  "react-native": "dist/client/react/react-native.js",
   "scripts": {
     "gen-types:cdk": "tsc --project cdk/lib/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly && mv ./cognito-passwordless.d.ts cdk.d.ts && tsc --project cdk/custom-auth/tsconfig.json --declarationDir ./custom-auth --declaration --emitDeclarationOnly",
     "gen-types:client": "tsc --project client/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly",
@@ -70,6 +70,10 @@
     },
     "./react": {
       "import": "./dist/client/react/index.js",
+      "types": "./react/index.d.ts"
+    },
+    "./react-native": {
+      "import": "./dist/client/react/react-native.js",
       "types": "./react/index.d.ts"
     },
     "./refresh": {
