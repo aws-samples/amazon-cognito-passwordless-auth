@@ -15,6 +15,7 @@ Client to use this library in React Native Applications
 #### 1. Considerations
 
 - This library supports RN 70.6+ and to be able to use it, you must have your [environment properly setup for react native](https://reactnative.dev/docs/environment-setup).
+- For React Native this library does not include prebuilt UI components. You can implement those yourself within your app and you can use the hooks of this library (`usePasswordless`) to do much heavy lifting, as documented in this README.
 - Passkeys are natively supported only on iOS so far (although they'll be available for [Android very soon](https://developers.google.com/identity/passkeys/faq))
 - iOS Target must be 16.0+ since passkeys are not available in older versions
 - In order to use passkeys in iOS, you need to enable associated domains and, therefore, you'll need a [Paid Apple Developer Subscription](https://developer.apple.com/support/compare-memberships/) to use it.
