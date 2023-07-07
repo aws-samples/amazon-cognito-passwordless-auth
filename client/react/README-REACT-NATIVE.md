@@ -85,12 +85,11 @@ To use the library, you need to first import, wrap your app with the Passwordles
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   PasswordlessContextProvider,
-  usePasswordless,
+  Passwordless,
 } from "amazon-cognito-passwordless-auth";
 
 function App() {
-  const { configure } = usePasswordless();
-  configure({
+  Passwordless.configure({
     cognitoIdpEndpoint: "<URL_TO_YOUR_COGNITO_PROXY_API>",
     clientId: "<COGNITO_CLIENT_ID>",
     userPoolId: "<COGNITO_USER_POOL_ID>",
