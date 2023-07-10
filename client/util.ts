@@ -18,7 +18,7 @@ import {
 } from "./jwt-model.js";
 
 export async function throwIfNot2xx(res: Response) {
-  if (res.status >= 200 && res.status < 300) {
+  if (res.ok) {
     return res;
   }
   const detail = (await res.json()) as { __type: string; message: string };
