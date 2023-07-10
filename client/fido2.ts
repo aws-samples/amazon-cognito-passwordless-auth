@@ -20,7 +20,12 @@ import {
   initiateAuth,
   respondToAuthChallenge,
 } from "./cognito-api.js";
-import { parseJwtPayload, throwIfNot2xx, bufferFromBase64Url } from "./util.js";
+import {
+  parseJwtPayload,
+  throwIfNot2xx,
+  bufferFromBase64Url,
+  bufferToBase64Url,
+} from "./util.js";
 import { configure } from "./config.js";
 import { retrieveTokens } from "./storage.js";
 import { CognitoIdTokenPayload } from "./jwt-model.js";
@@ -375,9 +380,9 @@ async function fido2getCredential({
     extensions,
   };
   debug?.("Assembled public key options:", publicKey);
-  const credential = (await navigator.credentials.get({
+  const credential = await navigator.credentials.get({
     publicKey,
-  })) as PublicKeyCredential | null;
+  });
   if (!credential) {
     throw new Error(`Failed to get credential`);
   }
@@ -414,7 +419,7 @@ const parseAuthenticatorAttestationResponse = async (
 };
 
 const parseAuthenticatorAssertionResponse = async (
-  rawId: BufferSource,
+  rawId: ArrayBuffer,
   response: AuthenticatorAssertionResponse
 ) => {
   const [
@@ -428,7 +433,9 @@ const parseAuthenticatorAssertionResponse = async (
     bufferToBase64Url(response.authenticatorData),
     bufferToBase64Url(response.clientDataJSON),
     bufferToBase64Url(response.signature),
-    response.userHandle && bufferToBase64Url(response.userHandle),
+    response.userHandle && response.userHandle.byteLength > 0
+      ? bufferToBase64Url(response.userHandle)
+      : null,
   ]);
   return {
     credentialIdB64,
@@ -437,20 +444,6 @@ const parseAuthenticatorAssertionResponse = async (
     signatureB64,
     userHandleB64,
   };
-};
-
-const bufferToBase64Url = async (data: BufferSource) => {
-  const base64 = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.readAsDataURL(new Blob([data]));
-  });
-  // application/octet-stream;base64,A86gItq3dykr7ZLvVAGPoxAHMfKPFripN8wc/4D20UwiAUCHAx6O5ZX1VdA5XcZ2nVtnKIZ/Hcv3mw3pnMGMpA==
-  return base64
-    .split(",", 2)[1]
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=?=?$/, "");
 };
 
 export function authenticateWithFido2({
