@@ -63,7 +63,7 @@ export const Passwordless = ({
   children,
 }: {
   brand?: CustomBrand;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) => {
   const {
     requestSignInLink,
