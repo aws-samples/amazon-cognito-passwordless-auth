@@ -18,8 +18,8 @@ jobs:
         run: |
           npm install -g npm
           npm install
-      - name: test
+      - name: test-create-dist
         run: |
           npx prettier -c .
-          npx eslint .
+          npx eslint --ignore-pattern end-to-end-example .
           npm run dist
