@@ -24,7 +24,10 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "amazon-cognito-passwordless-auth": path.resolve(__dirname, "../../client"),
-    }
-  }
+      "amazon-cognito-passwordless-auth": path.resolve(
+        __dirname,
+        "../../client"
+      ),
+    },
+  },
 });
