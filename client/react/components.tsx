@@ -20,7 +20,6 @@ import {
   useLocalUserCache,
 } from "./hooks.js";
 import { timeAgo } from "../util.js";
-import spinner from "../assets/spinner.gif";
 
 interface CustomBrand {
   backgroundImageUrl?: string;
@@ -119,10 +118,7 @@ export const Passwordless = ({
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">
-          <img
-            src={spinner as string}
-            className="passwordless-loading-spinner"
-          />
+          <div className="passwordless-loading-spinner" />
           <div>Checking your sign-in status...</div>
         </div>
       </FlexContainer>
@@ -133,10 +129,7 @@ export const Passwordless = ({
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">
-          <img
-            src={spinner as string}
-            className="passwordless-loading-spinner"
-          />
+          <div className="passwordless-loading-spinner" />
           <div>Checking the sign-in link...</div>
         </div>
       </FlexContainer>
@@ -147,10 +140,7 @@ export const Passwordless = ({
     return (
       <FlexContainer brand={brand}>
         <div className="passwordless-flex">
-          <img
-            src={spinner as string}
-            className="passwordless-loading-spinner"
-          />
+          <div className="passwordless-loading-spinner" />
           <div>Signing out, please wait...</div>
         </div>
       </FlexContainer>
@@ -407,28 +397,19 @@ export const Passwordless = ({
         )}
         {signingInStatus === "REQUESTING_SIGNIN_LINK" && (
           <>
-            <img
-              src={spinner as string}
-              className="passwordless-loading-spinner"
-            />
+            <div className="passwordless-loading-spinner" />
             <div>Starting sign-in...</div>
           </>
         )}
         {signingInStatus === "STARTING_SIGN_IN_WITH_FIDO2" && (
           <>
-            <img
-              src={spinner as string}
-              className="passwordless-loading-spinner"
-            />
+            <div className="passwordless-loading-spinner" />
             <div>Starting sign-in...</div>
           </>
         )}
         {signingInStatus === "COMPLETING_SIGN_IN_WITH_FIDO2" && (
           <>
-            <img
-              src={spinner as string}
-              className="passwordless-loading-spinner"
-            />
+            <div className="passwordless-loading-spinner" />
             <div>Completing your sign-in...</div>
           </>
         )}
