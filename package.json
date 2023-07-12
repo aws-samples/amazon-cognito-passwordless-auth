@@ -29,7 +29,7 @@
     "gen-types:client": "tsc --project client/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly",
     "gen-types": "npm run gen-types:cdk && npm run gen-types:client",
     "clear-d-ts": "find . -type d -name node_modules -prune -o -name '*.d.ts' -print | xargs rm",
-    "dist:client": "rm -rf dist/client && npm run gen-types:client && cd client && npx tsc --outdir ../dist/client && cp *.css ../dist/client && cp -r assets ../dist/client/assets && node ../dist-create-package.cjs client module",
+    "dist:client": "rm -rf dist/client && npm run gen-types:client && cd client && npx tsc --outdir ../dist/client && cp *.css ../dist/client && node ../dist-create-package.cjs client module",
     "dist:cdk": "rm -rf dist/cdk && npm run gen-types:cdk && (cd cdk/lib && npx tsc --outdir ../../dist/cdk/lib) && (cd cdk/custom-auth && npx tsc --outdir ../../dist/cdk/custom-auth) && node dist-create-package.cjs cdk/custom-auth module && node dist-create-package.cjs cdk/lib commonjs",
     "dist": "npm run dist:cdk && npm run dist:client",
     "prepack": "npm run dist"
