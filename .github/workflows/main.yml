@@ -15,10 +15,27 @@ jobs:
         with:
           node-version: "18"
       - name: install
+        run: npm install
+      - name: lint
+        run: npx eslint --ignore-pattern end-to-end-example .
+      - name: prettier
+        run: npx prettier -c .
+      - name: dist
+        run: npm run dist
+      - name: cdk usage smoke test
         run: |
-          npm install
-      - name: test-create-dist
+          cd end-to-end-example/cdk
+          npm run install-passwordless-local
+          echo 'CDK_STACK_SES_FROM_ADDRESS=no-reply@example.com' > .env.local
+          echo 'CDK_STACK_NAME=test' > .env.local
+          npx cdk synth
+      - name: client usage smoke test
         run: |
-          npx prettier -c .
-          npx eslint --ignore-pattern end-to-end-example .
-          npm run dist
+          cd end-to-end-example/client
+          npm run install-passwordless-local
+          echo 'VITE_COGNITO_IDP_ENDPOINT=eu-west-1' > .env.local
+          echo 'VITE_CLIENT_ID=testclientid' > .env.local
+          echo 'VITE_FIDO2_BASE_URL=https://example.org.fido2/' > .env.local
+          npm run build
+      - name: lint end-to-end-example
+        run: npx eslint end-to-end-example
