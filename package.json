@@ -25,8 +25,8 @@
   "main": "dist/client/index.js",
   "react-native": "dist/client/react/react-native.js",
   "scripts": {
-    "gen-types:cdk": "tsc --project cdk/lib/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly && mv ./cognito-passwordless.d.ts cdk.d.ts && tsc --project cdk/custom-auth/tsconfig.json --declarationDir ./custom-auth --declaration --emitDeclarationOnly",
-    "gen-types:client": "tsc --project client/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly",
+    "gen-types:cdk": "rm -rf custom-auth && tsc --project cdk/lib/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly && mv ./cognito-passwordless.d.ts cdk.d.ts && tsc --project cdk/custom-auth/tsconfig.json --declarationDir ./custom-auth --declaration --emitDeclarationOnly",
+    "gen-types:client": "rm -rf react && tsc --project client/tsconfig.json --declarationDir . --declaration --emitDeclarationOnly",
     "gen-types": "npm run gen-types:cdk && npm run gen-types:client",
     "clear-d-ts": "find . -type d -name node_modules -prune -o -name '*.d.ts' -print | xargs rm",
     "dist:client": "rm -rf dist/client && npm run gen-types:client && cd client && npx tsc --outdir ../dist/client && cp *.css ../dist/client && node ../dist-create-package.cjs client module",
@@ -117,7 +117,21 @@
     "dist",
     "react",
     "custom-auth",
-    "*.d.ts"
+    "cdk.d.ts",
+    "cognito-api.d.ts",
+    "common.d.ts",
+    "config.d.ts",
+    "fido2.d.ts",
+    "index.d.ts",
+    "jwt-model.d.ts",
+    "magic-link.d.ts",
+    "model.d.ts",
+    "plaintext.d.ts",
+    "refresh.d.ts",
+    "sms-otp-stepup.d.ts",
+    "srp.d.ts",
+    "storage.d.ts",
+    "util.d.ts"
   ],
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.290.0",
