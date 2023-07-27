@@ -78,6 +78,7 @@ function StepUpAuth() {
           <a
             href="https://github.com/aws-samples/amazon-cognito-passwordless-auth/blob/main/SMS-OTP-STEPUP.md#step-up-authentication-with-sms-one-time-password"
             target="_blank"
+            rel="noreferrer"
           >
             explanation of the step up procedure
           </a>
@@ -191,6 +192,7 @@ function StepUpAuth() {
               <a
                 href={`https://jwtinspector.kevhak.people.aws.dev/inspect#token=${stepUpAuthIdToken}&tab=payload`}
                 target="_blank"
+                rel="noreferrer"
               >
                 view
               </a>
