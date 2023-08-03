@@ -46,7 +46,16 @@ export class Passwordless extends Construct {
       userPoolProps?: Partial<cdk.aws_cognito.UserPoolProps>;
       /** If you don't provide an existing User Pool Client, one will be created for you. Pass any properties you want for it, these will be merged with properties from this solution */
       userPoolClientProps?: Partial<cdk.aws_cognito.UserPoolClientOptions>;
-      /** The origins (URLs) where you will be hosting your Web app on (required for FIDO2 and Magic Links) */
+      /**
+       * The origins where you will be hosting your Web app on: scheme, hostname, and optionally port.
+       * Do not include path as it will be ignored. The wildcard (*) is not supported.
+       *
+       * Example value: https://subdomain.example.org
+       *
+       * This property is required when using FIDO2 or Magic Links:
+       * - For FIDO2 it is validated that the clientData.origin matches one of the allowedOrigins. Also, allowedOrigins is used as CORS origin setting on the FIDO2 credentials API.
+       * - For Magic Links it is validated that the redirectUri (without path) in each Magic Link matches one of the allowedOrigins.
+       */
       allowedOrigins?: string[];
       /** Enable sign-in with FIDO2 by providing this config object */
       fido2?: {
