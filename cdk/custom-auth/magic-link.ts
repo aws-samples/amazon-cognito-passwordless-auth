@@ -52,7 +52,7 @@ let config = {
   /** The origins that are allowed to be used in the Magic Links */
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
-    .map((url) => url.href),
+    .map((url) => url.origin),
   /** The e-mail address that Magic Links will be sent from */
   sesFromAddress: process.env.SES_FROM_ADDRESS,
   /** The Amazon SES region */
@@ -119,7 +119,7 @@ export async function addChallengeToEvent(
   const redirectUri = event.request.clientMetadata?.redirectUri;
   if (
     !redirectUri ||
-    !requireConfig("allowedOrigins").includes(new URL(redirectUri).href)
+    !requireConfig("allowedOrigins").includes(new URL(redirectUri).origin)
   ) {
     throw new UserFacingError(`Invalid redirectUri: ${redirectUri}`);
   }

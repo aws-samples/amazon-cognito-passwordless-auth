@@ -41,7 +41,7 @@ let config = {
   dynamoDbAuthenticatorsTableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE,
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
-    .map((url) => url.href),
+    .map((url) => url.origin),
   allowedRelyingPartyIds: process.env.ALLOWED_RELYING_PARTY_IDS?.split(","),
   relyingPartyId: process.env.RELYING_PARTY_ID,
   userVerification: process.env
@@ -269,7 +269,7 @@ export async function verifyChallenge({
     );
   }
   if (
-    !requireConfig("allowedOrigins").includes(new URL(clientData.origin).href)
+    !requireConfig("allowedOrigins").includes(new URL(clientData.origin).origin)
   ) {
     throw new Error(`Invalid clientData origin: ${clientData.origin}`);
   }
