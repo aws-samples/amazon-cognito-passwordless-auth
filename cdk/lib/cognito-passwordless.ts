@@ -57,7 +57,9 @@ export class Passwordless extends Construct {
        * - For Magic Links it is validated that the redirectUri (without path) in each Magic Link matches one of the allowedOrigins.
        */
       allowedOrigins?: string[];
-      /** Enable sign-in with FIDO2 by providing this config object */
+      /**
+       * Enable sign-in with FIDO2 by providing this config object.
+       */
       fido2?: {
         relyingPartyName?: string;
         allowedRelyingPartyIds: string[];
@@ -76,7 +78,11 @@ export class Passwordless extends Construct {
          */
         enforceFido2IfAvailable?: boolean;
       };
-      /** Enable sign-in with Magic Links by providing this config object */
+      /**
+       * Enable sign-in with Magic Links by providing this config object
+       * Make sure you've moved out of the SES sandbox, otherwise you can only send few e-mails,
+       * and only from and to verified e-mail addresses: https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html
+       */
       magicLink?: {
         /** The e-mail address you want to use as the FROM address of the magic link e-mails */
         sesFromAddress: string;
@@ -89,7 +95,11 @@ export class Passwordless extends Construct {
         minimumSecondsBetween?: cdk.Duration;
         autoConfirmUsers?: boolean;
       };
-      /** Enable SMS OTP Step Up authentication by providing this config object */
+      /**
+       * Enable SMS OTP Step Up authentication by providing this config object.
+       * Make sure you've moved out of the SNS sandbox, otherwise you can only send few SMS messages,
+       * and only to verified phone numbers: https://docs.aws.amazon.com/sns/latest/dg/sns-sms-sandbox.html
+       */
       smsOtpStepUp?: {
         /** The nr of digits in the OTP. Default: 6 */
         otpLength?: number;

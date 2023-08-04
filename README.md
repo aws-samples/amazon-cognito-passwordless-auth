@@ -4,13 +4,15 @@ _**AWS Solution to implement Passwordless authenticaton with Amazon Cognito**_
 
 Passwordless authentication improves security, reduces friction and provides better user experience for end-users of customer facing applications. Amazon Cognito provides features to implement custom authentication flows, which can be used to expand authentication factors for your application. This solution demonstrates several patterns to support passwordless authentication and provides reference implementations for these methods:
 
-- **FIDO2**: aka **WebAuthn**, i.e. sign in with Face, Touch, YubiKey, etc. This includes support for **Passkeys**.
-- **Magic Link Sign In**: sign in with a one-time-use secret link that's emailed to you (and works across browsers).
-- **SMS based Step-Up auth**: let an already signed-in user verify their identity again with a SMS One-Time-Password (OTP) without requiring them to type in their password.
+- **FIDO2**: aka **WebAuthn**, i.e. sign in with Face, Touch, YubiKey, etc. This includes support for **Passkeys**. [FIDO2 - architecture and details](./FIDO2.md).
+- **Magic Link Sign In**: sign in with a one-time-use secret link that's emailed to you (and works across browsers). [Magic Links - architecture and details](./MAGIC-LINKS.md).
+- **SMS based Step-Up auth**: let an already signed-in user verify their identity again with a SMS One-Time-Password (OTP) without requiring them to type in their password. [SMS OTP Step up - architecture and details](./SMS-OTP-STEPUP.md).
 
 The reference implementation of each of these auth methods uses several AWS resources. This solution contains both **CDK** code (TypeScript) for the back-end, as well as front-end code (TypeScript) to use in **Web**, **React** and **React Native** to help developers understand the building blocks needed and expand/adjust the solution as necessary.
 
 **IMPORTANT**: This AWS Solution is for demonstration purposes and uses several AWS resources, it is intended for developers with moderate to advanced AWS knowledge. If you plan to use these methods in production, you need to review, adjust and extend the sample code as necessary for your requirements.
+
+<img src="./drawings/passwordless-signin.png" alt="Passwordless Sign In" width="500px" />
 
 ## Video Introduction
 
@@ -18,52 +20,11 @@ Here's a short (11m41s) video that explains and demonstrates the solution:
 
 [![Solution Intro on YouTube](https://img.youtube.com/vi/hY54Zy-l6hc/0.jpg)](https://www.youtube.com/watch?v=hY54Zy-l6hc)
 
-## Self-paced Workshop
-
-The self-paced workshop (expected duration: 60 min.) will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
-
-## FIDO2 / WebAuthn
-
-This solution includes components that implement FIDO2 authentication, i.e. sign with Face, Touch, YubiKey, etc. This includes support for Passkeys:
-
-![FIDO2 AWS Architecture](./drawings/fido2.png)
-
-Included sample React component, for adding/changing/deleting authenticators:
-
-<img src="./drawings/fido2-authenticators-screenshot.png" alt="FIDO2 credentials" width="500px" />
-
-For more details, see [FIDO2](./FIDO2.md)
-
-## Magic Link Sign In
-
-This solution includes components to support signing-in with a Magic Link:
-
-![Magic Link Architecture](./drawings/magic-link.png)
-
-Example e-mail:
-
-<img src="./drawings/magic-link-screenshot.png" alt="Magic Link example" width="300px" style="border: 2px solid lightgray;" />
-
-For more details, see [Magic Links](./MAGIC-LINKS.md)
-
-## SMS based Step-Up auth
-
-This solution includes components to support step-up auth, using SMS One-Time-Password (OTP):
-
-![SMS OTP Step Up AWS Architecture](./drawings/sms-otp-stepup.png)
-
-Example SMS:
-
-<img src="./drawings/sms-otp-stepup-screenshot.png" alt="SMS OTP code" width="300px" />
-
-For more details, see [SMS OTP Step up](./SMS-OTP-STEPUP.md)
-
 ## Table of Contents
 
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Basic Usage](#basic-usage)
-- [React](#react)
 - [Features](#features)
 - [Security](#security)
 - [Usage with AWS Amplify](#usage-with-aws-amplify)
@@ -108,13 +69,13 @@ npm install amazon-cognito-passwordless-auth
 
 ## Getting Started
 
-To play around with the solution, you can deploy the [end-to-end example](./end-to-end-example/) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2 (WebAuthn), and try SMS OTP Step Up authentication.
+Follow the **self-paced workshop** (duration: 60 minutes) to understand how to use this solution to implement sign-in with FIDO2 (WebAuthn) and Magic Links. The workshop will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
 
-For FIDO2 (WebAuthn) and Magic Links, the self-paced workshop (expected duration: 60 min.) provides a guided experience. It will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
+Alternatively, you can deploy the [end-to-end example](./end-to-end-example/) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2 (WebAuthn), and try SMS OTP Step Up authentication.
 
 ## Basic Usage
 
-First, deploy a CDK stack and instantiate the `Passwordless` construct:
+Create a CDK stack, instantiate the `Passwordless` CDK construct, and deploy. This will deploy all necessary AWS components, such as AWS Lambda triggers that implement custom authentication flows.
 
 ```typescript
 import * as cdk from "aws-cdk-lib";
@@ -126,6 +87,7 @@ class SampleTestStack extends cdk.Stack {
     super(scope, id, props);
 
     const passwordless = new Passwordless(this, "Passwordless", {
+      userPool: yourUserPool, // optional, if not provided an Amazon Cognito User Pool will be created for you
       allowedOrigins: [
         "http://localhost:5173", // Mention all URLs you're exposing the web app on
       ],
@@ -134,7 +96,7 @@ class SampleTestStack extends cdk.Stack {
       },
       fido2: {
         allowedRelyingPartyIds: [
-          "localhost", // Domain names that you wish to use as RP ID
+          "localhost", // Domain names that you wish to use as Relying Party ID
         ],
       },
       smsOtpStepUp: {}, // leave this out to disable SMS OTP Step Up Auth. Likewise for magicLink and fido2
@@ -150,105 +112,9 @@ class SampleTestStack extends cdk.Stack {
 }
 ```
 
-Then, in your web app's entrypoint (e.g. `main.tsx`):
+Then, with your CDK stack deployed, you're ready to wire up the frontend, see below for React, React Native and (plain) Web.
 
-```typescript
-import { Passwordless } from "amazon-cognito-passwordless-auth";
-
-Passwordless.configure({
-  cognitoIdpEndpoint:
-    "<AWS region where the CDK stack was deployed to, e.g. eu-west-1>",
-  clientId:
-    "<Cognito User Pool Client ID, one of the outputs of the CDK stack>",
-  fido2: {
-    baseUrl:
-      "<The base URL to the FIDO2 API, one of the outputs of the CDK stack>",
-  },
-  debug: console.debug, // Optional: adds logging
-});
-```
-
-Now you're ready to use the library! E.g. in your web app you can do:
-
-```typescript
-import {
-  authenticateWithFido2,
-  fido2CreateCredential,
-} from "amazon-cognito-passwordless-auth/fido2";
-
-// Register a new credential (e.g. Face ID / Touch) for use with this Relying Party
-const { credentialId } = await fido2CreateCredential({
-  friendlyName: "My iPhone",
-});
-
-// Initiate FIDO2 authentication
-const { signedIn, abort } = authenticateWithFido2({ username: "alice" });
-
-const { idToken, accessToken, refreshToken } = await signedIn;
-```
-
-## React
-
-For React we recommend you use the Passwordless hook for all your interactions with the library. E.g. the hook tracks the sign-in status (`signInStatus`) and gives easy access to the user's JWTs (`tokens`, `tokensParsed`).
-
-To use the React hook, first wrap your app with the Passwordless context provider in your app's entrypoint (e.g. `main.tsx`):
-
-```typescript
-import { PasswordlessContextProvider } from "amazon-cognito-passwordless-auth/react";
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <PasswordlessContextProvider>
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  </PasswordlessContextProvider>
-);
-```
-
-Then, inside your components, use the Passwordless hook:
-
-```typescript
-import { usePasswordless } from "amazon-cognito-passwordless-auth/react";
-
-function MyComponent() {
-  const { tokensParsed, authenticateWithFido2, signInStatus, lastError, busy } =
-    usePasswordless();
-
-  if (signInStatus === "NOT_SIGNED_IN" || signInStatus === "SIGNING_IN") {
-    return (
-      <>
-        <form
-          onSubmit={(event) => {
-            authenticateWithFido2({
-              username: event.currentTarget.username.value,
-            });
-            event.preventDefault();
-          }}
-        >
-          <input
-            type="text"
-            placeholder="username"
-            name="username"
-            disabled={busy}
-          />
-          <input type="submit" disabled={busy} />
-        </form>
-        {lastError && <p>{lastError.message}</p>}
-      </>
-    );
-  }
-
-  if (signInStatus !== "SIGNED_IN") {
-    return <p>One moment please ...</p>;
-  }
-
-  return <p>Welcome, {tokensParsed?.idToken["cognito:username"]}!</p>;
-}
-```
-
-This solution also includes sample React components, e.g. a prefab sample sign-in page. See examples and documentation here: [README-REACT.md](./client/react/README-REACT.md)
-
-## Features
+## Notable Features
 
 This library includes:
 

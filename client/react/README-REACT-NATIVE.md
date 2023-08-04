@@ -1,6 +1,15 @@
-# Cognito Passwordless React Native Client
+# Amazon Cognito Passwordless Auth - React Native client
 
-Client to use this library in React Native Applications
+> **_NOTE:_** This page describes the React Native specific features of this library. You can of course also use the [generic JavaScript](../README.md) features in React Native, but note that imports must be done differently in React Native: see [Usage](#5.-usage).
+
+Upon deploying the backend (with the `Passwordless` CDK construct), custom authentication flows are added to your Amazon Cognito User Pool, and your front-end will need to initiate and "dance" along in the Passwordless choreography to sign users in. This library provides a hook to make that easy in React Native: the `usePasswordless` provides all functionality to sign-in with FIDO2 or SMS Step Up Auth (and passwords too should you want it).
+
+For React Native this library does not include prebuilt UI components, so you have to build your own sign-in page. It should be relatively easy to do that as the `usePasswordless` hook will do the heavy lifting for you. This is the same hook that is also available in React: refer to the [React docs](./README-REACT.md) to understand how to use the `usePasswordless` hook.
+
+Note that in React Native, these sign-in method are not (yet) available:
+
+- Magic Links
+- Username password auth with Secure Remote Password (SRP). Only username password auth with plaintext password is supported on React Native.
 
 ### Table of Contents
 
@@ -86,32 +95,37 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   PasswordlessContextProvider,
   Passwordless,
-} from "amazon-cognito-passwordless-auth";
+} from "amazon-cognito-passwordless-auth"; // In React Native: import from top-level module
 
 function App() {
   Passwordless.configure({
-    cognitoIdpEndpoint: "<URL_TO_YOUR_COGNITO_PROXY_API>",
-    clientId: "<COGNITO_CLIENT_ID>",
-    userPoolId: "<COGNITO_USER_POOL_ID>",
+    cognitoIdpEndpoint: "eu-west-1", // you can also use the full endpoint URL, potentially to use a proxy
+    clientId: "<client id>",
+    // optional, only required if you want to use FIDO2:
     fido2: {
-      baseUrl: "<URL_TO_YOUR_FIDO2_API>",
-      userVerification: "required",
+      baseUrl: "<fido2 base url>",
+      // optional, allows you to set WebAuthn options:
+      authenticatorSelection: {
+        userVerification: "required",
+      },
     },
+    userPoolId: "<user pool id>", // optional, only required if you want to use USER_SRP_AUTH
+    // optional, additional headers that will be sent with each request to Cognito:
+    proxyApiHeaders: {
+      "<header 1>": "<value 1>",
+      "<header 2>": "<value 2>",
+    },
+    storage: AsyncStorage, // Need to set this for React Native, as the default (localStorage) will not work
+    // Need to set these for React Native:
     native: {
       passkeyDomain: "<ASSOCIATED_PASSKEY_DOMAIN>",
       passkeyAppName: "<YOUR_APPS_NAME>",
     },
-    storage: AsyncStorage,
-    /* BELOW PARAMETERS ARE OPTIONAL */
-    proxyApiHeaders: {
-      "<YOUR_HEADER_KEY_1>": "<YOUR_HEADER_VALUE_1>",
-      "<YOUR_HEADER_KEY_2>": "<YOUR_HEADER_VALUE_2>",
-    }, // Default to empty object
   });
-  // Your original App
+  // Your original App here
 }
 
-export default function AppWrapper() {
+export default function AppWrapped() {
   return (
     <PasswordlessContextProvider>
       <App />
@@ -120,15 +134,13 @@ export default function AppWrapper() {
 }
 ```
 
-##### SignUp and LogIn
-
-The first step to be able to generate and setup passkeys credentials is to Sign up and Log in to your Cognito User Pool
+Then, in your components, use the `usePasswordless` hook:
 
 ```javascript
 import {
   signUp,
   usePasswordless,
-} from 'amazon-cognito-passwordless-auth';
+} from 'amazon-cognito-passwordless-auth'; // In React Native: import from top-level module
 
 export default function YourComponent() {
   const {
@@ -165,50 +177,4 @@ export default function YourComponent() {
 }
 ```
 
-The library automatically saves the state (ie: idToken, accessToken and others) inside your AsyncStorage so that now you can use the rest of the methods and it will remember the logged user and will perform all requests against it.
-
-To access to them, use the `usePasswordless()` hook as follows:
-
-```javascript
-const { tokensParsed } = usePasswordless();
-```
-
-##### Create FIDO2 Credential
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#create-fido2-credential)
-
-#### LogIn with your FIDO2 Credential
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#login-with-your-fido2-credential)
-
-#### SignOut
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#signout)
-
-#### Refresh user data (aka: tokensParsed)
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#refresh-user-data-aka-tokensparsed)
-
-#### List FIDO2 Credentials
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#list-fido2-credentials)
-
-#### Delete FIDO2 Credential
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#delete-fido2-credential)
-
-#### Update Cognito User Attributes
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#update-cognito-user-attributes)
-
-#### Send the user attribute verification code
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#send-the-user-attribute-verification-code)
-
-#### Verify Cognito User Attribute
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#verify-cognito-user-attribute)
-
-#### Helpers
-
-[Please refer to the common ReactJS usage](./README-REACT.md/#helpers)
+Refer to the [React docs](./README-REACT.md) for further explanations on the `usePasswordless` hook.
