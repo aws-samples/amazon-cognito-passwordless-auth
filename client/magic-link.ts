@@ -68,7 +68,8 @@ export const requestSignInLink = ({
         },
         clientMetadata: {
           signInMethod: "MAGIC_LINK",
-          redirectUri: redirectUri || currentBrowserLocationWithoutFragmentIdentifier(),
+          redirectUri:
+            redirectUri || currentBrowserLocationWithoutFragmentIdentifier(),
           alreadyHaveMagicLink: "no",
         },
         session: res.Session,

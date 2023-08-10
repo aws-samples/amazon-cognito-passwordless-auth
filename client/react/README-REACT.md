@@ -294,8 +294,8 @@ export default function YourComponent() {
       // automatically (if you've loaded this library), and sign the user in
       // supply an optional redirectUri as the second argument to specify where
       // in your application you'd like the user to be directed to after signing in.
-      const username = event.currentTarget.username.value
-      const redirectUri = "https://example.com/article/45"
+      const username = event.currentTarget.username.value;
+      const redirectUri = "https://example.com/article/45";
       requestSignInLink(username, redirectUri);
       event.preventDefault();
     }}
