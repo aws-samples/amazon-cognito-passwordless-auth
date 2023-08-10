@@ -449,7 +449,7 @@ function _usePasswordless() {
     requestSignInLink: (username: string) => {
       setLastError(undefined);
       const requesting = requestSignInLink({
-        usernameOrAlias: username,
+        username: username,
         statusCb: setSigninInStatus,
         currentStatus: signingInStatus,
       });
