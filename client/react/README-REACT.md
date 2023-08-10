@@ -291,12 +291,13 @@ export default function YourComponent() {
     onSubmit={(event) => {
       // Request a magic link to be e-mailed to the user.
       // When the user clicks on the link, your web app will open and parse the link
-      // automatically (if you've loaded this library), and sign the user in
-      // supply an optional redirectUri as the second argument to specify where
+      // automatically (if you've loaded this library), and sign the user in.
+      // Supply an optional redirectUri as the second argument to specify where
       // in your application you'd like the user to be directed to after signing in.
-      const username = event.currentTarget.username.value;
-      const redirectUri = "https://example.com/article/45";
-      requestSignInLink(username, redirectUri);
+      requestSignInLink({
+        username: event.currentTarget.username.value,
+        redirectUri: "https://example.com/article/45",
+      });
       event.preventDefault();
     }}
   >

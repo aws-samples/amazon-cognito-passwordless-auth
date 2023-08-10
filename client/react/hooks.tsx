@@ -446,7 +446,13 @@ function _usePasswordless() {
       return signingOut;
     },
     /** Request a sign-in link ("magic link") to be sent to the user's e-mail address */
-    requestSignInLink: (username: string, redirectUri?: string) => {
+    requestSignInLink: ({
+      username,
+      redirectUri,
+    }: {
+      username: string;
+      redirectUri?: string;
+    }) => {
       setLastError(undefined);
       const requesting = requestSignInLink({
         usernameOrAlias: username,
