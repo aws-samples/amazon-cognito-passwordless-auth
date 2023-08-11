@@ -93,7 +93,7 @@ export const Passwordless = ({
   }, [lastSignedInUsers]);
 
   function signInWithMagicLinkOrFido2(username: string) {
-    requestSignInLink(username).signInLinkRequested.catch((err) => {
+    requestSignInLink({ username }).signInLinkRequested.catch((err) => {
       if (
         err instanceof Error &&
         err.message.toLowerCase().includes("you must sign-in with fido2")
@@ -257,7 +257,7 @@ export const Passwordless = ({
                 className={`passwordless-button passwordless-button-sign-in ${
                   useFido === "YES" ? "passwordless-button-outlined" : ""
                 }`}
-                onClick={() => !busy && requestSignInLink(email)}
+                onClick={() => !busy && requestSignInLink({ username: email })}
                 disabled={busy}
               >
                 <div className="passwordless-flex">

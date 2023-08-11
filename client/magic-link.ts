@@ -32,10 +32,12 @@ import { CognitoIdTokenPayload } from "./jwt-model.js";
 
 export const requestSignInLink = ({
   usernameOrAlias,
+  redirectUri,
   currentStatus,
   statusCb,
 }: {
   usernameOrAlias: string;
+  redirectUri?: string;
   currentStatus?: BusyState | IdleState;
   statusCb?: (status: BusyState | IdleState) => void;
 }) => {
@@ -66,7 +68,8 @@ export const requestSignInLink = ({
         },
         clientMetadata: {
           signInMethod: "MAGIC_LINK",
-          redirectUri: currentBrowserLocationWithoutFragmentIdentifier(),
+          redirectUri:
+            redirectUri || currentBrowserLocationWithoutFragmentIdentifier(),
           alreadyHaveMagicLink: "no",
         },
         session: res.Session,
