@@ -535,7 +535,7 @@ export async function handleAuthResponse({
 }: {
   authResponse: ChallengeResponse | AuthenticatedResponse;
   /**
-   * Username, or alias (e-mail, phone number)
+   * Username (not alias)
    */
   username: string;
   smsMfaCode?: () => Promise<string>;

@@ -81,7 +81,7 @@ export async function fido2CreateCredential({
   friendlyName,
 }: {
   /**
-   * Username, or alias (e-mail, phone number)
+   * Display name for the user
    */
   username: string;
   friendlyName: string;
@@ -110,7 +110,7 @@ export async function fido2GetCredential({
 }: {
   challenge: string;
   /**
-   * Username, or alias (e-mail, phone number)
+   * Display name for the user
    */
   username: string;
 }) {
