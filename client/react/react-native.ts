@@ -77,7 +77,7 @@ export const toBase64String = (base64Url: string) =>
   base64Url.replace(/-/g, "+").replace(/_/g, "/") + "==";
 
 export async function fido2CreateCredential({
-  username = "Anonymous",
+  username,
   friendlyName,
 }: {
   /**
@@ -106,7 +106,7 @@ export async function fido2CreateCredential({
 
 export async function fido2GetCredential({
   challenge,
-  username = "Anonymous",
+  username,
 }: {
   challenge: string;
   /**
