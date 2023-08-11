@@ -36,6 +36,9 @@ export const requestSignInLink = ({
   currentStatus,
   statusCb,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   redirectUri?: string;
   currentStatus?: BusyState | IdleState;
@@ -175,6 +178,9 @@ async function authenticateWithSignInLink({
   session,
   abort,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   fragmentIdentifier: string;
   currentStatus?: BusyState | IdleState;

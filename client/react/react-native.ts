@@ -80,6 +80,9 @@ export async function fido2CreateCredential({
   username = "Anonymous",
   friendlyName,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   friendlyName: string;
 }) {
@@ -106,6 +109,9 @@ export async function fido2GetCredential({
   username = "Anonymous",
 }: {
   challenge: string;
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
 }) {
   const config = configure();
@@ -121,7 +127,14 @@ export async function fido2GetCredential({
   };
 }
 
-export async function loginWithFido2({ username }: { username: string }) {
+export async function loginWithFido2({
+  username,
+}: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
+  username: string;
+}) {
   const response = authenticateWithFido2({
     username,
     credentialGetter: ({ challenge }: { challenge: string }) => {

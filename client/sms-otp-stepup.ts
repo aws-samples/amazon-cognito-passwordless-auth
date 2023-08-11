@@ -34,6 +34,9 @@ export function stepUpAuthenticationWithSmsOtp({
   currentStatus,
   clientMetadata,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   smsMfaCode: (phoneNumber: string, attempt: number) => Promise<string>;
   tokensCb?: (tokens: TokensFromSignIn) => void | Promise<void>;
