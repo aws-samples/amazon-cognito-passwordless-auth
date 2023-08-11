@@ -77,9 +77,12 @@ export const toBase64String = (base64Url: string) =>
   base64Url.replace(/-/g, "+").replace(/_/g, "/") + "==";
 
 export async function fido2CreateCredential({
-  username = "Anonymous",
+  username,
   friendlyName,
 }: {
+  /**
+   * Display name for the user
+   */
   username: string;
   friendlyName: string;
 }) {
@@ -103,9 +106,12 @@ export async function fido2CreateCredential({
 
 export async function fido2GetCredential({
   challenge,
-  username = "Anonymous",
+  username,
 }: {
   challenge: string;
+  /**
+   * Display name for the user
+   */
   username: string;
 }) {
   const config = configure();
@@ -121,7 +127,14 @@ export async function fido2GetCredential({
   };
 }
 
-export async function loginWithFido2({ username }: { username: string }) {
+export async function loginWithFido2({
+  username,
+}: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
+  username: string;
+}) {
   const response = authenticateWithFido2({
     username,
     credentialGetter: ({ challenge }: { challenge: string }) => {

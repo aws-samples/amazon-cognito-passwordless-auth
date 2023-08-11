@@ -455,7 +455,7 @@ function _usePasswordless() {
     }) => {
       setLastError(undefined);
       const requesting = requestSignInLink({
-        usernameOrAlias: username,
+        username,
         redirectUri,
         statusCb: setSigninInStatus,
         currentStatus: signingInStatus,
@@ -469,6 +469,9 @@ function _usePasswordless() {
       credentials,
       clientMetadata,
     }: {
+      /**
+       * Username, or alias (e-mail, phone number)
+       */
       username: string;
       credentials?: { id: string; transports?: AuthenticatorTransport[] }[];
       clientMetadata?: Record<string, string>;
@@ -491,6 +494,9 @@ function _usePasswordless() {
       smsMfaCode,
       clientMetadata,
     }: {
+      /**
+       * Username, or alias (e-mail, phone number)
+       */
       username: string;
       password: string;
       smsMfaCode?: () => Promise<string>;
@@ -515,6 +521,9 @@ function _usePasswordless() {
       smsMfaCode,
       clientMetadata,
     }: {
+      /**
+       * Username, or alias (e-mail, phone number)
+       */
       username: string;
       password: string;
       smsMfaCode?: () => Promise<string>;
@@ -538,6 +547,9 @@ function _usePasswordless() {
       smsMfaCode,
       clientMetadata,
     }: {
+      /**
+       * Username, or alias (e-mail, phone number)
+       */
       username: string;
       smsMfaCode: (phoneNumber: string, attempt: number) => Promise<string>;
       clientMetadata?: Record<string, string>;

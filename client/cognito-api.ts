@@ -339,6 +339,9 @@ export async function signUp({
   validationData,
   abort,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   password: string;
   userAttributes?: { name: string; value: string }[];
@@ -531,6 +534,9 @@ export async function handleAuthResponse({
   abort,
 }: {
   authResponse: ChallengeResponse | AuthenticatedResponse;
+  /**
+   * Username (not alias)
+   */
   username: string;
   smsMfaCode?: () => Promise<string>;
   newPassword?: () => Promise<string>;

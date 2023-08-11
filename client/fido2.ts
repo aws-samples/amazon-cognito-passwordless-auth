@@ -455,6 +455,9 @@ export function authenticateWithFido2({
   clientMetadata,
   credentialGetter = fido2getCredential,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   credentials?: { id: string; transports?: AuthenticatorTransport[] }[];
   tokensCb?: (tokens: TokensFromSignIn) => void | Promise<void>;

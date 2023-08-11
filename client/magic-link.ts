@@ -31,12 +31,15 @@ import { configure } from "./config.js";
 import { CognitoIdTokenPayload } from "./jwt-model.js";
 
 export const requestSignInLink = ({
-  usernameOrAlias,
+  username,
   redirectUri,
   currentStatus,
   statusCb,
 }: {
-  usernameOrAlias: string;
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
+  username: string;
   redirectUri?: string;
   currentStatus?: BusyState | IdleState;
   statusCb?: (status: BusyState | IdleState) => void;
@@ -54,17 +57,17 @@ export const requestSignInLink = ({
       let res = await initiateAuth({
         authflow: "CUSTOM_AUTH",
         authParameters: {
-          USERNAME: usernameOrAlias,
+          USERNAME: username,
         },
         abort: abort.signal,
       });
       assertIsChallengeResponse(res);
-      const username = res.ChallengeParameters.USERNAME;
+      username = res.ChallengeParameters.USERNAME; // switch to non-alias if necessary
       res = await respondToAuthChallenge({
         challengeName: "CUSTOM_CHALLENGE",
         challengeResponses: {
           ANSWER: "__dummy__",
-          USERNAME: usernameOrAlias,
+          USERNAME: username,
         },
         clientMetadata: {
           signInMethod: "MAGIC_LINK",
@@ -168,14 +171,17 @@ function assertIsMessage(
 }
 
 async function authenticateWithSignInLink({
-  usernameOrAlias,
+  username,
   fragmentIdentifier,
   currentStatus,
   clientMetadata,
   session,
   abort,
 }: {
-  usernameOrAlias: string;
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
+  username: string;
   fragmentIdentifier: string;
   currentStatus?: BusyState | IdleState;
   clientMetadata?: Record<string, string>;
@@ -189,18 +195,15 @@ async function authenticateWithSignInLink({
     );
   }
   session ??=
-    (await storage.getItem(
-      `Passwordless.${clientId}.${usernameOrAlias}.session`
-    )) ?? undefined;
-  await storage.removeItem(
-    `Passwordless.${clientId}.${usernameOrAlias}.session`
-  );
+    (await storage.getItem(`Passwordless.${clientId}.${username}.session`)) ??
+    undefined;
+  await storage.removeItem(`Passwordless.${clientId}.${username}.session`);
   if (!session) {
     debug?.(`Invoking initiateAuth ...`);
     const initAuthResponse = await initiateAuth({
       authflow: "CUSTOM_AUTH",
       authParameters: {
-        USERNAME: usernameOrAlias,
+        USERNAME: username,
       },
       abort,
     });
@@ -215,7 +218,7 @@ async function authenticateWithSignInLink({
     challengeName: "CUSTOM_CHALLENGE",
     challengeResponses: {
       ANSWER: fragmentIdentifier,
-      USERNAME: usernameOrAlias,
+      USERNAME: username,
     },
     clientMetadata: {
       ...clientMetadata,
@@ -262,7 +265,7 @@ export const signInWithLink = (props?: {
     statusCb?.("SIGNING_IN_WITH_LINK");
     try {
       const tokens = await authenticateWithSignInLink({
-        usernameOrAlias: params.username,
+        username: params.username,
         fragmentIdentifier: params.fragmentIdentifier,
         session: props?.session,
         abort: abort.signal,

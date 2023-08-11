@@ -265,6 +265,9 @@ export function authenticateWithSRP({
   statusCb,
   clientMetadata,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   password: string;
   smsMfaCode?: () => Promise<string>;

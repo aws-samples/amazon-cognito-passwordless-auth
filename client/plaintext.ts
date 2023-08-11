@@ -26,6 +26,9 @@ export function authenticateWithPlaintextPassword({
   statusCb,
   clientMetadata,
 }: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
   username: string;
   password: string;
   smsMfaCode?: () => Promise<string>;
