@@ -219,15 +219,16 @@ async function authenticateWithSignInLink({
     ) {
       debug?.("Invalid session for the user, starting fresh one");
       session = await startSession({ username, abort });
-      await continueSession({
+      authResult = await continueSession({
         username,
         fragmentIdentifier,
         clientMetadata,
         session,
         abort,
       });
+    } else {
+      throw err;
     }
-    throw err;
   }
   assertIsAuthenticatedResponse(authResult);
   debug?.(`Response from respondToAuthChallenge:`, authResult);
