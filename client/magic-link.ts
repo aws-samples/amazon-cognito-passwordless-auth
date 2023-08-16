@@ -199,36 +199,37 @@ async function authenticateWithSignInLink({
     undefined;
   await storage.removeItem(`Passwordless.${clientId}.${username}.session`);
   if (!session) {
-    debug?.(`Invoking initiateAuth ...`);
-    const initAuthResponse = await initiateAuth({
-      authflow: "CUSTOM_AUTH",
-      authParameters: {
-        USERNAME: username,
-      },
-      abort,
-    });
-    assertIsChallengeResponse(initAuthResponse);
-    debug?.(`Response from initiateAuth:`, initAuthResponse);
-    session = initAuthResponse.Session;
+    session = await startSession({ username, abort });
   } else {
     debug?.(`Continuing authentication using session: ${session}`);
   }
-  debug?.(`Invoking respondToAuthChallenge ...`);
-  const authResult = await respondToAuthChallenge({
-    challengeName: "CUSTOM_CHALLENGE",
-    challengeResponses: {
-      ANSWER: fragmentIdentifier,
-      USERNAME: username,
-    },
-    clientMetadata: {
-      ...clientMetadata,
-      signInMethod: "MAGIC_LINK",
-      redirectUri: currentBrowserLocationWithoutFragmentIdentifier(),
-      alreadyHaveMagicLink: "yes",
-    },
-    session: session,
-    abort,
-  });
+  let authResult: Awaited<ReturnType<typeof respondToAuthChallenge>>;
+  try {
+    authResult = await continueSession({
+      username,
+      fragmentIdentifier,
+      clientMetadata,
+      session,
+      abort,
+    });
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message.startsWith("Invalid session for the user")
+    ) {
+      debug?.("Invalid session for the user, starting fresh one");
+      session = await startSession({ username, abort });
+      authResult = await continueSession({
+        username,
+        fragmentIdentifier,
+        clientMetadata,
+        session,
+        abort,
+      });
+    } else {
+      throw err;
+    }
+  }
   assertIsAuthenticatedResponse(authResult);
   debug?.(`Response from respondToAuthChallenge:`, authResult);
   return {
@@ -242,6 +243,59 @@ async function authenticateWithSignInLink({
       authResult.AuthenticationResult.IdToken
     )["cognito:username"],
   };
+}
+
+async function startSession({
+  username,
+  abort,
+}: {
+  username: string;
+  abort?: AbortSignal;
+}) {
+  const { debug } = configure();
+  debug?.(`Invoking initiateAuth ...`);
+  const initAuthResponse = await initiateAuth({
+    authflow: "CUSTOM_AUTH",
+    authParameters: {
+      USERNAME: username,
+    },
+    abort,
+  });
+  assertIsChallengeResponse(initAuthResponse);
+  debug?.(`Response from initiateAuth:`, initAuthResponse);
+  return initAuthResponse.Session;
+}
+
+async function continueSession({
+  username,
+  fragmentIdentifier,
+  clientMetadata,
+  session,
+  abort,
+}: {
+  username: string;
+  fragmentIdentifier: string;
+  clientMetadata?: Record<string, string>;
+  session: Session;
+  abort?: AbortSignal;
+}) {
+  const { debug } = configure();
+  debug?.(`Invoking respondToAuthChallenge ...`);
+  return respondToAuthChallenge({
+    challengeName: "CUSTOM_CHALLENGE",
+    challengeResponses: {
+      ANSWER: fragmentIdentifier,
+      USERNAME: username,
+    },
+    clientMetadata: {
+      ...clientMetadata,
+      signInMethod: "MAGIC_LINK",
+      redirectUri: currentBrowserLocationWithoutFragmentIdentifier(),
+      alreadyHaveMagicLink: "yes",
+    },
+    session,
+    abort,
+  });
 }
 
 export const signInWithLink = (props?: {
