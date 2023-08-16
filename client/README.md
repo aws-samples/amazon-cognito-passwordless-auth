@@ -2,6 +2,34 @@
 
 > **_Oops:_** These docs are pretty incomplete and don't explain how to sign in yet :( For now, the best we have are some useful comments in this issue: https://github.com/aws-samples/amazon-cognito-passwordless-auth/issues/1
 
+### Configuration
+
+To use the library, you need to first configure it:
+
+```javascript
+import { Passwordless } from "amazon-cognito-passwordless-auth/react";
+
+Passwordless.configure({
+  cognitoIdpEndpoint: "eu-west-1", // you can also use the full endpoint URL, potentially to use a proxy
+  clientId: "<client id>",
+  // optional, only required if you want to use FIDO2:
+  fido2: {
+    baseUrl: "<fido2 base url>",
+    // optional, allows you to set WebAuthn options:
+    authenticatorSelection: {
+      userVerification: "required",
+    },
+  },
+  userPoolId: "<user pool id>", // optional, only required if you want to use USER_SRP_AUTH
+  // optional, additional headers that will be sent with each request to Cognito:
+  proxyApiHeaders: {
+    "<header 1>": "<value 1>",
+    "<header 2>": "<value 2>",
+  },
+  storage: window.localStorage, // Optional, default to localStorage
+});
+```
+
 ### Sign Up
 
 If your User Pool is enabled for self sign-up, users can sign up like so:

@@ -44,10 +44,6 @@ class End2EndExampleStack extends cdk.Stack {
       },
       userPoolProps: {
         removalPolicy: cdk.RemovalPolicy.DESTROY,
-        signInAliases: {
-          email: true,
-        },
-        enableSmsRole: true,
       },
       fido2: {
         authenticatorsTableProps: {
@@ -64,10 +60,18 @@ class End2EndExampleStack extends cdk.Stack {
       },
       smsOtpStepUp: {},
       userPoolClientProps: {
+        // perrty short so you see token refreshes in action often:
         idTokenValidity: cdk.Duration.minutes(5),
         accessTokenValidity: cdk.Duration.minutes(5),
         refreshTokenValidity: cdk.Duration.hours(1),
+        // while testing/experimenting it's best to set this to false,
+        // so that when you try to sign in with a user that doesn't exist,
+        // Cognito will tell you that––and you don't wait for a magic link
+        // that will never arrive in your inbox:
+        preventUserExistenceErrors: false,
       },
+      // while testing/experimenting it's heplful to see e.g. full request details in logs:
+      logLevel: "DEBUG",
     });
 
     new cdk.CfnOutput(this, "UserPoolId", {
@@ -161,19 +165,6 @@ NagSuppressions.addResourceSuppressions(
     {
       id: "AwsSolutions-APIG1",
       reason: "Access logging is enabled using override, invisible to CDK Nag",
-    },
-  ],
-  true
-);
-NagSuppressions.addResourceSuppressionsByPath(
-  stack,
-  "/" + stackName + "/UserPoolPasswordless/smsRole/Resource",
-  [
-    {
-      id: "AwsSolutions-IAM5",
-      reason:
-        "SMS role is automatically created by CDK and requires sns:publish to any phone number",
-      appliesTo: ["Resource::*"],
     },
   ],
   true
