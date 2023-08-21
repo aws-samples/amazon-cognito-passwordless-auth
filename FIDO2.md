@@ -10,6 +10,10 @@ This solution includes components that implement FIDO2 authentication, i.e. sign
 
 <img src="./drawings/fido2-authenticators-screenshot.png" alt="FIDO2 credentials" width="500px" />
 
+## Customizing Auth - e.g. to use custom FIDO2 challenges
+
+If you want to do customization of this solution that goes beyond the parameters of the `Passwordless` construct, e.g. to use custom FIDO2 challenges, see [CUSTOMIZE-AUTH.md](./CUSTOMIZE-AUTH.md)
+
 ## FIDO2 Browser Support
 
 FIDO2 (/WebAuthn) is still a relatively new standard and not all browsers support it to the fullest yet. Currently, we recommend to use Chrome, as it best supports FIDO2 in our experience.

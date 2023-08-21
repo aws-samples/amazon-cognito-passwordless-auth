@@ -23,13 +23,21 @@ import { SimpleJwksCache } from "aws-jwt-verify/jwk";
 import { logger, UserFacingError } from "./common.js";
 
 let config = {
+  /** Should SMS OTP step-up sign-in be enabled? If set to false, clients cannot sign-in with SMS OTP step-up (an error is shown instead when they request a OTP sms) */
   smsOtpStepUpEnabled: !!process.env.SMS_OTP_STEP_UP_ENABLED,
+  /** The length of the OTP */
   secretCodeLength: process.env.OTP_LENGTH ? Number(process.env.OTP_LENGTH) : 6,
+  /** Amazon SNS origination number to use for sending SMS messages */
   originationNumber: process.env.ORIGINATION_NUMBER || undefined,
+  /** Amazon SNS sender ID to use for sending SMS messages */
   senderId: process.env.SENDER_ID || undefined,
+  /** The Amazon SNS region, override e.g. to set a region where you are out of the SES sandbox */
   snsRegion: process.env.SNS_REGION || process.env.AWS_REGION,
+  /** Function to mask the phone nr that will be visible in the public challenge parameters */
   phoneNrMasker: maskPhoneNumber,
+  /** Function to create the content of the OTP sms-es, override to e.g. use a custom sms template */
   contentCreator: createSmsContent,
+  /** The function to verify JWTs with, override to e.g. verify custom claims */
   jwtVerifier: verifyJwt,
 };
 
