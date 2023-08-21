@@ -244,6 +244,7 @@ export class Passwordless extends Construct {
         USER_VERIFICATION: props.fido2.userVerification ?? "required",
         EXPOSE_USER_CREDENTIAL_IDS:
           props.fido2.exposeUserCredentialIDs === false ? "" : "TRUE",
+        STACK_ID: cdk.Stack.of(scope).stackId,
       });
     }
     if (props.smsOtpStepUp) {
@@ -361,6 +362,7 @@ export class Passwordless extends Construct {
           ? "TRUE"
           : "",
         USER_VERIFICATION: props.fido2.userVerification ?? "required",
+        STACK_ID: cdk.Stack.of(scope).stackId,
       });
     }
     if (props.smsOtpStepUp) {
