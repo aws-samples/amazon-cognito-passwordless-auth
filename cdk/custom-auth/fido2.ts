@@ -37,19 +37,30 @@ interface StoredCredential {
 }
 
 let config = {
+  /** Should FIDO2 sign-in be enabled? If set to false, clients cannot sign-in with FIDO2 (a FIDO2 challenge to sign is not sent to them) */
   fido2enabled: !!process.env.FIDO2_ENABLED,
+  /** The DynamoDB table with FIDO2 credentials */
   dynamoDbAuthenticatorsTableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE,
+  /** The set of allowed origins thay may initiate FIDO2 sign-in */
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
     .map((url) => url.origin),
+  /** The set of Relying Party IDs thay may initiate FIDO2 sign-in */
   allowedRelyingPartyIds: process.env.ALLOWED_RELYING_PARTY_IDS?.split(","),
+  /** The Relying Party ID to use (optional, if not set user agents will use the current domain) */
   relyingPartyId: process.env.RELYING_PARTY_ID,
+  /** The WebAuthn user verification requirement to enforce ("discouraged" | "preferred" | "required") */
   userVerification: process.env
     .USER_VERIFICATION as UserVerificationRequirement,
+  /** Expose credential IDs to users signing in? If you want users to use non-discoverable credentials you should set this to true */
   exposeUserCredentialIds: !!process.env.EXPOSE_USER_CREDENTIAL_IDS,
+  /** Function to generate FIDO2 challenges that user's authenticators must sign. Override to e.g. implement transaction signing */
   challengeGenerator: () => randomBytes(64).toString("base64url"),
+  /** Timeout for the sign-in attempt (per WebAuthn standard) */
   timeout: 120000, // 2 minutes,
+  /** Should users having a registered FIDO2 credential be forced to use that for signing in? If true, other custom auth flows, such as Magic Link sign-in, will be denied for users having FIDO2 credentials––to protect them from phishing */
   enforceFido2IfAvailable: !!process.env.ENFORCE_FIDO2_IF_AVAILABLE,
+  /** Salt to use for storing hashed FIDO2 credential data */
   salt: process.env.STACK_ID,
 };
 

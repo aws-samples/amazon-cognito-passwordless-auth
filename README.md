@@ -31,6 +31,7 @@ Here's a short (11m41s) video that explains and demonstrates the solution:
 - [Usage in (plain) Web](#usage-in-plain-web)
 - [Usage in React](#usage-in-react)
 - [Usage in React Native](#usage-in-react-native)
+- [Customizing Auth](#customizing-auth)
 - [FAQ - Frequently Asked Questions](#faq---frequently-asked-questions)
 - [License](#license)
 
@@ -217,6 +218,10 @@ See [README-REACT.md](./client/react/README-REACT.md)
 ## Usage in React Native
 
 See [README-REACT-NATIVE.md](./client/react/README-REACT-NATIVE.md)
+
+## Customizing Auth
+
+If you want to do customization of this solution that goes beyond the parameters of the `Passwordless` construct, e.g. to use your own e-mail content for magic links, see [CUSTOMIZE-AUTH.md](./CUSTOMIZE-AUTH.md)
 
 ## FAQ - Frequently Asked Questions
 

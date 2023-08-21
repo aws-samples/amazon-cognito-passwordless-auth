@@ -9,6 +9,10 @@ This solution includes components to support signing-in with a Magic Link:
 
 <img src="./drawings/magic-link-screenshot.png" alt="Magic Link example" width="300px" style="border: 2px solid lightgray;" />
 
+## Customizing Auth - e.g. to use your own e-mail template
+
+If you want to do customization of this solution that goes beyond the parameters of the `Passwordless` construct, e.g. to use your own e-mail content for magic links, see [CUSTOMIZE-AUTH.md](./CUSTOMIZE-AUTH.md)
+
 ## AWS Architecture
 
 ![Magic Link Architecture](./drawings/magic-link.png)

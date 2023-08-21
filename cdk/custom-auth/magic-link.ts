@@ -55,7 +55,7 @@ let config = {
     .map((url) => url.origin),
   /** The e-mail address that Magic Links will be sent from */
   sesFromAddress: process.env.SES_FROM_ADDRESS,
-  /** The Amazon SES region */
+  /** The Amazon SES region, override e.g. to set a region where you are out of the SES sandbox */
   sesRegion: process.env.SES_REGION || process.env.AWS_REGION,
   /** KMS Key ID to use for generating Magic Links (signatures) */
   kmsKeyId: process.env.KMS_KEY_ID,
@@ -63,11 +63,11 @@ let config = {
   dynamodbSecretsTableName: process.env.DYNAMODB_SECRETS_TABLE,
   /** Function to mask the e-mail address that will be visible in the public challenge parameters */
   emailMasker: maskEmail,
-  /** Function that will send the actual Magic Link e-mails */
+  /** Function that will send the actual Magic Link e-mails. Override this to e.g. use another e-mail provider instead of Amazon SES */
   emailSender: sendEmailWithLink,
   /** A salt to use for storing hashes of magic links in the DynamoDB table */
   salt: process.env.STACK_ID,
-  /** Function to create the content of the Magic Link e-mails */
+  /** Function to create the content of the Magic Link e-mails, override to e.g. use a custom e-mail template */
   contentCreator: createEmailContent,
   /** Error message that will be shown to the client, if the client requests a Magic Link but isn't allowed to yet */
   notNowMsg:

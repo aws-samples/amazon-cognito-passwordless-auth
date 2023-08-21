@@ -8,6 +8,10 @@ This solution includes components to support step-up auth, using SMS One-Time-Pa
 
 <img src="./drawings/sms-otp-stepup-screenshot.png" alt="SMS OTP code" width="300px" />
 
+## Customizing Auth - e.g. to use your own SMS template
+
+If you want to do customization of this solution that goes beyond the parameters of the `Passwordless` construct, e.g. to use your own SMS template, see [CUSTOMIZE-AUTH.md](./CUSTOMIZE-AUTH.md)
+
 ## AWS Architecture
 
 ![SMS OTP Step Up AWS Architecture](./drawings/sms-otp-stepup.png)
