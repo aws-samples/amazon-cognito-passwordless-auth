@@ -7,7 +7,7 @@
 To use the library, you need to first configure it:
 
 ```javascript
-import { Passwordless } from "amazon-cognito-passwordless-auth/react";
+import { Passwordless } from "amazon-cognito-passwordless-auth";
 
 Passwordless.configure({
   cognitoIdpEndpoint: "eu-west-1", // you can also use the full endpoint URL, potentially to use a proxy

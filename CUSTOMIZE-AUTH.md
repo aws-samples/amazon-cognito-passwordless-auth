@@ -9,9 +9,9 @@ You can override many pieces of configuration by specifying the right property v
 - Use your own template for One-Time-Password (OTP) SMS messages
 - Use custom FIDO2 challenges, to e.g. implement transaction signing.
 
-In such cases you can still use the Lambda function from this solution: the custom auth implementations (FIDO2, Magic Links, SMS OTP) have a `configure()` method that you can use to swap in pieces of your own logic. Here's how that works, there's 2 steps to it:
+In such cases you can still use the Lambda function code from this solution: the custom auth implementations (FIDO2, Magic Links, SMS OTP) have a `configure()` method that you can use to swap in pieces of your own logic. Here's how that works, there's 2 steps to it:
 
-### 1. Create your own Lambda function, using this library, and calling `configure()`
+### 1. Create your own Lambda function, using this library, and call `configure()`
 
 As an example, suppose you want to use your own template for magic link e-mails. In that case you can override the `contentCreator` config like so:
 
@@ -58,13 +58,6 @@ const passwordless = new Passwordless(this, "Passwordless", {
     createAuthChallenge: {
       // Override entry, to point to your custom code:
       entry: join(__dirname, "create-auth-challenge/index.ts"),
-      // Optional –– specify ESM bundling:
-      bundling: {
-        format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
-        // needed for cbor dependency, https://github.com/evanw/esbuild/issues/1921:
-        banner:
-          "import{createRequire}from 'module';const require=createRequire(import.meta.url);",
-      },
     },
   },
 });
@@ -79,3 +72,27 @@ Best look at the definition of the `config` variable and the `configure()` funct
 - SMS OTP Step Up: [cdk/custom-auth/sms-otp-stepup.ts](cdk/custom-auth/sms-otp-stepup.ts)
 
 Note: configuration sourced from environment variables (you'll see `process.env.SOME_KEY` in the source code) can be supplied while instantiating the `Passwordless` CDK construct, and don't require you to override the Lambda function used.
+
+## Other examples
+
+### Using another provider for sending e-mails than Amazon SES
+
+Create your own Lambda function, use this library, and override the `emailSender` function:
+
+```typescript
+import { magicLink } from "amazon-cognito-passwordless-auth/custom-auth";
+export { createAuthChallengeHandler as handler } from "amazon-cognito-passwordless-auth/custom-auth";
+import sendEmail from "your-email-provider-sdk";
+
+magicLink.configure({
+  async emailSender({ emailAddress, content }) {
+    return sendEmail({
+      email: emailAddress,
+      subject: content.subject.data,
+      message: content.html.data,
+    });
+  },
+});
+```
+
+Then, configure the Passwordless solution's CDK construct to use YOUR custom Lambda function, as decribed above.
