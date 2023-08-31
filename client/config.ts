@@ -86,21 +86,6 @@ export interface Config {
    */
   history?: MinimalHistory;
 }
-class MemoryStorage {
-  private memory: Map<string, string>;
-  constructor() {
-    this.memory = new Map();
-  }
-  getItem(key: string) {
-    return this.memory.get(key);
-  }
-  setItem(key: string, value: string) {
-    this.memory.set(key, value);
-  }
-  removeItem(key: string) {
-    this.memory.delete(key);
-  }
-}
 
 let config_:
   | (Config & {
@@ -192,6 +177,22 @@ interface AmplifyConfig {
 
 function isAmplifyConfig(c: unknown): c is AmplifyConfig {
   return !!c && typeof c === "object" && "Auth" in c;
+}
+
+class MemoryStorage {
+  private memory: Map<string, string>;
+  constructor() {
+    this.memory = new Map();
+  }
+  getItem(key: string) {
+    return this.memory.get(key);
+  }
+  setItem(key: string, value: string) {
+    this.memory.set(key, value);
+  }
+  removeItem(key: string) {
+    this.memory.delete(key);
+  }
 }
 
 export class UndefinedGlobalVariableError extends Error {}
