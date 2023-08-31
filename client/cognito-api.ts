@@ -13,7 +13,7 @@
  * language governing permissions and limitations under the License.
  */
 import { parseJwtPayload, throwIfNot2xx } from "./util.js";
-import { configure } from "./config.js";
+import { configure, MinimalResponse } from "./config.js";
 import { retrieveTokens } from "./storage.js";
 
 const AWS_REGION_REGEXP = /^[a-z]{2}-[a-z]+-\d$/;
@@ -167,22 +167,22 @@ export async function initiateAuth<
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
   return fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       signal: abort,
       headers: {
         "x-amz-target": "AWSCognitoIdentityProviderService.InitiateAuth",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
         AuthFlow: authflow,
-        ClientId: config.clientId,
+        ClientId: clientId,
         AuthParameters: authParameters,
         ClientMetadata: clientMetadata,
       }),
@@ -203,23 +203,23 @@ export async function respondToAuthChallenge({
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
   return fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target":
           "AWSCognitoIdentityProviderService.RespondToAuthChallenge",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
         ChallengeName: challengeName,
         ChallengeResponses: challengeResponses,
-        ClientId: config.clientId,
+        ClientId: clientId,
         Session: session,
         ClientMetadata: clientMetadata,
       }),
@@ -235,21 +235,21 @@ export async function revokeToken({
   refreshToken: string;
   abort?: AbortSignal;
 }) {
-  const config = configure();
-  return await fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
+  return fetch(
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target": "AWSCognitoIdentityProviderService.RevokeToken",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
         Token: refreshToken,
-        ClientId: config.clientId,
+        ClientId: clientId,
       }),
       signal: abort,
     }
@@ -263,7 +263,7 @@ export async function getId({
   identityPoolId: string;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch } = configure();
   const identityPoolRegion = identityPoolId.split(":")[0];
   const { idToken } = (await retrieveTokens()) ?? {};
   if (!idToken) {
@@ -277,7 +277,6 @@ export async function getId({
       headers: {
         "x-amz-target": "AWSCognitoIdentityService.GetId",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -299,7 +298,7 @@ export async function getCredentialsForIdentity({
   identityId: string;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch } = configure();
   const identityPoolRegion = identityId.split(":")[0];
   const { idToken } = (await retrieveTokens()) ?? {};
   if (!idToken) {
@@ -313,7 +312,6 @@ export async function getCredentialsForIdentity({
       headers: {
         "x-amz-target": "AWSCognitoIdentityService.GetCredentialsForIdentity",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -349,16 +347,16 @@ export async function signUp({
   validationData?: { name: string; value: string }[];
   abort?: AbortSignal;
 }) {
-  const config = configure();
-  await fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
+  return fetch(
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target": "AWSCognitoIdentityProviderService.SignUp",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -377,7 +375,7 @@ export async function signUp({
             Value: value,
           })),
         ClientMetadata: clientMetadata,
-        ClientId: config.clientId,
+        ClientId: clientId,
       }),
       signal: abort,
     }
@@ -393,18 +391,18 @@ export async function updateUserAttributes({
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
   const tokens = await retrieveTokens();
   await fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target":
           "AWSCognitoIdentityProviderService.UpdateUserAttributes",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -429,18 +427,18 @@ export async function getUserAttributeVerificationCode({
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
   const tokens = await retrieveTokens();
   await fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target":
           "AWSCognitoIdentityProviderService.GetUserAttributeVerificationCode",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -462,17 +460,17 @@ export async function verifyUserAttribute({
   code: string;
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
   const tokens = await retrieveTokens();
   await fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target": "AWSCognitoIdentityProviderService.VerifyUserAttribute",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -494,18 +492,18 @@ export async function setUserMFAPreference({
   softwareTokenMfaSettings?: { enabled?: boolean; preferred?: boolean };
   abort?: AbortSignal;
 }) {
-  const config = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
   const tokens = await retrieveTokens();
   await fetch(
-    config.cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
-      ? `https://cognito-idp.${config.cognitoIdpEndpoint}.amazonaws.com/`
-      : config.cognitoIdpEndpoint,
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
     {
       headers: {
         "x-amz-target":
           "AWSCognitoIdentityProviderService.SetUserMFAPreference",
         "content-type": "application/x-amz-json-1.1",
-        ...config.proxyApiHeaders,
+        ...proxyApiHeaders,
       },
       method: "POST",
       body: JSON.stringify({
@@ -594,9 +592,9 @@ function extractInitiateAuthResponse<
     | "USER_SRP_AUTH"
     | "USER_PASSWORD_AUTH"
 >(authflow: T) {
-  return async (res: Response) => {
+  return async (res: MinimalResponse) => {
     await throwIfNot2xx(res);
-    const body = (await res.json()) as unknown;
+    const body = await res.json();
     if (authflow === "REFRESH_TOKEN_AUTH") {
       assertIsAuthenticatedResponse(body);
     } else {
@@ -608,9 +606,9 @@ function extractInitiateAuthResponse<
   };
 }
 
-async function extractChallengeResponse(res: Response) {
+async function extractChallengeResponse(res: MinimalResponse) {
   await throwIfNot2xx(res);
-  const body = (await res.json()) as unknown;
+  const body = await res.json();
   assertIsSignInResponse(body);
   return body;
 }

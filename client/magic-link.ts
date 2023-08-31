@@ -27,7 +27,7 @@ import {
   removeFragmentIdentifierFromBrowserLocation,
   bufferFromBase64Url,
 } from "./util.js";
-import { configure } from "./config.js";
+import { configure, UndefinedGlobalVariableError } from "./config.js";
 import { CognitoIdTokenPayload } from "./jwt-model.js";
 
 export const requestSignInLink = ({
@@ -101,11 +101,11 @@ export const requestSignInLink = ({
 
 const failedFragmentIdentifieres = new Set<string>();
 function checkCurrentLocationForSignInLink() {
-  const { debug } = configure();
+  const { debug, location } = configure();
   let url: URL;
   let fragmentIdentifier: string;
   try {
-    url = new URL(window.location?.href);
+    url = new URL(location.href);
     fragmentIdentifier = url.hash?.slice(1);
     if (!fragmentIdentifier) {
       debug?.(
@@ -120,7 +120,9 @@ function checkCurrentLocationForSignInLink() {
       return;
     }
   } catch (e) {
-    // TODO Implement DeepLinks for React Native MagicLink Support
+    if (e instanceof UndefinedGlobalVariableError) {
+      throw e;
+    }
     debug?.("Couldn't parse location url");
     return;
   }

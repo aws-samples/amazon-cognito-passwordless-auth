@@ -12,6 +12,7 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
+
 interface Headers {
   [key: string]: string;
 }
@@ -66,12 +67,58 @@ export interface Config {
    * you may want to pass additional HTTP headers.
    */
   proxyApiHeaders?: Headers;
+  /**
+   * Overriding fetch implementation. Default: globalThis.fetch
+   */
+  fetch?: MinimalFetch;
+  /**
+   * Overriding crypto implementation. Default: globalThis.crypto
+   */
+  crypto?: MinimalCrypto;
+  /**
+   * Overriding location implementation. Default: globalThis.location
+   */
+  location?: MinimalLocation;
+  /**
+   * Overriding history implementation. Default: globalThis.history
+   */
+  history?: MinimalHistory;
+}
+class MemoryStorage {
+  private memory: Map<string, string>;
+  constructor() {
+    this.memory = new Map();
+  }
+  getItem(key: string) {
+    return this.memory.get(key);
+  }
+  setItem(key: string, value: string) {
+    this.memory.set(key, value);
+  }
+  removeItem(key: string) {
+    this.memory.delete(key);
+  }
 }
 
-let config_: (Config & { storage: CustomStorage }) | undefined = undefined;
+let config_:
+  | (Config & {
+      storage: NonNullable<Config["storage"]>;
+      crypto: NonNullable<Config["crypto"]>;
+      fetch: NonNullable<Config["fetch"]>;
+      location: NonNullable<Config["location"]>;
+      history: NonNullable<Config["history"]>;
+    })
+  | undefined = undefined;
 export function configure(config?: Config) {
   if (config) {
-    config_ = { ...config, storage: config.storage ?? localStorage };
+    config_ = {
+      ...config,
+      crypto: config.crypto ?? Defaults.crypto,
+      storage: config.storage ?? Defaults.storage,
+      fetch: config.fetch ?? Defaults.fetch,
+      location: config.location ?? Defaults.location,
+      history: config.history ?? Defaults.history,
+    };
     config_.debug?.("Configuration loaded:", config);
   } else {
     if (!config_) {
@@ -143,4 +190,76 @@ interface AmplifyConfig {
 
 function isAmplifyConfig(c: unknown): c is AmplifyConfig {
   return !!c && typeof c === "object" && "Auth" in c;
+}
+
+export class UndefinedGlobalVariableError extends Error {}
+
+class Defaults {
+  static getFailingProxy(expected: string) {
+    const message = `"${expected}" is not available as a global variable in your JavaScript runtime, so you must configure it explicitly with Passwordless.configure()`;
+    return new Proxy((() => undefined) as object, {
+      apply() {
+        throw new UndefinedGlobalVariableError(message);
+      },
+      get() {
+        throw new UndefinedGlobalVariableError(message);
+      },
+    });
+  }
+  static get storage() {
+    return typeof globalThis.localStorage !== "undefined"
+      ? globalThis.localStorage
+      : new MemoryStorage();
+  }
+  static get crypto(): MinimalCrypto {
+    if (typeof globalThis.crypto !== "undefined") return globalThis.crypto;
+    return Defaults.getFailingProxy("crypto") as MinimalCrypto;
+  }
+  static get fetch(): MinimalFetch {
+    if (typeof globalThis.fetch !== "undefined") return globalThis.fetch;
+    return Defaults.getFailingProxy("fetch") as MinimalFetch;
+  }
+  static get location(): MinimalLocation {
+    if (typeof globalThis.location !== "undefined") return globalThis.location;
+    return Defaults.getFailingProxy("location") as MinimalLocation;
+  }
+  static get history(): MinimalHistory {
+    if (typeof globalThis.history !== "undefined") return globalThis.history;
+    return Defaults.getFailingProxy("history") as MinimalHistory;
+  }
+}
+
+export interface MinimalResponse {
+  ok: boolean;
+  json: () => Promise<unknown>;
+}
+
+export interface MinimalLocation {
+  href: string;
+  hostname: string;
+}
+
+export type MinimalFetch = (
+  input: string | URL,
+  init?:
+    | {
+        signal?: AbortSignal;
+        headers?: Record<string, string>;
+        method?: string;
+        body?: string;
+      }
+    | undefined
+) => Promise<MinimalResponse>;
+
+export interface MinimalHistory {
+  pushState(data: unknown, unused: string, url?: string | URL | null): void;
+}
+
+export interface MinimalCrypto {
+  getRandomValues: Crypto["getRandomValues"];
+  subtle: {
+    digest: Crypto["subtle"]["digest"];
+    importKey: Crypto["subtle"]["importKey"];
+    sign: Crypto["subtle"]["sign"];
+  };
 }

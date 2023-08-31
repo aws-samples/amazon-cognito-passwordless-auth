@@ -26,7 +26,7 @@ Passwordless.configure({
     "<header 1>": "<value 1>",
     "<header 2>": "<value 2>",
   },
-  storage: window.localStorage, // Optional, default to localStorage
+  storage: localStorage, // Optional, default to localStorage
 });
 ```
 

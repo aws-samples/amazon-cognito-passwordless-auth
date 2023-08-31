@@ -46,8 +46,9 @@ async function getConstants() {
         "BBE117577A615D6C770988C0BAD946E208E24FA074E5AB31" +
         "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF"
     );
+    const { crypto } = configure();
     const k = arrayBufferToBigInt(
-      await window.crypto.subtle.digest(
+      await crypto.subtle.digest(
         "SHA-256",
         hexToArrayBuffer(`${padHex(N.toString(16))}${padHex(g.toString(16))}`)
       )
@@ -89,8 +90,9 @@ function padHex(hexStr: string) {
 }
 
 function generateSmallA() {
+  const { crypto } = configure();
   const randomValues = new Uint8Array(128);
-  window.crypto.getRandomValues(randomValues);
+  crypto.getRandomValues(randomValues);
   return arrayBufferToBigInt(randomValues.buffer);
 }
 
@@ -118,18 +120,16 @@ async function calculateSrpSignature({
   password: string;
   secretBlock: string;
 }) {
+  const { crypto } = configure();
   const aPlusBHex = padHex(largeAHex) + padHex(srpBHex);
-  const u = await window.crypto.subtle.digest(
-    "SHA-256",
-    hexToArrayBuffer(aPlusBHex)
-  );
+  const u = await crypto.subtle.digest("SHA-256", hexToArrayBuffer(aPlusBHex));
   const [, userPoolName] = userPoolId.split("_");
-  const usernamePasswordHash = await window.crypto.subtle.digest(
+  const usernamePasswordHash = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(`${userPoolName}${username}:${password}`)
   );
 
-  const x = await window.crypto.subtle.digest(
+  const x = await crypto.subtle.digest(
     "SHA-256",
     await new Blob([
       hexToArrayBuffer(padHex(salt)),
@@ -151,7 +151,7 @@ async function calculateSrpSignature({
     ..."Caldera Derived Key".split("").map((c) => c.charCodeAt(0)),
     1,
   ]).buffer;
-  const prkKey = await window.crypto.subtle.importKey(
+  const prkKey = await crypto.subtle.importKey(
     "raw",
     hexToArrayBuffer(saltHkdfHex),
     {
@@ -161,12 +161,12 @@ async function calculateSrpSignature({
     false,
     ["sign"]
   );
-  const prk = await window.crypto.subtle.sign(
+  const prk = await crypto.subtle.sign(
     "HMAC",
     prkKey,
     hexToArrayBuffer(ikmHex)
   );
-  const hkdfKey = await window.crypto.subtle.importKey(
+  const hkdfKey = await crypto.subtle.importKey(
     "raw",
     prk,
     {
@@ -176,9 +176,10 @@ async function calculateSrpSignature({
     false,
     ["sign"]
   );
-  const hkdf = (
-    await window.crypto.subtle.sign("HMAC", hkdfKey, infoBits)
-  ).slice(0, 16);
+  const hkdf = (await crypto.subtle.sign("HMAC", hkdfKey, infoBits)).slice(
+    0,
+    16
+  );
 
   const timestamp = formatDate(new Date());
   const parts = [
@@ -190,7 +191,7 @@ async function calculateSrpSignature({
 
   const msg = new Uint8Array(parts).buffer;
 
-  const signatureKey = await window.crypto.subtle.importKey(
+  const signatureKey = await crypto.subtle.importKey(
     "raw",
     hkdf,
     {
@@ -201,11 +202,7 @@ async function calculateSrpSignature({
     ["sign"]
   );
 
-  const signatureString = await window.crypto.subtle.sign(
-    "HMAC",
-    signatureKey,
-    msg
-  );
+  const signatureString = await crypto.subtle.sign("HMAC", signatureKey, msg);
   return {
     timestamp,
     passwordClaimSignature: bufferToBase64(signatureString),
