@@ -12,7 +12,7 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { parseJwtPayload, throwIfNot2xx } from "./util.js";
+import { parseJwtPayload, throwIfNot2xx, bufferToBase64 } from "./util.js";
 import { configure, MinimalResponse } from "./config.js";
 import { retrieveTokens } from "./storage.js";
 
@@ -163,11 +163,12 @@ export async function initiateAuth<
   abort,
 }: {
   authflow: T;
-  authParameters: Record<string, unknown>;
+  authParameters: Record<string, string>;
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
 }) {
-  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId, clientSecret } =
+    configure();
   return fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -183,7 +184,12 @@ export async function initiateAuth<
       body: JSON.stringify({
         AuthFlow: authflow,
         ClientId: clientId,
-        AuthParameters: authParameters,
+        AuthParameters: {
+          ...authParameters,
+          ...(clientSecret && {
+            SECRET_HASH: await calculateSecretHash(authParameters.USERNAME),
+          }),
+        },
         ClientMetadata: clientMetadata,
       }),
     }
@@ -203,7 +209,8 @@ export async function respondToAuthChallenge({
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
 }) {
-  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId, clientSecret } =
+    configure();
   return fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -218,7 +225,12 @@ export async function respondToAuthChallenge({
       method: "POST",
       body: JSON.stringify({
         ChallengeName: challengeName,
-        ChallengeResponses: challengeResponses,
+        ChallengeResponses: {
+          ...challengeResponses,
+          ...(clientSecret && {
+            SECRET_HASH: await calculateSecretHash(challengeResponses.USERNAME),
+          }),
+        },
         ClientId: clientId,
         Session: session,
         ClientMetadata: clientMetadata,
@@ -347,7 +359,8 @@ export async function signUp({
   validationData?: { name: string; value: string }[];
   abort?: AbortSignal;
 }) {
-  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId } = configure();
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId, clientSecret } =
+    configure();
   return fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -376,6 +389,9 @@ export async function signUp({
           })),
         ClientMetadata: clientMetadata,
         ClientId: clientId,
+        ...(clientSecret && {
+          SecretHash: await calculateSecretHash(username),
+        }),
       }),
       signal: abort,
     }
@@ -611,4 +627,25 @@ async function extractChallengeResponse(res: MinimalResponse) {
   const body = await res.json();
   assertIsSignInResponse(body);
   return body;
+}
+
+async function calculateSecretHash(username?: string) {
+  const { crypto, clientId, clientSecret } = configure();
+  username ??= (await retrieveTokens())?.username;
+  if (!username) {
+    throw new Error("Failed to determine username for calculating secret hash");
+  }
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(clientSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`${username}${clientId}`)
+  );
+  return bufferToBase64(signature);
 }

@@ -26,6 +26,8 @@ export interface Config {
   cognitoIdpEndpoint: string;
   /** The Amazon Cognito Client ID */
   clientId: string;
+  /** The Amazon Cognito Client Secret (optional: don't use this in Web clients, use when running server side) */
+  clientSecret?: string;
   /** The Amazon Cognito User Pool ID */
   userPoolId?: string;
   /** FIDO2 (WebAuthn) configuration */
