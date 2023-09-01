@@ -94,7 +94,7 @@ class CustomLocation implements MinimalLocation {
    * Implement a mechanism in Node.js to provide the hostname (used as default RP ID in FIDO2, unless configured itself):
    */
   get hostname() {
-    return "https://abcdefghijk.cloudfront.net";
+    return "abcdefghijk.cloudfront.net";
   }
 }
 
