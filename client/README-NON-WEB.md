@@ -100,7 +100,7 @@ class CustomLocation implements MinimalLocation {
 
 class CustomHistory implements MinimalHistory {
   /**
-   * Implement a mechanism in Node.js to navigate to the next page (might not be applicable in CLI scripts!)
+   * Implement a mechanism in Node.js to change the current URL (probably not applicable in CLI scripts!)
    */
   pushState() {}
 }
