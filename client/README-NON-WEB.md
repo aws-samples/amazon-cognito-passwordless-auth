@@ -22,7 +22,7 @@ You do not need to provide these implementations in all cases, so it's easiest w
 
 ## Examples
 
-This works in Node.js 18 and above:
+This works in Node.js 18 and above (but in Node.js 20 you don't need to do this as crypto has become a global, as in Web):
 
 ```typescript
 import { Passwordless } from "amazon-cognito-passwordless-auth";
@@ -64,6 +64,54 @@ Passwordless.configure({
   history: {
     pushState: () => {},
   },
+});
+
+const { signedIn } = signInWithLink();
+
+const tokens = await signedIn;
+
+console.log(tokens);
+```
+
+Same example but more fancy:
+
+```typescript
+import { Passwordless } from "amazon-cognito-passwordless-auth";
+import {
+  MinimalLocation,
+  MinimalHistory,
+} from "amazon-cognito-passwordless-auth/config";
+import { signInWithLink } from "amazon-cognito-passwordless-auth/magic-link";
+
+class CustomLocation implements MinimalLocation {
+  /**
+   * Implement a mechanism in Node.js to acquire and provide the magic link:
+   */
+  get href() {
+    return "https://abcdefghijk.cloudfront.net/#eyactualmagiclinkyrqfhahsv89grhz9rghrzhbvzxcvcbhzdrt4ut9qg...";
+  }
+  /**
+   * Implement a mechanism in Node.js to provide the hostname (used as default RP ID in FIDO2, unless configured itself):
+   */
+  get hostname() {
+    return "https://abcdefghijk.cloudfront.net";
+  }
+}
+
+class CustomHistory implements MinimalHistory {
+  /**
+   * Implement a mechanism in Node.js to navigate to the next page (might not be applicable in CLI scripts!)
+   */
+  pushState() {}
+}
+
+Passwordless.configure({
+  clientId: "<your client id>",
+  cognitoIdpEndpoint: "<your region>",
+  // override location
+  location: new CustomLocation(),
+  // override history
+  history: new CustomHistory(),
 });
 
 const { signedIn } = signInWithLink();
