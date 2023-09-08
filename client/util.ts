@@ -16,8 +16,9 @@ import {
   CognitoAccessTokenPayload,
   CognitoIdTokenPayload,
 } from "./jwt-model.js";
+import { MinimalResponse, configure } from "./config.js";
 
-export async function throwIfNot2xx(res: Response) {
+export async function throwIfNot2xx(res: MinimalResponse) {
   if (res.ok) {
     return res;
   }
@@ -61,21 +62,24 @@ export function setTimeoutWallClock<T>(cb: () => T, ms: number) {
       cb();
     }
   }, 1000);
+
+  // unref the interval if we can, so that e.g. when running in Node.js
+  // this interval would not block program exit:
+  if (typeof i.unref === "function") i.unref();
+
   return () => clearInterval(i);
 }
 
 export function currentBrowserLocationWithoutFragmentIdentifier() {
-  const current = new URL(window.location.href);
+  const { location } = configure();
+  const current = new URL(location.href);
   current.hash = "";
   return current.href;
 }
 
 export function removeFragmentIdentifierFromBrowserLocation() {
-  window.history.pushState(
-    "",
-    document.title,
-    currentBrowserLocationWithoutFragmentIdentifier()
-  );
+  const { history } = configure();
+  history.pushState("", "", currentBrowserLocationWithoutFragmentIdentifier());
 }
 
 export function timeAgo(now: Date, historicDate?: Date) {

@@ -243,9 +243,9 @@ function _usePasswordless() {
 
   // Give easy access to isUserVerifyingPlatformAuthenticatorAvailable
   useEffect(() => {
-    if (window.PublicKeyCredential) {
+    if (typeof PublicKeyCredential !== "undefined") {
       const cancel = new AbortController();
-      window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
         .then((res) => {
           if (!cancel.signal.aborted) {
             setUserVerifyingPlatformAuthenticatorAvailable(res);

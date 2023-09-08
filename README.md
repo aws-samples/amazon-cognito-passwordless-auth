@@ -219,6 +219,10 @@ See [README-REACT.md](./client/react/README-REACT.md)
 
 See [README-REACT-NATIVE.md](./client/react/README-REACT-NATIVE.md)
 
+## Usage in JavaScript environments other than Web
+
+See [README.md](./client/README-NON-WEB.md)
+
 ## Customizing Auth
 
 If you want to do customization of this solution that goes beyond the parameters of the `Passwordless` construct, e.g. to use your own e-mail content for magic links, see [CUSTOMIZE-AUTH.md](./CUSTOMIZE-AUTH.md)

@@ -142,7 +142,7 @@ export interface ParsedCredential {
 }
 
 export async function fido2StartCreateCredential() {
-  const { fido2 } = configure();
+  const { fido2, fetch, location } = configure();
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }
@@ -151,9 +151,7 @@ export async function fido2StartCreateCredential() {
     throw new Error("No JWT to invoke Fido2 API with");
   }
   const url = new URL(
-    `/register-authenticator/start?rpId=${
-      fido2.rp?.id ?? window.location.hostname
-    }`,
+    `/register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`,
     fido2.baseUrl
   );
   const method = "POST";
@@ -176,7 +174,7 @@ export async function fido2CompleteCreateCredential({
   credential: PublicKeyCredential | ParsedCredential;
   friendlyName: string;
 }) {
-  const { fido2 } = configure();
+  const { fido2, fetch } = configure();
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }
@@ -225,7 +223,7 @@ export async function fido2CompleteCreateCredential({
 }
 
 export async function fido2ListCredentials() {
-  const { fido2 } = configure();
+  const { fido2, fetch, location } = configure();
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }
@@ -234,7 +232,7 @@ export async function fido2ListCredentials() {
     throw new Error("No JWT to invoke Fido2 API with");
   }
   const url = new URL(
-    `/authenticators/list?rpId=${fido2.rp?.id ?? window.location.hostname}`,
+    `/authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`,
     fido2.baseUrl
   );
   return fetch(url, {
@@ -275,7 +273,7 @@ export async function fido2DeleteCredential({
 }: {
   credentialId: string;
 }) {
-  const { fido2 } = configure();
+  const { fido2, fetch } = configure();
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }
@@ -302,7 +300,7 @@ export async function fido2UpdateCredential({
   credentialId: string;
   friendlyName: string;
 }) {
-  const { fido2 } = configure();
+  const { fido2, fetch } = configure();
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }

@@ -15,8 +15,8 @@ module.exports = {
     getCdkOverrides("cdk/lib"),
     getCdkOverrides("cdk/custom-auth"),
     getCdkOverrides("end-to-end-example/cdk"),
-    getReactOverrides("client"),
-    getReactOverrides("end-to-end-example/client"),
+    getClientOverrides("client"),
+    getClientOverrides("end-to-end-example/client"),
   ],
   plugins: ["@typescript-eslint", "header", "import"],
   root: true,
@@ -56,7 +56,7 @@ function getCdkOverrides(basedir) {
   };
 }
 
-function getReactOverrides(basedir) {
+function getClientOverrides(basedir) {
   return {
     env: {
       browser: true,
@@ -86,6 +86,15 @@ function getReactOverrides(basedir) {
     rules: {
       ...rules(),
       "react/react-in-jsx-scope": "off",
+      "no-restricted-globals": [
+        "error",
+        "window",
+        "document",
+        "history",
+        "location",
+        "crypto",
+        "fetch",
+      ],
     },
     plugins: ["react", "@typescript-eslint", "header", "import"],
   };
