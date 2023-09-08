@@ -21,7 +21,7 @@ import {
   fido2DeleteCredential,
   authenticateWithFido2,
 } from "../fido2.js";
-import { configure as _configure, Config } from "../config.js";
+import { configure as _configure, Config, MinimalLocation } from "../config.js";
 
 import { retrieveTokens } from "../storage.js";
 export {
@@ -62,12 +62,30 @@ export function usePasswordless() {
 
 interface PasskeyConfig {
   fido2?: {
+    /**
+     * React Native Passkey Domain. Used by iOS and Android to link your app's paykeys to your domain
+     * That domain must serve the mandatory manifest json required by Apple and Google under the following paths:
+     * - iOS: https://<your_passkey_domain>/.well-known/apple-app-site-association
+     * - Android: https://<your_passkey_domain>/.well-known/assetlinks.json
+     * More info:
+     * - iOS: https://developer.apple.com/documentation/xcode/supporting-associated-domains
+     * - Android: https://developer.android.com/training/sign-in/passkeys#add-support-dal
+     */
     passkeyDomain: string;
+    /** React Native App Name. Used by iOS and Android to show your app's name within the passkey dialog */
     passkeyAppName: string;
   };
 }
 
 function configure(config?: Config & PasskeyConfig) {
+  if (config && !config.location) {
+    config.location = config.fido2
+      ? ({
+          href: `https://${config.fido2.passkeyDomain}`,
+          hostname: config.fido2.passkeyDomain,
+        } as MinimalLocation)
+      : undefined;
+  }
   return _configure(config) as ReturnType<typeof _configure> & PasskeyConfig;
 }
 
@@ -92,7 +110,7 @@ export async function fido2CreateCredential({
   const passkey = new Passkey(config.fido2?.passkeyDomain, username);
   const credential = await passkey.register(
     toBase64String(response.challenge),
-    response.user.id
+    response.user.id,
   );
 
   return await fido2CompleteCreateCredential({
@@ -231,14 +249,14 @@ class RNTextDecoder {
         codePoints.push(
           ((byte & 0x0f) << 12) |
             ((readContinuationByte() & 0x3f) << 6) |
-            (readContinuationByte() & 0x3f)
+            (readContinuationByte() & 0x3f),
         );
       } else if (byte >> 3 === 0b11110) {
         codePoints.push(
           ((byte & 0x07) << 18) |
             ((readContinuationByte() & 0x3f) << 12) |
             ((readContinuationByte() & 0x3f) << 6) |
-            (readContinuationByte() & 0x3f)
+            (readContinuationByte() & 0x3f),
         );
       } else {
         RNTextDecoder.throwMalformedInputError();
