@@ -87,15 +87,12 @@ export interface Config {
   history?: MinimalHistory;
 }
 
-let config_:
-  | (Config & {
-      storage: NonNullable<Config["storage"]>;
-      crypto: NonNullable<Config["crypto"]>;
-      fetch: NonNullable<Config["fetch"]>;
-      location: NonNullable<Config["location"]>;
-      history: NonNullable<Config["history"]>;
-    })
-  | undefined = undefined;
+export type ConfigWithDefaults = Config &
+  Required<
+    Pick<Config, "storage" | "crypto" | "fetch" | "location" | "history">
+  >;
+
+let config_: ConfigWithDefaults | undefined = undefined;
 export function configure(config?: Config) {
   if (config) {
     config_ = {

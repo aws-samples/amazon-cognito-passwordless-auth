@@ -21,7 +21,11 @@ import {
   fido2DeleteCredential,
   authenticateWithFido2,
 } from "../fido2.js";
-import { configure as _configure, Config, MinimalLocation } from "../config.js";
+import {
+  configure as _configure,
+  Config,
+  ConfigWithDefaults,
+} from "../config.js";
 
 import { retrieveTokens } from "../storage.js";
 export {
@@ -63,7 +67,7 @@ export function usePasswordless() {
 interface PasskeyConfig {
   fido2?: {
     /**
-     * React Native Passkey Domain. Used by iOS and Android to link your app's paykeys to your domain
+     * React Native Passkey Domain. Used by iOS and Android to link your app's passkeys to your domain
      * That domain must serve the mandatory manifest json required by Apple and Google under the following paths:
      * - iOS: https://<your_passkey_domain>/.well-known/apple-app-site-association
      * - Android: https://<your_passkey_domain>/.well-known/assetlinks.json
@@ -77,18 +81,17 @@ interface PasskeyConfig {
   };
 }
 
-function configure(config?: Config & PasskeyConfig) {
-  if (config && !config.location) {
-    config.location = config.fido2
-      ? ({
-          href: `https://${config.fido2.passkeyDomain}`,
-          hostname: config.fido2.passkeyDomain,
-        } as MinimalLocation)
-      : undefined;
-  }
-  return _configure(config) as ReturnType<typeof _configure> & PasskeyConfig;
-}
+export type ReactNativeConfig = Config & PasskeyConfig;
 
+export type ReactNativeConfigWithDefaults = ConfigWithDefaults &
+  PasskeyConfig & { fido2?: { rp: { id: string } } };
+
+function configure(config?: ReactNativeConfig) {
+  if (config && config.fido2 && !config.fido2.rp?.id) {
+    config.fido2.rp = { ...config.fido2.rp, id: config.fido2.passkeyDomain };
+  }
+  return _configure(config) as ReactNativeConfigWithDefaults;
+}
 export const Passwordless = { configure };
 
 export const toBase64String = (base64Url: string) =>
