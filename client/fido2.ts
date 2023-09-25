@@ -444,6 +444,21 @@ const parseAuthenticatorAssertionResponse = async (
   };
 };
 
+async function requestUsernamelessSignInChallenge() {
+  const { fido2, fetch } = configure();
+  if (!fido2) {
+    throw new Error("Missing Fido2 config");
+  }
+  return fetch(new URL(`/sign-in-challenge`, fido2.baseUrl), {
+    method: "POST",
+    headers: {
+      accept: "application/json, text/javascript",
+    },
+  })
+    .then(throwIfNot2xx)
+    .then((res) => res.json() as Promise<{ challenge: string }>);
+}
+
 export function authenticateWithFido2({
   username,
   credentials,
@@ -499,6 +514,104 @@ export function authenticateWithFido2({
       );
       debug?.("FIDO2 options from Cognito:", fido2options);
       const fido2credential = await credentialGetter(fido2options);
+      statusCb?.("COMPLETING_SIGN_IN_WITH_FIDO2");
+      const session = initAuthResponse.Session;
+      debug?.(`Invoking respondToAuthChallenge ...`);
+      const authResult = await respondToAuthChallenge({
+        challengeName: "CUSTOM_CHALLENGE",
+        challengeResponses: {
+          ANSWER: JSON.stringify(fido2credential),
+          USERNAME: username,
+        },
+        clientMetadata: {
+          ...clientMetadata,
+          signInMethod: "FIDO2",
+        },
+        session: session,
+        abort: abort.signal,
+      });
+      assertIsAuthenticatedResponse(authResult);
+      debug?.(`Response from respondToAuthChallenge:`, authResult);
+      const tokens = {
+        accessToken: authResult.AuthenticationResult.AccessToken,
+        idToken: authResult.AuthenticationResult.IdToken,
+        refreshToken: authResult.AuthenticationResult.RefreshToken,
+        expireAt: new Date(
+          Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000
+        ),
+        username: parseJwtPayload<CognitoIdTokenPayload>(
+          authResult.AuthenticationResult.IdToken
+        )["cognito:username"],
+      };
+      tokensCb
+        ? await tokensCb(tokens)
+        : await defaultTokensCb({ tokens, abort: abort.signal });
+      statusCb?.("SIGNED_IN_WITH_FIDO2");
+      return tokens;
+    } catch (err) {
+      statusCb?.("FIDO2_SIGNIN_FAILED");
+      throw err;
+    }
+  })();
+  return {
+    signedIn,
+    abort: () => abort.abort(),
+  };
+}
+
+export function authenticateWithFido2Passkey({
+  credentials,
+  tokensCb,
+  statusCb,
+  currentStatus,
+  clientMetadata,
+  credentialGetter = fido2getCredential,
+}: {
+  /**
+   * Username, or alias (e-mail, phone number)
+   */
+  credentials?: { id: string; transports?: AuthenticatorTransport[] }[];
+  tokensCb?: (tokens: TokensFromSignIn) => void | Promise<void>;
+  statusCb?: (status: BusyState | IdleState) => void;
+  currentStatus?: BusyState | IdleState;
+  clientMetadata?: Record<string, string>;
+  credentialGetter?: typeof fido2getCredential;
+}) {
+  if (currentStatus && busyState.includes(currentStatus as BusyState)) {
+    throw new Error(`Can't sign in while in status ${currentStatus}`);
+  }
+  const abort = new AbortController();
+  const signedIn = (async () => {
+    const { debug, fido2 } = configure();
+    if (!fido2) {
+      throw new Error("Missing Fido2 config");
+    }
+    statusCb?.("STARTING_SIGN_IN_WITH_FIDO2");
+    try {
+      const { challenge } = await requestUsernamelessSignInChallenge();
+      const fido2credential = await credentialGetter({
+        challenge,
+        credentials,
+        relyingPartyId: fido2.rp?.id,
+        timeout: fido2.timeout,
+        userVerification: fido2.authenticatorSelection?.userVerification,
+      });
+      if (!fido2credential.userHandleB64) {
+        throw new Error("No discoverable credentials available");
+      }
+      const username = new TextDecoder().decode(
+        bufferFromBase64Url(fido2credential.userHandleB64)
+      );
+      debug?.(`Invoking initiateAuth ...`);
+      const initAuthResponse = await initiateAuth({
+        authflow: "CUSTOM_AUTH",
+        authParameters: {
+          USERNAME: username,
+        },
+        abort: abort.signal,
+      });
+      debug?.(`Response from initiateAuth:`, initAuthResponse);
+      assertIsChallengeResponse(initAuthResponse);
       statusCb?.("COMPLETING_SIGN_IN_WITH_FIDO2");
       const session = initAuthResponse.Session;
       debug?.(`Invoking respondToAuthChallenge ...`);

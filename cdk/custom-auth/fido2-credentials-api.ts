@@ -52,6 +52,7 @@ if (!allowedOrigins.length)
 const authenticatorRegistrationTimeout = Number(
   process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000"
 );
+const signInTimeout = Number(process.env.SIGN_IN_TIMEOUT ?? "120000");
 const allowedKty: Record<number, string> = { 2: "EC", 3: "RSA" };
 const allowedAlg: Record<number, string> = { "-7": "ES256", "-257": "RS256" };
 const headers = {
@@ -75,20 +76,15 @@ export const handler: Handler<{
       };
     };
   };
+  rawPath: string;
   body?: string;
   isBase64Encoded: boolean;
-  pathParameters: {
-    fido2path: string;
-  };
   queryStringParameters?: {
     rpId?: string;
   };
 }> = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));
-  logger.info(
-    "FIDO2 credentials API invocation:",
-    event.pathParameters.fido2path
-  );
+  logger.info("FIDO2 credentials API invocation:", event.rawPath);
   if (event.requestContext.authorizer.jwt.claims.token_use !== "id") {
     logger.info("ERROR: This API must be accessed using the ID Token");
     return {
@@ -108,7 +104,7 @@ export const handler: Handler<{
     const userHandle = determineUserHandle({ sub, cognitoUsername });
     const userName = email ?? phoneNumber ?? name ?? cognitoUsername;
     const displayName = name ?? email;
-    if (event.pathParameters.fido2path === "register-authenticator/start") {
+    if (event.rawPath === "register-authenticator/start") {
       logger.info("Starting a new authenticator registration ...");
       if (!userName) {
         throw new Error("Unable to determine name for user");
@@ -135,9 +131,7 @@ export const handler: Handler<{
         body: JSON.stringify(options),
         headers,
       };
-    } else if (
-      event.pathParameters.fido2path === "register-authenticator/complete"
-    ) {
+    } else if (event.rawPath === "register-authenticator/complete") {
       logger.info("Completing the new authenticator registration ...");
       const storedCredential = await handleCredentialsResponse(
         userHandle,
@@ -148,7 +142,7 @@ export const handler: Handler<{
         body: JSON.stringify(storedCredential),
         headers,
       };
-    } else if (event.pathParameters.fido2path === "authenticators/list") {
+    } else if (event.rawPath === "authenticators/list") {
       logger.info("Listing authenticators ...");
       const rpId = event.queryStringParameters?.rpId;
       if (!rpId) {
@@ -168,7 +162,7 @@ export const handler: Handler<{
         }),
         headers,
       };
-    } else if (event.pathParameters.fido2path === "authenticators/delete") {
+    } else if (event.rawPath === "authenticators/delete") {
       logger.info("Deleting authenticator ...");
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
@@ -178,7 +172,7 @@ export const handler: Handler<{
         credentialId: parsed.credentialId,
       });
       return { statusCode: 204 };
-    } else if (event.pathParameters.fido2path === "authenticators/update") {
+    } else if (event.rawPath === "authenticators/update") {
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
       await updateCredential({
@@ -187,6 +181,9 @@ export const handler: Handler<{
         friendlyName: parsed.friendlyName,
       });
       return { statusCode: 200, headers };
+    } else if (event.rawPath === "/sign-in-challenge") {
+      const challenge = await generateAndStoreUsernamelessSignInChallenge();
+      return { statusCode: 200, headers, body: JSON.stringify({ challenge }) };
     }
     return {
       statusCode: 404,
@@ -254,6 +251,21 @@ interface Credential {
   lastSignIn?: Date;
   signCount: number;
   rpId: string;
+}
+
+async function generateAndStoreUsernamelessSignInChallenge() {
+  const challenge = randomBytes(64).toString("base64url");
+  await ddbDocClient.send(
+    new PutCommand({
+      TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
+      Item: {
+        pk: `CHALLENGE#${challenge}`,
+        sk: `SIGN_IN`,
+        exp: Math.floor(signInTimeout),
+      },
+    })
+  );
+  return challenge;
 }
 
 async function getExistingCredentialsForUser({

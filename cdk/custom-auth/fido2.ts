@@ -275,6 +275,7 @@ export async function verifyChallenge({
       Buffer.from(fido2options.challenge, "base64url")
     )
   ) {
+    // TODO add in this place a deleting read from DynamoDB - if we find the challenge there it is okay too
     throw new Error(
       `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
     );
