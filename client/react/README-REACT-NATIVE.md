@@ -104,10 +104,40 @@ function App() {
     // optional, only required if you want to use FIDO2:
     fido2: {
       baseUrl: "<fido2 base url>",
-      // optional, allows you to set WebAuthn options:
+      /**
+       * React Native Passkey Domain. Used by iOS and Android to link your app's passkeys to your domain
+       * That domain must serve the mandatory manifest json required by Apple and Google under the following paths:
+       * - iOS: https://<your_passkey_domain>/.well-known/apple-app-site-association
+       * - Android: https://<your_passkey_domain>/.well-known/assetlinks.json
+       * More info:
+       * - iOS: https://developer.apple.com/documentation/xcode/supporting-associated-domains
+       * - Android: https://developer.android.com/training/sign-in/passkeys#add-support-dal
+       */
+      passkeyDomain: "<ASSOCIATED_PASSKEY_DOMAIN>",
+      /**
+       * React Native App Name. Used by iOS and Android to show your app's name within the passkey dialog
+       */
+      passkeyAppName: "<YOUR_APP_NAME>",
+      /**
+       * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure:
+       */
       authenticatorSelection: {
-        userVerification: "required",
+        userVerification: "required", // even though optional, this one you probably want to explicitly specify as "required"
+        requireResidentKey: true,
+        residentKey: "preferred",
+        authenticatorAttachment: "platform",
       },
+      rp: {
+        id: "example.com", // default: your passkeyDomain
+        name: "Example",
+      },
+      attestation: "direct",
+      extensions: {
+        appid: "u2f.example.com",
+        credProps: true,
+        hmacCreateSecret: true,
+      },
+      timeout: 120000,
     },
     userPoolId: "<user pool id>", // optional, only required if you want to use USER_SRP_AUTH
     // optional, additional headers that will be sent with each request to Cognito:
@@ -116,11 +146,6 @@ function App() {
       "<header 2>": "<value 2>",
     },
     storage: AsyncStorage, // Need to set this for React Native, as the default (localStorage) will not work
-    // Need to set these for React Native:
-    native: {
-      passkeyDomain: "<ASSOCIATED_PASSKEY_DOMAIN>",
-      passkeyAppName: "<YOUR_APPS_NAME>",
-    },
   });
   // Your original App here
 }
