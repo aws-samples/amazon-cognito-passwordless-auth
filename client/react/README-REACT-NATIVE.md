@@ -104,9 +104,22 @@ function App() {
     // optional, only required if you want to use FIDO2:
     fido2: {
       baseUrl: "<fido2 base url>",
-      // optional, allows you to set WebAuthn options:
-      authenticatorSelection: {
-        userVerification: "required",
+      /**
+       * React Native Passkey Domain. Used by iOS and Android to link your app's passkeys to your domain
+       * That domain must serve the mandatory manifest json required by Apple and Google under the following paths:
+       * - iOS: https://<your_passkey_domain>/.well-known/apple-app-site-association
+       * - Android: https://<your_passkey_domain>/.well-known/assetlinks.json
+       * More info:
+       * - iOS: https://developer.apple.com/documentation/xcode/supporting-associated-domains
+       * - Android: https://developer.android.com/training/sign-in/passkeys#add-support-dal
+       */
+      passkeyDomain: "<ASSOCIATED_PASSKEY_DOMAIN>",
+      /**
+       * Configure Relying Party ID
+       */
+      rp: {
+        id: "example.com", // default: your passkeyDomain
+        name: "Example.com", // default: your passkeyDomain
       },
     },
     userPoolId: "<user pool id>", // optional, only required if you want to use USER_SRP_AUTH
@@ -116,11 +129,6 @@ function App() {
       "<header 2>": "<value 2>",
     },
     storage: AsyncStorage, // Need to set this for React Native, as the default (localStorage) will not work
-    // Need to set these for React Native:
-    native: {
-      passkeyDomain: "<ASSOCIATED_PASSKEY_DOMAIN>",
-      passkeyAppName: "<YOUR_APPS_NAME>",
-    },
   });
   // Your original App here
 }

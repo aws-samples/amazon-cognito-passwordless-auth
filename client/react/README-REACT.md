@@ -162,10 +162,26 @@ Passwordless.configure({
   // optional, only required if you want to use FIDO2:
   fido2: {
     baseUrl: "<fido2 base url>",
-    // optional, allows you to set WebAuthn options:
+    /**
+     * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure:
+     */
     authenticatorSelection: {
-      userVerification: "required",
+      userVerification: "required", // even though optional, this one you probably want to explicitly specify as "required"
+      requireResidentKey: true,
+      residentKey: "preferred",
+      authenticatorAttachment: "platform",
     },
+    rp: {
+      id: "example.com",
+      name: "Example",
+    },
+    attestation: "direct",
+    extensions: {
+      appid: "u2f.example.com",
+      credProps: true,
+      hmacCreateSecret: true,
+    },
+    timeout: 120000,
   },
   userPoolId: "<user pool id>", // optional, only required if you want to use USER_SRP_AUTH
   // optional, additional headers that will be sent with each request to Cognito:
