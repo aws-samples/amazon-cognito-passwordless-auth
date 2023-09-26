@@ -115,29 +115,12 @@ function App() {
        */
       passkeyDomain: "<ASSOCIATED_PASSKEY_DOMAIN>",
       /**
-       * React Native App Name. Used by iOS and Android to show your app's name within the passkey dialog
+       * Configure Relying Party ID
        */
-      passkeyAppName: "<YOUR_APP_NAME>",
-      /**
-       * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure:
-       */
-      authenticatorSelection: {
-        userVerification: "required", // even though optional, this one you probably want to explicitly specify as "required"
-        requireResidentKey: true,
-        residentKey: "preferred",
-        authenticatorAttachment: "platform",
-      },
       rp: {
         id: "example.com", // default: your passkeyDomain
-        name: "Example",
+        name: "Example.com", // default: your passkeyDomain
       },
-      attestation: "direct",
-      extensions: {
-        appid: "u2f.example.com",
-        credProps: true,
-        hmacCreateSecret: true,
-      },
-      timeout: 120000,
     },
     userPoolId: "<user pool id>", // optional, only required if you want to use USER_SRP_AUTH
     // optional, additional headers that will be sent with each request to Cognito:

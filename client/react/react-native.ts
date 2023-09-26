@@ -65,7 +65,7 @@ export function usePasswordless() {
 }
 
 interface PasskeyConfig {
-  fido2?: {
+  fido2: {
     /**
      * React Native Passkey Domain. Used by iOS and Android to link your app's passkeys to your domain
      * That domain must serve the mandatory manifest json required by Apple and Google under the following paths:
@@ -76,19 +76,23 @@ interface PasskeyConfig {
      * - Android: https://developer.android.com/training/sign-in/passkeys#add-support-dal
      */
     passkeyDomain: string;
-    /** React Native App Name. Used by iOS and Android to show your app's name within the passkey dialog */
-    passkeyAppName: string;
+    rp?: { id?: string; name?: string };
   };
 }
 
-export type ReactNativeConfig = Config & PasskeyConfig;
+export type ReactNativeConfig = Config & Partial<PasskeyConfig>;
 
-export type ReactNativeConfigWithDefaults = ConfigWithDefaults &
-  PasskeyConfig & { fido2?: { rp: { id: string } } };
+export type ReactNativeConfigWithDefaults = ConfigWithDefaults & {
+  fido2: { passkeyDomain: string; rp: { id: string; name: string } };
+};
 
 function configure(config?: ReactNativeConfig) {
-  if (config && config.fido2 && !config.fido2.rp?.id) {
-    config.fido2.rp = { ...config.fido2.rp, id: config.fido2.passkeyDomain };
+  if (config && config.fido2) {
+    config.fido2.rp = {
+      id: config.fido2.passkeyDomain,
+      name: config.fido2.passkeyDomain,
+      ...config.fido2.rp,
+    };
   }
   return _configure(config) as ReactNativeConfigWithDefaults;
 }
@@ -98,19 +102,14 @@ export const toBase64String = (base64Url: string) =>
   base64Url.replace(/-/g, "+").replace(/_/g, "/") + "==";
 
 export async function fido2CreateCredential({
-  username,
   friendlyName,
 }: {
-  /**
-   * Display name for the user
-   */
-  username: string;
   friendlyName: string;
 }) {
   const config = configure();
   const response = await fido2StartCreateCredential();
   if (!config.fido2) throw new Error("FIDO2 not configured");
-  const passkey = new Passkey(config.fido2?.passkeyDomain, username);
+  const passkey = new Passkey(config.fido2.passkeyDomain, config.fido2.rp.name);
   const credential = await passkey.register(
     toBase64String(response.challenge),
     response.user.id
