@@ -67,6 +67,11 @@ export class Passwordless extends Construct {
         userVerification?: "discouraged" | "preferred" | "required";
         authenticatorAttachment?: "cross-platform" | "platform";
         residentKey?: "discouraged" | "preferred" | "required";
+        /** Timeouts (in milliseconds) */
+        timeouts?: {
+          credentialRegistration?: number;
+          signIn?: number;
+        };
         authenticatorsTableProps?: TableProps;
         exposeUserCredentialIDs?: boolean;
         /**
@@ -86,7 +91,6 @@ export class Passwordless extends Construct {
          * This is because the user handle must be an opaque byte sequence as mandated by WebAuthn spec: https://www.w3.org/TR/webauthn-3/#user-handle
          *
          * To make this feature work, a public API is exposed that user agents can invoke to generate a FIDO2 challenge for sign-in.
-         * AWS WAF with a rate limit rule is added to this API to prevent misuse.
          */
         enableUsernamelessAuthentication?: boolean;
       };
@@ -375,6 +379,10 @@ export class Passwordless extends Construct {
           : "",
         USER_VERIFICATION: props.fido2.userVerification ?? "required",
         STACK_ID: cdk.Stack.of(scope).stackId,
+        USERNAMELESS_SIGN_IN_ENABLED: props.fido2
+          .enableUsernamelessAuthentication
+          ? "TRUE"
+          : "",
       });
     }
     if (props.smsOtpStepUp) {
@@ -578,6 +586,11 @@ export class Passwordless extends Construct {
             USER_VERIFICATION: props.fido2.userVerification ?? "required",
             AUTHENTICATOR_ATTACHMENT: props.fido2.authenticatorAttachment ?? "",
             REQUIRE_RESIDENT_KEY: props.fido2.residentKey ?? "",
+            AUTHENTICATOR_REGISTRATION_TIMEOUT:
+              props.fido2.timeouts?.credentialRegistration?.toString() ??
+              "300000",
+            SIGN_IN_TIMEOUT:
+              props.fido2.timeouts?.signIn?.toString() ?? "120000",
             ...props.functionProps?.fido2?.environment,
           },
         }
@@ -665,7 +678,7 @@ export class Passwordless extends Construct {
         "/authenticators/delete": authorizer,
         "/authenticators/update": authorizer,
         ...(props.fido2.enableUsernamelessAuthentication && {
-          "/sign-in-challenge": undefined, // public API, should ideally be protected by e.g. WAF rate limit rule, to prevent DOS and misuse
+          "/sign-in-challenge": undefined, // public API, should be protected by e.g. WAF rate limit rule, to prevent DOS and misuse
         }),
       }).forEach(
         ([path, authorizer]: [

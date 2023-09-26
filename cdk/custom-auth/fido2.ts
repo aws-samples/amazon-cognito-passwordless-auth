@@ -22,6 +22,7 @@ import {
   QueryCommand,
   UpdateCommand,
   GetCommand,
+  DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { randomBytes, JsonWebKey } from "crypto";
 import { createVerify, createHash, createPublicKey } from "crypto";
@@ -62,6 +63,7 @@ let config = {
   enforceFido2IfAvailable: !!process.env.ENFORCE_FIDO2_IF_AVAILABLE,
   /** Salt to use for storing hashed FIDO2 credential data */
   salt: process.env.STACK_ID,
+  usernamelessSignInEnabled: !!process.env.USERNAMELESS_SIGN_IN_ENABLED,
 };
 
 function requireConfig<K extends keyof typeof config>(
@@ -270,16 +272,22 @@ export async function verifyChallenge({
   if (clientData.type !== "webauthn.get") {
     throw new Error(`Invalid clientData type: ${clientData.type}`);
   }
-  if (
-    !Buffer.from(clientData.challenge, "base64url").equals(
-      Buffer.from(fido2options.challenge, "base64url")
-    )
-  ) {
-    // TODO add in this place a deleting read from DynamoDB - if we find the challenge there it is okay too
+
+  // Verify the challenge was created by us
+  const sameChallengeAsCreatedForUser = Buffer.from(
+    clientData.challenge,
+    "base64url"
+  ).equals(Buffer.from(fido2options.challenge, "base64url"));
+  const sameChallengeAsCreatedUsernameless =
+    config.usernamelessSignInEnabled &&
+    (await ensureUsernamelessChallengeExists(clientData.challenge));
+  if (!sameChallengeAsCreatedForUser && !sameChallengeAsCreatedUsernameless) {
     throw new Error(
       `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
     );
   }
+
+  // Verify origin
   if (
     !requireConfig("allowedOrigins").includes(new URL(clientData.origin).origin)
   ) {
@@ -366,6 +374,27 @@ export async function verifyChallenge({
     signCount,
     flagBackupState,
   });
+}
+
+async function ensureUsernamelessChallengeExists(challenge: string) {
+  const { Attributes: usernamelessChallenge } = await ddbDocClient.send(
+    new DeleteCommand({
+      TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
+      Key: {
+        pk: `CHALLENGE#${challenge}`,
+        sk: `SIGN_IN`,
+      },
+      ReturnValues: "ALL_OLD",
+    })
+  );
+  logger.debug(
+    "Usernameless challenge:",
+    JSON.stringify(usernamelessChallenge)
+  );
+  return (
+    !!usernamelessChallenge &&
+    (usernamelessChallenge.exp as number) * 1000 < Date.now()
+  );
 }
 
 function assertIsClientData(cd: unknown): asserts cd is {

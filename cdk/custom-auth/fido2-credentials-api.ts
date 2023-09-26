@@ -261,7 +261,7 @@ async function generateAndStoreUsernamelessSignInChallenge() {
       Item: {
         pk: `CHALLENGE#${challenge}`,
         sk: `SIGN_IN`,
-        exp: Math.floor(signInTimeout),
+        exp: Math.floor(signInTimeout / 1000),
       },
     })
   );
@@ -568,7 +568,7 @@ async function handleCredentialsResponse(
       })
     )
     .catch(handleConditionalCheckFailedException("Challenge not found"));
-  if (!storedChallenge) {
+  if (!storedChallenge || (storedChallenge.exp as number) * 1000 < Date.now()) {
     throw new UserFacingError("Challenge not found");
   }
   logger.debug("Challenge found:", JSON.stringify(storedChallenge));
