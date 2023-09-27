@@ -263,6 +263,7 @@ export class Passwordless extends Construct {
         EXPOSE_USER_CREDENTIAL_IDS:
           props.fido2.exposeUserCredentialIDs === false ? "" : "TRUE",
         STACK_ID: cdk.Stack.of(scope).stackId,
+        SIGN_IN_TIMEOUT: props.fido2.timeouts?.signIn?.toString() ?? "120000",
       });
     }
     if (props.smsOtpStepUp) {
@@ -622,6 +623,7 @@ export class Passwordless extends Construct {
               SIGN_IN_TIMEOUT:
                 props.fido2.timeouts?.signIn?.toString() ?? "120000",
               ...props.functionProps?.fido2challenge?.environment,
+              USER_VERIFICATION: props.fido2.userVerification ?? "required",
             },
           }
         );

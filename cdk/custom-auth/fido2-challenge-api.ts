@@ -34,11 +34,20 @@ export const handler: Handler<{
   rawPath: string;
 }> = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));
-  logger.info("FIDO2 challenge API public:", event.rawPath);
+  logger.info("FIDO2 challenge API invocation:", event.rawPath);
   try {
     if (event.rawPath === "/sign-in-challenge") {
       const challenge = await generateAndStoreUsernamelessSignInChallenge();
-      return { statusCode: 200, headers, body: JSON.stringify({ challenge }) };
+      return {
+        statusCode: 200,
+        headers,
+        /** Remember, only return things we want unauthenticated users to see */
+        body: JSON.stringify({
+          challenge,
+          timeout: signInTimeout,
+          userVerification: process.env.USER_VERIFICATION,
+        }),
+      };
     }
     return {
       statusCode: 404,

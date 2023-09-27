@@ -52,27 +52,19 @@ export async function fido2CreateCredential({
 }: {
   friendlyName: string | (() => string | Promise<string>);
 }) {
-  const {
-    debug,
-    fido2: {
-      attestation,
-      authenticatorSelection,
-      extensions,
-      rp,
-      timeout,
-    } = {},
-  } = configure();
+  const { debug, fido2 } = configure();
   const publicKeyOptions = await fido2StartCreateCredential();
   const publicKey: CredentialCreationOptions["publicKey"] = {
     ...publicKeyOptions,
     rp: {
-      name: rp?.name ?? publicKeyOptions.rp.name,
-      id: rp?.id ?? publicKeyOptions.rp.id,
+      name: publicKeyOptions.rp.name ?? fido2?.rp?.name,
+      id: publicKeyOptions.rp.id ?? fido2?.rp?.id,
     },
-    attestation,
-    authenticatorSelection,
-    extensions,
-    timeout,
+    attestation: fido2?.attestation,
+    authenticatorSelection:
+      publicKeyOptions.authenticatorSelection ?? fido2?.authenticatorSelection,
+    extensions: fido2?.extensions,
+    timeout: publicKeyOptions.timeout ?? fido2?.timeout,
     challenge: bufferFromBase64Url(publicKeyOptions.challenge),
     user: {
       ...publicKeyOptions.user,
@@ -456,7 +448,7 @@ async function requestUsernamelessSignInChallenge() {
     },
   })
     .then(throwIfNot2xx)
-    .then((res) => res.json() as Promise<{ challenge: string }>);
+    .then((res) => res.json() as unknown);
 }
 
 export function authenticateWithFido2({
@@ -516,28 +508,36 @@ export function authenticateWithFido2({
           initAuthResponse.ChallengeParameters.fido2options
         );
         assertIsFido2Options(fido2options);
-        fido2options.credentials = (fido2options.credentials ?? []).concat(
-          credentials?.filter(
-            (cred) =>
-              !fido2options.credentials?.find(
-                (optionsCred) => cred.id === optionsCred.id
-              )
-          ) ?? []
-        );
-        debug?.("FIDO2 options from Cognito:", fido2options);
-        // TODO overlay client side options on these server generated options?
-        fido2credential = await credentialGetter(fido2options);
+        debug?.("FIDO2 options from Cognito challenge:", fido2options);
+        fido2credential = await credentialGetter({
+          ...fido2options,
+          relyingPartyId: fido2.rp?.id ?? fido2options.relyingPartyId,
+          timeout: fido2.timeout ?? fido2options.timeout,
+          userVerification:
+            fido2.authenticatorSelection?.userVerification ??
+            fido2options.userVerification,
+          credentials: (fido2options.credentials ?? []).concat(
+            credentials?.filter(
+              (cred) =>
+                !fido2options.credentials?.find(
+                  (optionsCred) => cred.id === optionsCred.id
+                )
+            ) ?? []
+          ),
+        });
         session = initAuthResponse.Session;
       } else {
         debug?.("Starting usernameless authentication");
-        const { challenge } = await requestUsernamelessSignInChallenge();
-        // TODO API should return not just a challenge but all FIDO2 options
+        const fido2options = await requestUsernamelessSignInChallenge();
+        assertIsFido2Options(fido2options);
+        debug?.("FIDO2 options from usernameless challenge:", fido2options);
         fido2credential = await credentialGetter({
-          challenge,
-          credentials: undefined, // force use of discoverable credentials only
-          relyingPartyId: fido2.rp?.id,
-          timeout: fido2.timeout,
-          userVerification: fido2.authenticatorSelection?.userVerification,
+          ...fido2options,
+          relyingPartyId: fido2.rp?.id ?? fido2options.relyingPartyId,
+          timeout: fido2.timeout ?? fido2options.timeout,
+          userVerification:
+            fido2.authenticatorSelection?.userVerification ??
+            fido2options.userVerification,
         });
         if (!fido2credential.userHandleB64) {
           throw new Error("No discoverable credentials available");

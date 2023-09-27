@@ -103,7 +103,7 @@ export const handler: Handler<{
     const userHandle = determineUserHandle({ sub, cognitoUsername });
     const userName = email ?? phoneNumber ?? name ?? cognitoUsername;
     const displayName = name ?? email;
-    if (event.rawPath === "register-authenticator/start") {
+    if (event.rawPath === "/register-authenticator/start") {
       logger.info("Starting a new authenticator registration ...");
       if (!userName) {
         throw new Error("Unable to determine name for user");
@@ -130,7 +130,7 @@ export const handler: Handler<{
         body: JSON.stringify(options),
         headers,
       };
-    } else if (event.rawPath === "register-authenticator/complete") {
+    } else if (event.rawPath === "/register-authenticator/complete") {
       logger.info("Completing the new authenticator registration ...");
       const storedCredential = await handleCredentialsResponse(
         userHandle,
@@ -141,7 +141,7 @@ export const handler: Handler<{
         body: JSON.stringify(storedCredential),
         headers,
       };
-    } else if (event.rawPath === "authenticators/list") {
+    } else if (event.rawPath === "/authenticators/list") {
       logger.info("Listing authenticators ...");
       const rpId = event.queryStringParameters?.rpId;
       if (!rpId) {
@@ -161,7 +161,7 @@ export const handler: Handler<{
         }),
         headers,
       };
-    } else if (event.rawPath === "authenticators/delete") {
+    } else if (event.rawPath === "/authenticators/delete") {
       logger.info("Deleting authenticator ...");
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
@@ -171,7 +171,7 @@ export const handler: Handler<{
         credentialId: parsed.credentialId,
       });
       return { statusCode: 204 };
-    } else if (event.rawPath === "authenticators/update") {
+    } else if (event.rawPath === "/authenticators/update") {
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
       await updateCredential({

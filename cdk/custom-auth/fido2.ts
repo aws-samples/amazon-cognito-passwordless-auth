@@ -58,7 +58,7 @@ let config = {
   /** Function to generate FIDO2 challenges that user's authenticators must sign. Override to e.g. implement transaction signing */
   challengeGenerator: () => randomBytes(64).toString("base64url"),
   /** Timeout for the sign-in attempt (per WebAuthn standard) */
-  timeout: 120000, // 2 minutes,
+  timeout: Number(process.env.SIGN_IN_TIMEOUT ?? "120000"), // 2 minutes,
   /** Should users having a registered FIDO2 credential be forced to use that for signing in? If true, other custom auth flows, such as Magic Link sign-in, will be denied for users having FIDO2 credentials––to protect them from phishing */
   enforceFido2IfAvailable: !!process.env.ENFORCE_FIDO2_IF_AVAILABLE,
   /** Salt to use for storing hashed FIDO2 credential data */
