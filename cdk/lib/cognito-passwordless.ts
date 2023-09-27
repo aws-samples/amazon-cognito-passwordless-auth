@@ -713,6 +713,7 @@ export class Passwordless extends Construct {
           userPoolClients: this.userPoolClients,
         }
       );
+      // TODO Support configuration of throttling via construct props
       const routes: {
         [path: string]: {
           handler: cdk.aws_lambda.IFunction;

@@ -528,7 +528,9 @@ export function authenticateWithFido2({
         fido2credential = await credentialGetter(fido2options);
         session = initAuthResponse.Session;
       } else {
+        debug?.("Starting usernameless authentication");
         const { challenge } = await requestUsernamelessSignInChallenge();
+        // TODO API should return not just a challenge but all FIDO2 options
         fido2credential = await credentialGetter({
           challenge,
           credentials: undefined, // force use of discoverable credentials only
