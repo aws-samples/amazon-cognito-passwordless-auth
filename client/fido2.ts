@@ -525,6 +525,7 @@ export function authenticateWithFido2({
           ) ?? []
         );
         debug?.("FIDO2 options from Cognito:", fido2options);
+        // TODO overlay client side options on these server generated options?
         fido2credential = await credentialGetter(fido2options);
         session = initAuthResponse.Session;
       } else {

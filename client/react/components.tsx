@@ -221,6 +221,8 @@ export const Passwordless = ({
   const user = lastSignedInUsers.at(0);
   const { email, credentials, useFido } = user ?? {};
 
+  // TODO: implement usernameless auth
+
   return (
     <FlexContainer brand={brand}>
       {signInStatus === "NOT_SIGNED_IN" && email && (
