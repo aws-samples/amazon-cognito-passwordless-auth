@@ -52,7 +52,6 @@ if (!allowedOrigins.length)
 const authenticatorRegistrationTimeout = Number(
   process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000"
 );
-const signInTimeout = Number(process.env.SIGN_IN_TIMEOUT ?? "120000");
 const allowedKty: Record<number, string> = { 2: "EC", 3: "RSA" };
 const allowedAlg: Record<number, string> = { "-7": "ES256", "-257": "RS256" };
 const headers = {
@@ -181,9 +180,6 @@ export const handler: Handler<{
         friendlyName: parsed.friendlyName,
       });
       return { statusCode: 200, headers };
-    } else if (event.rawPath === "/sign-in-challenge") {
-      const challenge = await generateAndStoreUsernamelessSignInChallenge();
-      return { statusCode: 200, headers, body: JSON.stringify({ challenge }) };
     }
     return {
       statusCode: 404,
@@ -251,21 +247,6 @@ interface Credential {
   lastSignIn?: Date;
   signCount: number;
   rpId: string;
-}
-
-async function generateAndStoreUsernamelessSignInChallenge() {
-  const challenge = randomBytes(64).toString("base64url");
-  await ddbDocClient.send(
-    new PutCommand({
-      TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
-      Item: {
-        pk: `CHALLENGE#${challenge}`,
-        sk: `SIGN_IN`,
-        exp: Math.floor(signInTimeout / 1000),
-      },
-    })
-  );
-  return challenge;
 }
 
 async function getExistingCredentialsForUser({

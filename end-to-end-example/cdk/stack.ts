@@ -57,6 +57,7 @@ class End2EndExampleStack extends cdk.Stack {
         ],
         attestation: "none",
         userVerification: "required",
+        enableUsernamelessAuthentication: true,
       },
       smsOtpStepUp: {},
       userPoolClientProps: {
@@ -168,6 +169,18 @@ NagSuppressions.addResourceSuppressions(
     },
   ],
   true
+);
+
+NagSuppressions.addResourceSuppressionsByPath(
+  stack,
+  `/${stack.node.id}/Passwordless/HttpApiPasswordless/POST--sign-in-challenge/Resource`,
+  [
+    {
+      id: "AwsSolutions-APIG4",
+      reason:
+        "This is intentional, this route must be invoked by unauthenticated users",
+    },
+  ]
 );
 
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));

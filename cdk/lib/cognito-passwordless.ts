@@ -33,6 +33,7 @@ export class Passwordless extends Construct {
   preSignUpFn?: cdk.aws_lambda.IFunction;
   preTokenGenerationFn?: cdk.aws_lambda.IFunction;
   fido2Fn?: cdk.aws_lambda.IFunction;
+  fido2challengeFn?: cdk.aws_lambda.IFunction;
   fido2Api?: apigw.HttpApi;
   constructor(
     scope: Construct,
@@ -131,6 +132,7 @@ export class Passwordless extends Construct {
         preSignUp?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
         preTokenGeneration?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
         fido2?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
+        fido2challenge?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
       };
       /** Any keys in the clientMetadata that you specify here, will be persisted as claims in the ID-token, via the Amazon Cognito PreToken-generation trigger */
       clientMetadataTokenKeys?: string[];
@@ -589,14 +591,54 @@ export class Passwordless extends Construct {
             AUTHENTICATOR_REGISTRATION_TIMEOUT:
               props.fido2.timeouts?.credentialRegistration?.toString() ??
               "300000",
-            SIGN_IN_TIMEOUT:
-              props.fido2.timeouts?.signIn?.toString() ?? "120000",
-            ...props.functionProps?.fido2?.environment,
           },
         }
       );
       this.userPool.grant(this.fido2Fn, "cognito-idp:AdminGetUser");
       this.authenticatorsTable!.grantReadWriteData(this.fido2Fn);
+
+      if (props.fido2.enableUsernamelessAuthentication) {
+        this.fido2challengeFn = new cdk.aws_lambda_nodejs.NodejsFunction(
+          this,
+          `Fido2Challenge${id}`,
+          {
+            entry: join(
+              __dirname,
+              "..",
+              "custom-auth",
+              "fido2-challenge-api.js"
+            ),
+            runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+            architecture: cdk.aws_lambda.Architecture.ARM_64,
+            bundling: {
+              format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
+            },
+            timeout: cdk.Duration.seconds(30),
+            ...props.functionProps?.fido2,
+            environment: {
+              LOG_LEVEL: props.logLevel ?? "INFO",
+              DYNAMODB_AUTHENTICATORS_TABLE:
+                this.authenticatorsTable!.tableName,
+              SIGN_IN_TIMEOUT:
+                props.fido2.timeouts?.signIn?.toString() ?? "120000",
+              ...props.functionProps?.fido2challenge?.environment,
+            },
+          }
+        );
+        this.fido2challengeFn.addToRolePolicy(
+          new cdk.aws_iam.PolicyStatement({
+            effect: cdk.aws_iam.Effect.ALLOW,
+            actions: ["dynamodb:PutItem"],
+            resources: [this.authenticatorsTable!.tableArn],
+            conditions: {
+              "ForAllValues:StringEquals": {
+                "dynamodb:Attributes": ["pk", "sk", "exp"],
+              },
+            },
+          })
+        );
+      }
+
       this.fido2Api = new apigw.HttpApi(this, `HttpApi${id}`, {
         corsPreflight: {
           allowHeaders: ["Content-Type", "Authorization"],
@@ -671,30 +713,58 @@ export class Passwordless extends Construct {
           userPoolClients: this.userPoolClients,
         }
       );
-      Object.entries({
-        "/register-authenticator/start": authorizer,
-        "/register-authenticator/complete": authorizer,
-        "/authenticators/list": authorizer,
-        "/authenticators/delete": authorizer,
-        "/authenticators/update": authorizer,
+      const routes: {
+        [path: string]: {
+          handler: cdk.aws_lambda.IFunction;
+          authorizer?: apigwAuth.HttpUserPoolAuthorizer | undefined;
+          routeSettings?: {
+            ThrottlingBurstLimit: number;
+            ThrottlingRateLimit: number;
+          };
+        };
+      } = {
+        "/register-authenticator/start": { authorizer, handler: this.fido2Fn },
+        "/register-authenticator/complete": {
+          authorizer,
+          handler: this.fido2Fn,
+        },
+        "/authenticators/list": { authorizer, handler: this.fido2Fn },
+        "/authenticators/delete": { authorizer, handler: this.fido2Fn },
+        "/authenticators/update": { authorizer, handler: this.fido2Fn },
         ...(props.fido2.enableUsernamelessAuthentication && {
-          "/sign-in-challenge": undefined, // public API, should be protected by e.g. WAF rate limit rule, to prevent DOS and misuse
+          "/sign-in-challenge": {
+            handler: this.fido2challengeFn!,
+            authorizer: undefined, // public API
+            routeSettings: {
+              // allow higher RPS for authentication
+              ThrottlingBurstLimit: 2000,
+              ThrottlingRateLimit: 1000,
+            },
+          },
         }),
-      }).forEach(
-        ([path, authorizer]: [
-          string,
-          apigwAuth.HttpUserPoolAuthorizer | undefined
-        ]) =>
+      };
+      const allRouteSettings: {
+        [routeKey: string]: (typeof routes)[string]["routeSettings"];
+      } = {};
+      Object.entries(routes).forEach(
+        ([path, { authorizer, handler, routeSettings }]) => {
+          const routeKey = `POST ${path}`;
           this.fido2Api!.addRoutes({
             path,
             methods: [apigw.HttpMethod.POST],
             integration: new apigwInt.HttpLambdaIntegration(
-              `Fido2Integration${id}`,
-              this.fido2Fn!
+              `Fido2Integration${routeKey}`,
+              handler
             ),
             authorizer,
-          })
+          });
+          if (routeSettings) {
+            // eslint-disable-next-line security/detect-object-injection
+            allRouteSettings[routeKey] = routeSettings;
+          }
+        }
       );
+      defaultStage.addPropertyOverride("RouteSettings", allRouteSettings);
     }
   }
 }

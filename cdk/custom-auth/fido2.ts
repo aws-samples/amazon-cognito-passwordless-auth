@@ -382,7 +382,7 @@ async function ensureUsernamelessChallengeExists(challenge: string) {
       TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
       Key: {
         pk: `CHALLENGE#${challenge}`,
-        sk: `SIGN_IN`,
+        sk: `USERNAMELESS_SIGN_IN`,
       },
       ReturnValues: "ALL_OLD",
     })
