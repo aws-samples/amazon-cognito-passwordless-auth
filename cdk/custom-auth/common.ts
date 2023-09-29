@@ -94,27 +94,38 @@ function isUuid(cognitoUsername: string) {
   );
 }
 
+/**
+ * Generate a WebAuthn challenge in the context of an AWS Lambda function invocation
+ *
+ * This implementation opts to not use crypto.randomBytes() in order to side step concerns
+ * around sustaining entropy in a multi-tenant environment such as AWS Lambda.
+ * Instead, we use sources of entropy specific to the particular Lambda execution sandbox,
+ * most notably the AWS_SECRET_ACCESS_KEY.
+ *
+ * @param awsRequestId The AWS Request ID from the Lambda execution context
+ * @returns A 64 byte challenge that is infeasible to guess
+ */
 export function generateWebAuthnChallengeForLambdaInvocation(
   awsRequestId: string
 ) {
-  /**
-   * We opt to not use crypto.randomBytes because it's entropy strength cannot be
-   * guaranteed in a multi-tenant environment such as AWS Lambda.
-   */
-  const {
-    AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY,
-    AWS_SESSION_TOKEN = "",
-  } = process.env;
+  const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN } =
+    process.env;
   if (!AWS_ACCESS_KEY_ID) {
     throw new Error("Missing environment variable AWS_ACCESS_KEY_ID");
   }
   if (!AWS_SECRET_ACCESS_KEY) {
     throw new Error("Missing environment variable AWS_SECRET_ACCESS_KEY");
   }
-  return createHmac("SHA256", AWS_SECRET_ACCESS_KEY)
-    .update(
-      `${AWS_ACCESS_KEY_ID}${AWS_SESSION_TOKEN}${randomUUID()}${awsRequestId}`
-    )
+  if (!AWS_SESSION_TOKEN) {
+    throw new Error("Missing environment variable AWS_SESSION_TOKEN");
+  }
+  return createHmac(
+    "SHA512", // 64 bytes
+    AWS_SECRET_ACCESS_KEY
+  )
+    .update(AWS_ACCESS_KEY_ID)
+    .update(AWS_SESSION_TOKEN)
+    .update(awsRequestId) // additional uniqueness per invocation (the AWS Request ID)
+    .update(randomUUID()) // add randomness
     .digest("base64url");
 }
