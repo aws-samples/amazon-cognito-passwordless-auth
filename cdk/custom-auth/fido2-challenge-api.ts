@@ -13,10 +13,12 @@
  * language governing permissions and limitations under the License.
  */
 import { Handler } from "aws-lambda";
-import { randomBytes } from "crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { logger } from "./common.js";
+import {
+  logger,
+  generateWebAuthnChallengeForLambdaInvocation,
+} from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: {
@@ -32,12 +34,23 @@ const headers = {
 
 export const handler: Handler<{
   rawPath: string;
-}> = async (event) => {
+}> = async (event, { awsRequestId }) => {
   logger.debug(JSON.stringify(event, null, 2));
   logger.info("FIDO2 challenge API invocation:", event.rawPath);
   try {
     if (event.rawPath === "/sign-in-challenge") {
-      const challenge = await generateAndStoreUsernamelessSignInChallenge();
+      const challenge =
+        generateWebAuthnChallengeForLambdaInvocation(awsRequestId);
+      await ddbDocClient.send(
+        new PutCommand({
+          TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
+          Item: {
+            pk: `CHALLENGE#${challenge}`,
+            sk: `USERNAMELESS_SIGN_IN`,
+            exp: Math.floor((Date.now() + signInTimeout) / 1000),
+          },
+        })
+      );
       return {
         statusCode: 200,
         headers,
@@ -63,18 +76,3 @@ export const handler: Handler<{
     };
   }
 };
-
-async function generateAndStoreUsernamelessSignInChallenge() {
-  const challenge = randomBytes(64).toString("base64url");
-  await ddbDocClient.send(
-    new PutCommand({
-      TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
-      Item: {
-        pk: `CHALLENGE#${challenge}`,
-        sk: `USERNAMELESS_SIGN_IN`,
-        exp: Math.floor((Date.now() + signInTimeout) / 1000),
-      },
-    })
-  );
-  return challenge;
-}

@@ -14,6 +14,8 @@
  */
 
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
+import { randomUUID, createHmac } from "crypto";
+
 export class UserFacingError extends Error {
   constructor(msg: string) {
     super(msg);
@@ -90,4 +92,29 @@ function isUuid(cognitoUsername: string) {
   return !!cognitoUsername.match(
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   );
+}
+
+export function generateWebAuthnChallengeForLambdaInvocation(
+  awsRequestId: string
+) {
+  /**
+   * We opt to not use crypto.randomBytes because it's entropy strength cannot be
+   * guaranteed in a multi-tenant environment such as AWS Lambda.
+   */
+  const {
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    AWS_SESSION_TOKEN = "",
+  } = process.env;
+  if (!AWS_ACCESS_KEY_ID) {
+    throw new Error("Missing environment variable AWS_ACCESS_KEY_ID");
+  }
+  if (!AWS_SECRET_ACCESS_KEY) {
+    throw new Error("Missing environment variable AWS_SECRET_ACCESS_KEY");
+  }
+  return createHmac("SHA256", AWS_SECRET_ACCESS_KEY)
+    .update(
+      `${AWS_ACCESS_KEY_ID}${AWS_SESSION_TOKEN}${randomUUID()}${awsRequestId}`
+    )
+    .digest("base64url");
 }

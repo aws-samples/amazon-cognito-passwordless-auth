@@ -13,7 +13,7 @@
  * language governing permissions and limitations under the License.
  */
 import { Handler } from "aws-lambda";
-import { randomBytes, createHash } from "crypto";
+import { createHash } from "crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -28,6 +28,7 @@ import {
   logger,
   handleConditionalCheckFailedException,
   UserFacingError,
+  generateWebAuthnChallengeForLambdaInvocation,
 } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -81,7 +82,7 @@ export const handler: Handler<{
   queryStringParameters?: {
     rpId?: string;
   };
-}> = async (event) => {
+}> = async (event, { awsRequestId }) => {
   logger.debug(JSON.stringify(event, null, 2));
   logger.info("FIDO2 credentials API invocation:", event.rawPath);
   if (event.requestContext.authorizer.jwt.claims.token_use !== "id") {
@@ -123,6 +124,7 @@ export const handler: Handler<{
         name: userName,
         displayName,
         rpId,
+        awsRequestId,
       });
       logger.debug("Options:", JSON.stringify(options));
       return {
@@ -391,11 +393,13 @@ async function requestCredentialsChallenge({
   name,
   displayName,
   rpId,
+  awsRequestId,
 }: {
   userId: string;
   name: string;
   displayName: string;
   rpId: string;
+  awsRequestId: string;
 }) {
   logger.info("Requesting credential challenge ...");
   const existingCredentials = await getExistingCredentialsForUser({
@@ -403,7 +407,7 @@ async function requestCredentialsChallenge({
     rpId,
   });
   const options: RpPublicKeyCredentialCreationOptions = {
-    challenge: randomBytes(64).toString("base64url"),
+    challenge: generateWebAuthnChallengeForLambdaInvocation(awsRequestId),
     attestation:
       (process.env.ATTESTATION as AttestationConveyancePreference) ?? "none",
     rp: {
