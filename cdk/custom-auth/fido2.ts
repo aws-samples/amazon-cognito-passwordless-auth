@@ -56,7 +56,8 @@ let config = {
   /** Expose credential IDs to users signing in? If you want users to use non-discoverable credentials you should set this to true */
   exposeUserCredentialIds: !!process.env.EXPOSE_USER_CREDENTIAL_IDS,
   /** Function to generate FIDO2 challenges that user's authenticators must sign. Override to e.g. implement transaction signing */
-  challengeGenerator: () => randomBytes(64).toString("base64url"),
+  challengeGenerator: (): Promise<string> | string =>
+    randomBytes(64).toString("base64url"),
   /** Timeout for the sign-in attempt (per WebAuthn standard) */
   timeout: Number(process.env.SIGN_IN_TIMEOUT ?? "120000"), // 2 minutes,
   /** Should users having a registered FIDO2 credential be forced to use that for signing in? If true, other custom auth flows, such as Magic Link sign-in, will be denied for users having FIDO2 credentials––to protect them from phishing */
