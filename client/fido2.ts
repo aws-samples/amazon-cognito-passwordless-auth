@@ -546,7 +546,7 @@ export function authenticateWithFido2({
           bufferFromBase64Url(fido2credential.userHandleB64)
         );
         debug?.(
-          `Proceeding with discovered credential for username: ${username}`
+          `Proceeding with discovered credential for username: ${username} (b64: ${fido2credential.userHandleB64})`
         );
         debug?.(`Invoking initiateAuth ...`);
         const initAuthResponse = await initiateAuth({

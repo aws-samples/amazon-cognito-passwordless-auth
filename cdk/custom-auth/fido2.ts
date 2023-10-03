@@ -285,14 +285,15 @@ export async function verifyChallenge({
   }
 
   // Verify the challenge was created by us
-  const sameChallengeAsCreatedForUser = Buffer.from(
-    clientData.challenge,
-    "base64url"
-  ).equals(Buffer.from(fido2options.challenge, "base64url"));
-  const sameChallengeAsCreatedUsernameless =
-    config.usernamelessSignInEnabled &&
-    (await ensureUsernamelessChallengeExists(clientData.challenge));
-  if (!sameChallengeAsCreatedForUser && !sameChallengeAsCreatedUsernameless) {
+  if (
+    !(
+      Buffer.from(clientData.challenge, "base64url").equals(
+        Buffer.from(fido2options.challenge, "base64url")
+      ) ||
+      (config.usernamelessSignInEnabled &&
+        (await ensureUsernamelessChallengeExists(clientData.challenge)))
+    )
+  ) {
     throw new Error(
       `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
     );
@@ -404,7 +405,7 @@ async function ensureUsernamelessChallengeExists(challenge: string) {
   );
   return (
     !!usernamelessChallenge &&
-    (usernamelessChallenge.exp as number) * 1000 < Date.now()
+    (usernamelessChallenge.exp as number) * 1000 > Date.now()
   );
 }
 
