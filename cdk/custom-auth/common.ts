@@ -148,9 +148,11 @@ export function withCorsHeaders(handler: APIGatewayProxyHandler) {
         new Error("Callback style response from wrapped handler not supported")
       )
     )?.then((response) => {
-      const origin = Object.entries(event.headers).find(
-        ([k, v]) => k.toLowerCase() === "origin" && v
-      )?.[1];
+      const origin =
+        event.headers &&
+        Object.entries(event.headers).find(
+          ([k, v]) => k.toLowerCase() === "origin" && v
+        )?.[1];
       const headers = {
         "Strict-Transport-Security":
           "max-age=31536000; includeSubdomains; preload",
