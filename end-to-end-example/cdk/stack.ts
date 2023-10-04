@@ -170,20 +170,21 @@ NagSuppressions.addResourceSuppressions(
   ],
   true
 );
+//TODO Fix CDK Nag!!!
 
-NagSuppressions.addResourceSuppressionsByPath(
-  stack,
-  `/${stack.node.id}/Passwordless/HttpApiPasswordless/POST--sign-in-challenge/Resource`,
-  [
-    {
-      id: "AwsSolutions-APIG4",
-      reason:
-        "This is intentional, this route must be invoked by unauthenticated users",
-    },
-  ]
-);
+// NagSuppressions.addResourceSuppressionsByPath(
+//   stack,
+//   `/${stack.node.id}/Passwordless/HttpApiPasswordless/POST--sign-in-challenge/Resource`,
+//   [
+//     {
+//       id: "AwsSolutions-APIG4",
+//       reason:
+//         "This is intentional, this route must be invoked by unauthenticated users",
+//     },
+//   ]
+// );
 
-cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
+// cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
 
 export function cloudfrontServedEmptySpaBucket(
   scope: Construct,

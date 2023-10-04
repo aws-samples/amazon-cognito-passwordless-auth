@@ -13,9 +13,6 @@
  * language governing permissions and limitations under the License.
  */
 import * as cdk from "aws-cdk-lib";
-import * as apigw from "@aws-cdk/aws-apigatewayv2-alpha";
-import * as apigwInt from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
-import * as apigwAuth from "@aws-cdk/aws-apigatewayv2-authorizers-alpha";
 import { Construct } from "constructs";
 import { join } from "path";
 
@@ -34,7 +31,7 @@ export class Passwordless extends Construct {
   preTokenGenerationFn?: cdk.aws_lambda.IFunction;
   fido2Fn?: cdk.aws_lambda.IFunction;
   fido2challengeFn?: cdk.aws_lambda.IFunction;
-  fido2Api?: apigw.HttpApi;
+  fido2Api?: cdk.aws_apigateway.RestApi;
   constructor(
     scope: Construct,
     id: string,
@@ -94,6 +91,16 @@ export class Passwordless extends Construct {
          * To make this feature work, a public API is exposed that user agents can invoke to generate a FIDO2 challenge for sign-in.
          */
         enableUsernamelessAuthentication?: boolean;
+        api?: {
+          /**
+           * Create a log role for API Gateway and add this to API Gateway account settings?
+           * Set to false if you have already set this up in your account and region,
+           * otherwise that config will be overwritten.
+           *
+           * @default true
+           */
+          addCloudWatchLogsRoleAndAccountSetting?: boolean;
+        };
       };
       /**
        * Enable sign-in with Magic Links by providing this config object
@@ -103,6 +110,7 @@ export class Passwordless extends Construct {
       magicLink?: {
         /** The e-mail address you want to use as the FROM address of the magic link e-mails */
         sesFromAddress: string;
+        /** The AWS region you want to use Amazon SES from. Use this to specify a different region where you're no longer in the SES sandbox */
         sesRegion?: string;
         kmsKey?: cdk.aws_kms.IKey;
         kmsKeyProps?: cdk.aws_kms.KeyProps;
@@ -558,6 +566,12 @@ export class Passwordless extends Construct {
       this.userPool = props.userPool;
     }
     if (props.fido2) {
+      const corsOptions: cdk.aws_apigateway.CorsOptions = {
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowMethods: ["POST"],
+        allowOrigins: props.allowedOrigins ?? [],
+        maxAge: cdk.Duration.days(1),
+      };
       this.fido2Fn = new cdk.aws_lambda_nodejs.NodejsFunction(
         this,
         `Fido2${id}`,
@@ -592,6 +606,11 @@ export class Passwordless extends Construct {
             AUTHENTICATOR_REGISTRATION_TIMEOUT:
               props.fido2.timeouts?.credentialRegistration?.toString() ??
               "300000",
+            CORS_ALLOWED_ORIGINS: corsOptions.allowOrigins.join(","),
+            CORS_ALLOWED_HEADERS: corsOptions.allowHeaders?.join(",") ?? "",
+            CORS_ALLOWED_METHODS: corsOptions.allowMethods?.join(",") ?? "",
+            CORS_MAX_AGE: corsOptions.maxAge?.toSeconds().toString() ?? "",
+            ...props.functionProps?.fido2?.environment,
           },
         }
       );
@@ -622,8 +641,12 @@ export class Passwordless extends Construct {
                 this.authenticatorsTable!.tableName,
               SIGN_IN_TIMEOUT:
                 props.fido2.timeouts?.signIn?.toString() ?? "120000",
-              ...props.functionProps?.fido2challenge?.environment,
               USER_VERIFICATION: props.fido2.userVerification ?? "required",
+              CORS_ALLOWED_ORIGINS: corsOptions.allowOrigins.join(","),
+              CORS_ALLOWED_HEADERS: corsOptions.allowHeaders?.join(",") ?? "",
+              CORS_ALLOWED_METHODS: corsOptions.allowMethods?.join(",") ?? "",
+              CORS_MAX_AGE: corsOptions.maxAge?.toSeconds().toString() ?? "",
+              ...props.functionProps?.fido2challenge?.environment,
             },
           }
         );
@@ -641,20 +664,6 @@ export class Passwordless extends Construct {
         );
       }
 
-      this.fido2Api = new apigw.HttpApi(this, `HttpApi${id}`, {
-        corsPreflight: {
-          allowHeaders: ["Content-Type", "Authorization"],
-          allowMethods: [apigw.CorsHttpMethod.POST],
-          allowOrigins: props.allowedOrigins,
-          maxAge: cdk.Duration.days(1),
-        },
-      });
-      const defaultStage = this.fido2Api.defaultStage?.node
-        .defaultChild as cdk.aws_apigatewayv2.CfnStage;
-      defaultStage.addPropertyOverride("DefaultRouteSettings", {
-        ThrottlingBurstLimit: 100,
-        ThrottlingRateLimit: 200,
-      });
       const accessLogs = new cdk.aws_logs.LogGroup(
         this,
         `ApigwAccessLogs${id}`,
@@ -662,35 +671,105 @@ export class Passwordless extends Construct {
           retention: cdk.aws_logs.RetentionDays.INFINITE,
         }
       );
-      defaultStage.addPropertyOverride(
-        "AccessLogSettings.DestinationArn",
-        accessLogs.logGroupArn
+      const authorizer = new cdk.aws_apigateway.CognitoUserPoolsAuthorizer(
+        scope,
+        `CognitoAuthorizer${id}`,
+        {
+          cognitoUserPools: [this.userPool],
+          resultsCacheTtl: cdk.Duration.minutes(1),
+        }
       );
-      defaultStage.addPropertyOverride(
-        "AccessLogSettings.Format",
-        JSON.stringify({
-          requestId: "$context.requestId",
-          jwtSub: "$context.authorizer.claims.sub",
-          jwtIat: "$context.authorizer.claims.iat",
-          jwtEventId: "$context.authorizer.claims.event_id",
-          jwtJti: "$context.authorizer.claims.jti",
-          jwtOriginJti: "$context.authorizer.claims.origin_jti",
-          jwtSignInMethod: "$context.authorizer.claims.sign_in_method",
-          userAgent: "$context.identity.userAgent",
-          sourceIp: "$context.identity.sourceIp",
-          requestTime: "$context.requestTime",
-          requestTimeEpoch: "$context.requestTimeEpoch",
-          httpMethod: "$context.httpMethod",
-          path: "$context.path",
-          status: "$context.status",
-          authorizerError: "$context.authorizer.error",
-          apiError: "$context.error.message",
-          protocol: "$context.protocol",
-          responseLength: "$context.responseLength",
-          responseLatency: "$context.responseLatency",
-          domainName: "$context.domainName",
-        })
+      this.fido2Api = new cdk.aws_apigateway.LambdaRestApi(
+        this,
+        `RestApi${id}`,
+        {
+          proxy: false,
+          handler: this.fido2Fn,
+          deployOptions: {
+            throttlingBurstLimit: 1000,
+            throttlingRateLimit: 2000,
+            accessLogDestination: new cdk.aws_apigateway.LogGroupLogDestination(
+              accessLogs
+            ),
+            accessLogFormat: cdk.aws_apigateway.AccessLogFormat.custom(
+              JSON.stringify({
+                requestId: cdk.aws_apigateway.AccessLogField.contextRequestId(),
+                jwtSub:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
+                    "sub"
+                  ),
+                jwtIat:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
+                    "iat"
+                  ),
+                jwtEventId:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
+                    "event_id"
+                  ),
+                jwtJti:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
+                    "jti"
+                  ),
+                jwtOriginJti:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
+                    "origin_jti"
+                  ),
+                jwtSignInMethod:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
+                    "sign_in_method"
+                  ),
+                userAgent:
+                  cdk.aws_apigateway.AccessLogField.contextIdentityUserAgent(),
+                sourceIp:
+                  cdk.aws_apigateway.AccessLogField.contextIdentitySourceIp(),
+                requestTime:
+                  cdk.aws_apigateway.AccessLogField.contextRequestTime(),
+                requestTimeEpoch:
+                  cdk.aws_apigateway.AccessLogField.contextRequestTimeEpoch(),
+                httpMethod:
+                  cdk.aws_apigateway.AccessLogField.contextHttpMethod(),
+                path: cdk.aws_apigateway.AccessLogField.contextPath(),
+                status: cdk.aws_apigateway.AccessLogField.contextStatus(),
+                authorizerError:
+                  cdk.aws_apigateway.AccessLogField.contextAuthorizerError(),
+                apiError:
+                  cdk.aws_apigateway.AccessLogField.contextErrorMessage(),
+                protocol: cdk.aws_apigateway.AccessLogField.contextProtocol(),
+                responseLength:
+                  cdk.aws_apigateway.AccessLogField.contextResponseLength(),
+                responseLatency:
+                  cdk.aws_apigateway.AccessLogField.contextResponseLatency(),
+                domainName:
+                  cdk.aws_apigateway.AccessLogField.contextDomainName(),
+              })
+            ),
+          },
+        }
       );
+      if (props.fido2.api?.addCloudWatchLogsRoleAndAccountSetting !== false) {
+        const logRole = new cdk.aws_iam.Role(
+          scope,
+          "ApiGatewayCloudWatchLogsRole",
+          {
+            assumedBy: new cdk.aws_iam.ServicePrincipal(
+              "apigateway.amazonaws.com"
+            ),
+            managedPolicies: [
+              cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+                "service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+              ),
+            ],
+          }
+        );
+        const accountSetting = new cdk.aws_apigateway.CfnAccount(
+          scope,
+          "ApiGatewayAccountSetting",
+          {
+            cloudWatchRoleArn: logRole.roleArn,
+          }
+        );
+        this.fido2Api.node.addDependency(accountSetting);
+      }
       if (!props.userPoolClients) {
         this.userPoolClients = [
           this.userPool.addClient(`UserPoolClient${id}`, {
@@ -708,66 +787,44 @@ export class Passwordless extends Construct {
       } else {
         this.userPoolClients = props.userPoolClients;
       }
-      const authorizer = new apigwAuth.HttpUserPoolAuthorizer(
-        `CognitoAuthorizer${id}`,
-        this.userPool,
-        {
-          userPoolClients: this.userPoolClients,
-        }
+
+      const registerAuthenticatorResource = this.fido2Api.root.addResource(
+        "register-authenticator"
       );
-      // TODO Support configuration of throttling via construct props
-      const routes: {
-        [path: string]: {
-          handler: cdk.aws_lambda.IFunction;
-          authorizer?: apigwAuth.HttpUserPoolAuthorizer | undefined;
-          routeSettings?: {
-            ThrottlingBurstLimit: number;
-            ThrottlingRateLimit: number;
-          };
-        };
-      } = {
-        "/register-authenticator/start": { authorizer, handler: this.fido2Fn },
-        "/register-authenticator/complete": {
-          authorizer,
-          handler: this.fido2Fn,
-        },
-        "/authenticators/list": { authorizer, handler: this.fido2Fn },
-        "/authenticators/delete": { authorizer, handler: this.fido2Fn },
-        "/authenticators/update": { authorizer, handler: this.fido2Fn },
-        ...(props.fido2.enableUsernamelessAuthentication && {
-          "/sign-in-challenge": {
-            handler: this.fido2challengeFn!,
+      const startResource = registerAuthenticatorResource.addResource("start");
+      const completeResource =
+        registerAuthenticatorResource.addResource("complete");
+      const authenticatorsResource =
+        this.fido2Api.root.addResource("authenticators");
+      const listResource = authenticatorsResource.addResource("list");
+      const deleteResource = authenticatorsResource.addResource("delete");
+      const updateResource = authenticatorsResource.addResource("update");
+
+      [
+        startResource,
+        completeResource,
+        listResource,
+        deleteResource,
+        updateResource,
+      ].forEach((r) => {
+        r.addCorsPreflight(corsOptions);
+        r.addMethod("POST", undefined, {
+          authorizer: authorizer,
+        });
+      });
+
+      if (props.fido2.enableUsernamelessAuthentication) {
+        const signInChallenge =
+          this.fido2Api.root.addResource("sign-in-challenge");
+        signInChallenge.addCorsPreflight(corsOptions);
+        signInChallenge.addMethod(
+          "POST",
+          new cdk.aws_apigateway.LambdaIntegration(this.fido2challengeFn!),
+          {
             authorizer: undefined, // public API
-            routeSettings: {
-              // allow higher RPS for authentication
-              ThrottlingBurstLimit: 2000,
-              ThrottlingRateLimit: 1000,
-            },
-          },
-        }),
-      };
-      const allRouteSettings: {
-        [routeKey: string]: (typeof routes)[string]["routeSettings"];
-      } = {};
-      Object.entries(routes).forEach(
-        ([path, { authorizer, handler, routeSettings }]) => {
-          const routeKey = `POST ${path}`;
-          this.fido2Api!.addRoutes({
-            path,
-            methods: [apigw.HttpMethod.POST],
-            integration: new apigwInt.HttpLambdaIntegration(
-              `Fido2Integration${routeKey}`,
-              handler
-            ),
-            authorizer,
-          });
-          if (routeSettings) {
-            // eslint-disable-next-line security/detect-object-injection
-            allRouteSettings[routeKey] = routeSettings;
           }
-        }
-      );
-      defaultStage.addPropertyOverride("RouteSettings", allRouteSettings);
+        );
+      }
     }
   }
 }

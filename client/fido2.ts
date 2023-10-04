@@ -142,10 +142,9 @@ export async function fido2StartCreateCredential() {
   if (!idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL(
-    `/register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`,
-    fido2.baseUrl
-  );
+  const url = `${
+    new URL(fido2.baseUrl).href
+  }/register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`;
   const method = "POST";
   return fetch(url, {
     method,
@@ -174,7 +173,7 @@ export async function fido2CompleteCreateCredential({
   if (!idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL("/register-authenticator/complete", fido2.baseUrl);
+  const url = `${new URL(fido2.baseUrl).href}register-authenticator/complete`;
   const method = "POST";
   const parsedCredential =
     "response" in credential
@@ -223,10 +222,9 @@ export async function fido2ListCredentials() {
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL(
-    `/authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`,
-    fido2.baseUrl
-  );
+  const url = `${new URL(fido2.baseUrl).href}authenticators/list?rpId=${
+    fido2.rp?.id ?? location.hostname
+  }`;
   return fetch(url, {
     method: "POST",
     headers: {
@@ -273,7 +271,7 @@ export async function fido2DeleteCredential({
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL("/authenticators/delete", fido2.baseUrl);
+  const url = `${new URL(fido2.baseUrl).href}authenticators/delete`;
   return fetch(url, {
     method: "POST",
     body: JSON.stringify({ credentialId }),
@@ -300,7 +298,7 @@ export async function fido2UpdateCredential({
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL("/authenticators/update", fido2.baseUrl);
+  const url = `${new URL(fido2.baseUrl).href}authenticators/update`;
   return fetch(url, {
     method: "POST",
     body: JSON.stringify({ credentialId, friendlyName }),
@@ -441,7 +439,7 @@ async function requestUsernamelessSignInChallenge() {
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }
-  return fetch(new URL(`/sign-in-challenge`, fido2.baseUrl), {
+  return fetch(`${new URL(fido2.baseUrl).href}sign-in-challenge`, {
     method: "POST",
     headers: {
       accept: "application/json, text/javascript",

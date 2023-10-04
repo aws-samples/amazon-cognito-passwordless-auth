@@ -12,12 +12,13 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { Handler } from "aws-lambda";
+import { APIGatewayProxyHandler } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import {
   logger,
   generateWebAuthnChallengeForLambdaInvocation,
+  withCorsHeaders,
 } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -32,13 +33,11 @@ const headers = {
   "Cache-Control": "no-store",
 };
 
-export const handler: Handler<{
-  rawPath: string;
-}> = async (event, { awsRequestId }) => {
+const _handler: APIGatewayProxyHandler = async (event, { awsRequestId }) => {
   logger.debug(JSON.stringify(event, null, 2));
-  logger.info("FIDO2 challenge API invocation:", event.rawPath);
+  logger.info("FIDO2 challenge API invocation:", event.path);
   try {
-    if (event.rawPath === "/sign-in-challenge") {
+    if (event.path === "/sign-in-challenge") {
       const challenge =
         generateWebAuthnChallengeForLambdaInvocation(awsRequestId);
       await ddbDocClient.send(
@@ -76,3 +75,5 @@ export const handler: Handler<{
     };
   }
 };
+
+export const handler = withCorsHeaders(_handler);

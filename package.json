@@ -143,9 +143,6 @@
     "cbor": "^8.1.0"
   },
   "peerDependencies": {
-    "@aws-cdk/aws-apigatewayv2-alpha": "*",
-    "@aws-cdk/aws-apigatewayv2-authorizers-alpha": "*",
-    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "*",
     "aws-cdk-lib": ">=2.0.0",
     "cdk-nag": ">=2.0.0",
     "constructs": ">=10.0.0",

@@ -15,6 +15,7 @@
 
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { randomUUID, createHmac } from "crypto";
+import { APIGatewayProxyHandler } from "aws-lambda";
 
 export class UserFacingError extends Error {
   constructor(msg: string) {
@@ -128,4 +129,49 @@ export function generateWebAuthnChallengeForLambdaInvocation(
     .update(awsRequestId) // additional uniqueness per invocation (the AWS Request ID)
     .update(randomUUID()) // add randomness
     .digest("base64url");
+}
+
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS;
+const allowedMethods = process.env.CORS_ALLOWED_METHODS;
+const allowedHeaders = process.env.CORS_ALLOWED_HEADERS;
+const maxAge = process.env.CORS_MAX_AGE;
+const corsHeaderAvailable = !!(
+  allowedOrigins &&
+  allowedMethods &&
+  allowedHeaders &&
+  maxAge
+);
+export function withCorsHeaders(handler: APIGatewayProxyHandler) {
+  const wrapped: typeof handler = (event, context, cb) => {
+    return handler(event, context, () =>
+      cb(
+        new Error("Callback style response from wrapped handler not supported")
+      )
+    )?.then((response) => {
+      const origin = Object.entries(event.headers).find(
+        ([k, v]) => k.toLowerCase() === "origin" && v
+      )?.[1];
+      const headers = {
+        "Strict-Transport-Security":
+          "max-age=31536000; includeSubdomains; preload",
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      };
+      if (
+        origin &&
+        corsHeaderAvailable &&
+        allowedOrigins.split(",").includes(origin)
+      ) {
+        Object.assign(headers, {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Methods": allowedMethods,
+          "Access-Control-Allow-Headers": allowedHeaders,
+          "Access-Control-Max-Age": maxAge,
+        });
+      }
+      response.headers = { ...response.headers, ...headers };
+      return response;
+    });
+  };
+  return wrapped;
 }
