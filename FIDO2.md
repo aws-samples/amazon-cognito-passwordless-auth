@@ -1,3 +1,14 @@
+TODO USERNAMELESS DOCS
+
+         * Set to true to enable users to sign in without requiring them to type in their username––instead, the user handle from the
+         * user's existing FIDO2 credential will be used as username. This only works if the user has an existing discoverable credential (aka Passkey).
+         *
+         * You should then make sure you're using an opaque username (i.e. a UUID) for users, in which case the username can also be used as user handle.
+         * Example: username b4ef439d-b3ef-457c-9a4a-0a3031c07e86 would be okay, username johndoe not.
+         * This is because the user handle must be an opaque byte sequence as mandated by WebAuthn spec: https://www.w3.org/TR/webauthn-3/#user-handle
+         *
+         * To make this feature work, a public API is exposed that user agents can invoke to generate a FIDO2 challenge for sign-in.
+
 # FIDO2
 
 This solution includes components that implement FIDO2 authentication, i.e. sign with Face, Touch, YubiKey, etc.:

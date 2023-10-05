@@ -80,17 +80,6 @@ export class Passwordless extends Construct {
          * @default false
          */
         enforceFido2IfAvailable?: boolean;
-        /**
-         * Set to true to enable users to sign in without requiring them to type in their username––instead, the user handle from the
-         * user's existing FIDO2 credential will be used as username. This only works if the user has an existing discoverable credential (aka Passkey).
-         *
-         * You should then make sure you're using an opaque username (i.e. a UUID) for users, in which case the username can also be used as user handle.
-         * Example: username b4ef439d-b3ef-457c-9a4a-0a3031c07e86 would be okay, username johndoe not.
-         * This is because the user handle must be an opaque byte sequence as mandated by WebAuthn spec: https://www.w3.org/TR/webauthn-3/#user-handle
-         *
-         * To make this feature work, a public API is exposed that user agents can invoke to generate a FIDO2 challenge for sign-in.
-         */
-        enableUsernamelessAuthentication?: boolean;
         api?: {
           /**
            * Create a log role for API Gateway and add this to API Gateway account settings?
@@ -390,10 +379,6 @@ export class Passwordless extends Construct {
           : "",
         USER_VERIFICATION: props.fido2.userVerification ?? "required",
         STACK_ID: cdk.Stack.of(scope).stackId,
-        USERNAMELESS_SIGN_IN_ENABLED: props.fido2
-          .enableUsernamelessAuthentication
-          ? "TRUE"
-          : "",
       });
     }
     if (props.smsOtpStepUp) {
@@ -617,52 +602,44 @@ export class Passwordless extends Construct {
       this.userPool.grant(this.fido2Fn, "cognito-idp:AdminGetUser");
       this.authenticatorsTable!.grantReadWriteData(this.fido2Fn);
 
-      if (props.fido2.enableUsernamelessAuthentication) {
-        this.fido2challengeFn = new cdk.aws_lambda_nodejs.NodejsFunction(
-          this,
-          `Fido2Challenge${id}`,
-          {
-            entry: join(
-              __dirname,
-              "..",
-              "custom-auth",
-              "fido2-challenge-api.js"
-            ),
-            runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
-            architecture: cdk.aws_lambda.Architecture.ARM_64,
-            bundling: {
-              format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
+      this.fido2challengeFn = new cdk.aws_lambda_nodejs.NodejsFunction(
+        this,
+        `Fido2Challenge${id}`,
+        {
+          entry: join(__dirname, "..", "custom-auth", "fido2-challenge-api.js"),
+          runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+          architecture: cdk.aws_lambda.Architecture.ARM_64,
+          bundling: {
+            format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
+          },
+          timeout: cdk.Duration.seconds(30),
+          ...props.functionProps?.fido2,
+          environment: {
+            LOG_LEVEL: props.logLevel ?? "INFO",
+            DYNAMODB_AUTHENTICATORS_TABLE: this.authenticatorsTable!.tableName,
+            SIGN_IN_TIMEOUT:
+              props.fido2.timeouts?.signIn?.toString() ?? "120000",
+            USER_VERIFICATION: props.fido2.userVerification ?? "required",
+            CORS_ALLOWED_ORIGINS: corsOptions.allowOrigins.join(","),
+            CORS_ALLOWED_HEADERS: corsOptions.allowHeaders?.join(",") ?? "",
+            CORS_ALLOWED_METHODS: corsOptions.allowMethods?.join(",") ?? "",
+            CORS_MAX_AGE: corsOptions.maxAge?.toSeconds().toString() ?? "",
+            ...props.functionProps?.fido2challenge?.environment,
+          },
+        }
+      );
+      this.fido2challengeFn.addToRolePolicy(
+        new cdk.aws_iam.PolicyStatement({
+          effect: cdk.aws_iam.Effect.ALLOW,
+          actions: ["dynamodb:PutItem"],
+          resources: [this.authenticatorsTable!.tableArn],
+          conditions: {
+            "ForAllValues:StringEquals": {
+              "dynamodb:Attributes": ["pk", "sk", "exp"],
             },
-            timeout: cdk.Duration.seconds(30),
-            ...props.functionProps?.fido2,
-            environment: {
-              LOG_LEVEL: props.logLevel ?? "INFO",
-              DYNAMODB_AUTHENTICATORS_TABLE:
-                this.authenticatorsTable!.tableName,
-              SIGN_IN_TIMEOUT:
-                props.fido2.timeouts?.signIn?.toString() ?? "120000",
-              USER_VERIFICATION: props.fido2.userVerification ?? "required",
-              CORS_ALLOWED_ORIGINS: corsOptions.allowOrigins.join(","),
-              CORS_ALLOWED_HEADERS: corsOptions.allowHeaders?.join(",") ?? "",
-              CORS_ALLOWED_METHODS: corsOptions.allowMethods?.join(",") ?? "",
-              CORS_MAX_AGE: corsOptions.maxAge?.toSeconds().toString() ?? "",
-              ...props.functionProps?.fido2challenge?.environment,
-            },
-          }
-        );
-        this.fido2challengeFn.addToRolePolicy(
-          new cdk.aws_iam.PolicyStatement({
-            effect: cdk.aws_iam.Effect.ALLOW,
-            actions: ["dynamodb:PutItem"],
-            resources: [this.authenticatorsTable!.tableArn],
-            conditions: {
-              "ForAllValues:StringEquals": {
-                "dynamodb:Attributes": ["pk", "sk", "exp"],
-              },
-            },
-          })
-        );
-      }
+          },
+        })
+      );
 
       const accessLogs = new cdk.aws_logs.LogGroup(
         this,
@@ -813,18 +790,16 @@ export class Passwordless extends Construct {
         });
       });
 
-      if (props.fido2.enableUsernamelessAuthentication) {
-        const signInChallenge =
-          this.fido2Api.root.addResource("sign-in-challenge");
-        signInChallenge.addCorsPreflight(corsOptions);
-        signInChallenge.addMethod(
-          "POST",
-          new cdk.aws_apigateway.LambdaIntegration(this.fido2challengeFn!),
-          {
-            authorizer: undefined, // public API
-          }
-        );
-      }
+      const signInChallenge =
+        this.fido2Api.root.addResource("sign-in-challenge");
+      signInChallenge.addCorsPreflight(corsOptions);
+      signInChallenge.addMethod(
+        "POST",
+        new cdk.aws_apigateway.LambdaIntegration(this.fido2challengeFn),
+        {
+          authorizer: undefined, // public API
+        }
+      );
     }
   }
 }

@@ -70,7 +70,6 @@ let config = {
   enforceFido2IfAvailable: !!process.env.ENFORCE_FIDO2_IF_AVAILABLE,
   /** Salt to use for storing hashed FIDO2 credential data */
   salt: process.env.STACK_ID,
-  usernamelessSignInEnabled: !!process.env.USERNAMELESS_SIGN_IN_ENABLED,
 };
 
 function requireConfig<K extends keyof typeof config>(
@@ -289,9 +288,7 @@ export async function verifyChallenge({
     !(
       Buffer.from(clientData.challenge, "base64url").equals(
         Buffer.from(fido2options.challenge, "base64url")
-      ) ||
-      (config.usernamelessSignInEnabled &&
-        (await ensureUsernamelessChallengeExists(clientData.challenge)))
+      ) || (await ensureUsernamelessChallengeExists(clientData.challenge))
     )
   ) {
     throw new Error(
