@@ -32,6 +32,7 @@ export class Passwordless extends Construct {
   fido2Fn?: cdk.aws_lambda.IFunction;
   fido2challengeFn?: cdk.aws_lambda.IFunction;
   fido2Api?: cdk.aws_apigateway.RestApi;
+  fido2ApiWebACL?: cdk.aws_wafv2.CfnWebACL;
   constructor(
     scope: Construct,
     id: string,
@@ -89,6 +90,14 @@ export class Passwordless extends Construct {
            * @default true
            */
           addCloudWatchLogsRoleAndAccountSetting?: boolean;
+          /**
+           * Add a WAF Web ACL with rate limit rule to the API deployment stage? The included Web ACL will have 1 rule:
+           * rate limit incoming requests to max 100 per 5 minutes per IP address (based on X-Forwarded-For header).
+           * If you want to customize the Web ACL, set addWaf to false and add your own Web ACL instead.
+           *
+           * @default true
+           */
+          addWaf?: boolean;
         };
       };
       /**
@@ -663,6 +672,9 @@ export class Passwordless extends Construct {
           proxy: false,
           handler: this.fido2Fn,
           deployOptions: {
+            loggingLevel: cdk.aws_apigateway.MethodLoggingLevel.ERROR,
+            metricsEnabled: true,
+            stageName: "v1",
             throttlingBurstLimit: 1000,
             throttlingRateLimit: 2000,
             accessLogDestination: new cdk.aws_apigateway.LogGroupLogDestination(
@@ -800,6 +812,52 @@ export class Passwordless extends Construct {
           authorizer: undefined, // public API
         }
       );
+
+      if (props.fido2.api?.addWaf !== false) {
+        this.fido2ApiWebACL = new cdk.aws_wafv2.CfnWebACL(
+          scope,
+          `Fido2ApiWebACL${id}`,
+          {
+            defaultAction: {
+              allow: {},
+            },
+            scope: "REGIONAL",
+            visibilityConfig: {
+              cloudWatchMetricsEnabled: true,
+              metricName: `Fido2ApiWebACL${id}`,
+              sampledRequestsEnabled: true,
+            },
+            rules: [
+              {
+                name: "RateLimitPerIP",
+                priority: 1,
+                action: {
+                  block: {},
+                },
+                visibilityConfig: {
+                  sampledRequestsEnabled: true,
+                  cloudWatchMetricsEnabled: true,
+                  metricName: "RateLimitPerIP",
+                },
+                statement: {
+                  rateBasedStatement: {
+                    limit: 100, // max 100 requests per 5 minutes per IP address
+                    aggregateKeyType: "FORWARDED_IP",
+                    forwardedIpConfig: {
+                      headerName: "X-Forwarded-For",
+                      fallbackBehavior: "MATCH",
+                    },
+                  },
+                },
+              },
+            ],
+          }
+        );
+      }
+      new cdk.aws_wafv2.CfnWebACLAssociation(scope, `WafAssociation${id}`, {
+        resourceArn: this.fido2Api.deploymentStage.stageArn,
+        webAclArn: this.fido2ApiWebACL!.attrArn,
+      });
     }
   }
 }

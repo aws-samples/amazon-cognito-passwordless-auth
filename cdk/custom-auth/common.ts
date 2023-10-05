@@ -96,6 +96,7 @@ function isUuid(cognitoUsername: string) {
 }
 
 /**
+ * TODO switch back to randomBytes
  * Generate a WebAuthn challenge in the context of an AWS Lambda function invocation
  *
  * This implementation opts to not use crypto.randomBytes() in order to side step concerns
@@ -141,8 +142,8 @@ const corsHeaderAvailable = !!(
   allowedHeaders &&
   maxAge
 );
-export function withCorsHeaders(handler: APIGatewayProxyHandler) {
-  const wrapped: typeof handler = (event, context, cb) => {
+export function withCorsHeaders<T extends APIGatewayProxyHandler>(handler: T) {
+  const wrapped: APIGatewayProxyHandler = (event, context, cb) => {
     return handler(event, context, () =>
       cb(
         new Error("Callback style response from wrapped handler not supported")
@@ -175,5 +176,5 @@ export function withCorsHeaders(handler: APIGatewayProxyHandler) {
       return response;
     });
   };
-  return wrapped;
+  return wrapped as T;
 }
