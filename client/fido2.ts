@@ -57,8 +57,8 @@ export async function fido2CreateCredential({
   const publicKey: CredentialCreationOptions["publicKey"] = {
     ...publicKeyOptions,
     rp: {
-      name: publicKeyOptions.rp.name ?? fido2?.rp?.name,
-      id: publicKeyOptions.rp.id ?? fido2?.rp?.id,
+      name: fido2?.rp?.name ?? publicKeyOptions.rp.name,
+      id: fido2?.rp?.id ?? publicKeyOptions.rp.id,
     },
     attestation: fido2?.attestation,
     authenticatorSelection:
@@ -133,6 +133,14 @@ export interface ParsedCredential {
   transports?: string[]; // Should be: "usb" | "nfc" | "ble" | "internal" | "hybrid"
 }
 
+function getFullFido2Url(path: string) {
+  const { fido2 } = configure();
+  if (!fido2) {
+    throw new Error("Missing Fido2 config");
+  }
+  return `${fido2.baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+}
+
 export async function fido2StartCreateCredential() {
   const { fido2, fetch, location } = configure();
   if (!fido2) {
@@ -142,18 +150,19 @@ export async function fido2StartCreateCredential() {
   if (!idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = `${
-    new URL(fido2.baseUrl).href
-  }/register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`;
-  const method = "POST";
-  return fetch(url, {
-    method,
-    headers: {
-      accept: "application/json, text/javascript",
-      "content-type": "application/json; charset=UTF-8",
-      authorization: `Bearer ${idToken}`,
-    },
-  })
+  return fetch(
+    getFullFido2Url(
+      `register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`
+    ),
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json, text/javascript",
+        "content-type": "application/json; charset=UTF-8",
+        authorization: `Bearer ${idToken}`,
+      },
+    }
+  )
     .then(throwIfNot2xx)
     .then((res) => res.json() as Promise<StartCreateCredentialResponse>);
 }
@@ -165,16 +174,11 @@ export async function fido2CompleteCreateCredential({
   credential: PublicKeyCredential | ParsedCredential;
   friendlyName: string;
 }) {
-  const { fido2, fetch } = configure();
-  if (!fido2) {
-    throw new Error("Missing Fido2 config");
-  }
+  const { fetch } = configure();
   const { idToken } = (await retrieveTokens()) ?? {};
   if (!idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = `${new URL(fido2.baseUrl).href}register-authenticator/complete`;
-  const method = "POST";
   const parsedCredential =
     "response" in credential
       ? await parseAuthenticatorAttestationResponse(
@@ -182,12 +186,12 @@ export async function fido2CompleteCreateCredential({
         )
       : credential;
 
-  return fetch(url, {
+  return fetch(getFullFido2Url("register-authenticator/complete"), {
     body: JSON.stringify({
       ...parsedCredential,
       friendlyName,
     }),
-    method,
+    method: "POST",
     headers: {
       accept: "application/json, text/javascript",
       "content-type": "application/json; charset=UTF-8",
@@ -222,17 +226,19 @@ export async function fido2ListCredentials() {
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = `${new URL(fido2.baseUrl).href}authenticators/list?rpId=${
-    fido2.rp?.id ?? location.hostname
-  }`;
-  return fetch(url, {
-    method: "POST",
-    headers: {
-      accept: "application/json, text/javascript",
-      "content-type": "application/json; charset=UTF-8",
-      authorization: `Bearer ${tokens.idToken}`,
-    },
-  })
+  return fetch(
+    getFullFido2Url(
+      `authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`
+    ),
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json, text/javascript",
+        "content-type": "application/json; charset=UTF-8",
+        authorization: `Bearer ${tokens.idToken}`,
+      },
+    }
+  )
     .then(throwIfNot2xx)
     .then(
       (res) =>
@@ -271,8 +277,7 @@ export async function fido2DeleteCredential({
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = `${new URL(fido2.baseUrl).href}authenticators/delete`;
-  return fetch(url, {
+  return fetch(getFullFido2Url("authenticators/delete"), {
     method: "POST",
     body: JSON.stringify({ credentialId }),
     headers: {
@@ -298,8 +303,7 @@ export async function fido2UpdateCredential({
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = `${new URL(fido2.baseUrl).href}authenticators/update`;
-  return fetch(url, {
+  return fetch(getFullFido2Url("authenticators/update"), {
     method: "POST",
     body: JSON.stringify({ credentialId, friendlyName }),
     headers: {
@@ -439,7 +443,7 @@ async function requestUsernamelessSignInChallenge() {
   if (!fido2) {
     throw new Error("Missing Fido2 config");
   }
-  return fetch(`${new URL(fido2.baseUrl).href}sign-in-challenge`, {
+  return fetch(getFullFido2Url("sign-in-challenge"), {
     method: "POST",
     headers: {
       accept: "application/json, text/javascript",
