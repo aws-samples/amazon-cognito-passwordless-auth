@@ -260,10 +260,6 @@ export async function verifyChallenge({
   ) {
     throw new Error(`Unknown credential ID: ${credentialId}`);
   }
-  const storedCredential = await credentialGetter({ userId, credentialId });
-  if (!storedCredential) {
-    throw new Error(`Unknown credential ID: ${credentialId}`);
-  }
 
   // Verify Client Data
   const cData = Buffer.from(clientDataJSON_B64, "base64url");
@@ -271,19 +267,6 @@ export async function verifyChallenge({
   assertIsClientData(clientData);
   if (clientData.type !== "webauthn.get") {
     throw new Error(`Invalid clientData type: ${clientData.type}`);
-  }
-
-  // Verify the challenge was created by us
-  if (
-    !(
-      Buffer.from(clientData.challenge, "base64url").equals(
-        Buffer.from(fido2options.challenge, "base64url")
-      ) || (await ensureUsernamelessChallengeExists(clientData.challenge))
-    )
-  ) {
-    throw new Error(
-      `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
-    );
   }
 
   // Verify origin
@@ -329,6 +312,25 @@ export async function verifyChallenge({
     !flagUserVerified
   ) {
     throw new Error("User is not verified");
+  }
+
+  // Verify the challenge was created by us
+  if (
+    !(
+      Buffer.from(clientData.challenge, "base64url").equals(
+        Buffer.from(fido2options.challenge, "base64url")
+      ) || (await ensureUsernamelessChallengeExists(clientData.challenge))
+    )
+  ) {
+    throw new Error(
+      `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
+    );
+  }
+
+  // Retrieve credential
+  const storedCredential = await credentialGetter({ userId, credentialId });
+  if (!storedCredential) {
+    throw new Error(`Unknown credential ID: ${credentialId}`);
   }
 
   // Verify flagBackupEligibility is unchanged

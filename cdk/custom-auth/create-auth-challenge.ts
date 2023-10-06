@@ -21,10 +21,7 @@ import * as smsOtpStepUp from "./sms-otp-stepup.js";
 import * as magicLink from "./magic-link.js";
 import { logger, UserFacingError } from "./common.js";
 
-export const handler: CreateAuthChallengeTriggerHandler = async (
-  event,
-  context
-) => {
+export const handler: CreateAuthChallengeTriggerHandler = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));
   try {
     if (!event.request.session || !event.request.session.length) {
@@ -38,7 +35,7 @@ export const handler: CreateAuthChallengeTriggerHandler = async (
       await provideAuthParameters(event);
       // If enabled, fido2 challenge is attached to the event always, even if the client might want to use another signInMethod.
       // This is so that client can immediately respond with a FIDO2 signature
-      await fido2.addChallengeToEvent(event, context);
+      await fido2.addChallengeToEvent(event);
     } else {
       const { signInMethod } = event.request.clientMetadata ?? {};
       logger.info(`Client has requested signInMethod: ${signInMethod}`);
