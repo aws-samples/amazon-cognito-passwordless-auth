@@ -15,11 +15,8 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import {
-  logger,
-  generateWebAuthnChallengeForLambdaInvocation,
-  withCorsHeaders,
-} from "./common.js";
+import { logger, withCommonHeaders } from "./common.js";
+import { randomBytes } from "crypto";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: {
@@ -33,13 +30,12 @@ const headers = {
   "Cache-Control": "no-store",
 };
 
-const _handler: APIGatewayProxyHandler = async (event, { awsRequestId }) => {
+const _handler: APIGatewayProxyHandler = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));
   logger.info("FIDO2 challenge API invocation:", event.path);
   try {
     if (event.path === "/sign-in-challenge") {
-      const challenge =
-        generateWebAuthnChallengeForLambdaInvocation(awsRequestId);
+      const challenge = randomBytes(64).toString("base64url");
       await ddbDocClient.send(
         new PutCommand({
           TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
@@ -76,4 +72,4 @@ const _handler: APIGatewayProxyHandler = async (event, { awsRequestId }) => {
   }
 };
 
-export const handler = withCorsHeaders(_handler);
+export const handler = withCommonHeaders(_handler);

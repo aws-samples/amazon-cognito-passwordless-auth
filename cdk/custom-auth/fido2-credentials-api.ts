@@ -16,7 +16,7 @@ import {
   APIGatewayProxyWithCognitoAuthorizerHandler,
   APIGatewayProxyHandler,
 } from "aws-lambda";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -31,8 +31,7 @@ import {
   logger,
   handleConditionalCheckFailedException,
   UserFacingError,
-  generateWebAuthnChallengeForLambdaInvocation,
-  withCorsHeaders,
+  withCommonHeaders,
 } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -65,10 +64,7 @@ const headers = {
   "Cache-Control": "no-store",
 };
 
-const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (
-  event,
-  { awsRequestId }
-) => {
+const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));
   logger.info("FIDO2 credentials API invocation:", event.path);
   if (event.requestContext.authorizer?.claims.token_use !== "id") {
@@ -110,7 +106,6 @@ const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (
         name: userName,
         displayName,
         rpId,
-        awsRequestId,
       });
       logger.debug("Options:", JSON.stringify(options));
       return {
@@ -189,7 +184,7 @@ const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (
     };
   }
 };
-export const handler = withCorsHeaders(_handler as APIGatewayProxyHandler);
+export const handler = withCommonHeaders(_handler as APIGatewayProxyHandler);
 
 interface UserDetails {
   id: string;
@@ -380,13 +375,11 @@ async function requestCredentialsChallenge({
   name,
   displayName,
   rpId,
-  awsRequestId,
 }: {
   userId: string;
   name: string;
   displayName: string;
   rpId: string;
-  awsRequestId: string;
 }) {
   logger.info("Requesting credential challenge ...");
   const existingCredentials = await getExistingCredentialsForUser({
@@ -394,7 +387,7 @@ async function requestCredentialsChallenge({
     rpId,
   });
   const options: RpPublicKeyCredentialCreationOptions = {
-    challenge: generateWebAuthnChallengeForLambdaInvocation(awsRequestId),
+    challenge: randomBytes(64).toString("base64url"),
     attestation:
       (process.env.ATTESTATION as AttestationConveyancePreference) ?? "none",
     rp: {

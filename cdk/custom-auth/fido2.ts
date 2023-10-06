@@ -15,7 +15,6 @@
 import {
   VerifyAuthChallengeResponseTriggerEvent,
   CreateAuthChallengeTriggerEvent,
-  Context,
 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
@@ -26,13 +25,8 @@ import {
   DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { JsonWebKey } from "crypto";
-import { createVerify, createHash, createPublicKey } from "crypto";
-import {
-  logger,
-  UserFacingError,
-  determineUserHandle,
-  generateWebAuthnChallengeForLambdaInvocation,
-} from "./common.js";
+import { createVerify, createHash, createPublicKey, randomBytes } from "crypto";
+import { logger, UserFacingError, determineUserHandle } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 interface StoredCredential {
@@ -62,8 +56,8 @@ let config = {
   /** Expose credential IDs to users signing in? If you want users to use non-discoverable credentials you should set this to true */
   exposeUserCredentialIds: !!process.env.EXPOSE_USER_CREDENTIAL_IDS,
   /** Function to generate FIDO2 challenges that user's authenticators must sign. Override to e.g. implement transaction signing */
-  challengeGenerator: (awsRequestId: string): Promise<string> | string =>
-    generateWebAuthnChallengeForLambdaInvocation(awsRequestId),
+  challengeGenerator: (): Promise<string> | string =>
+    randomBytes(64).toString("base64url"),
   /** Timeout for the sign-in attempt (per WebAuthn standard) */
   timeout: Number(process.env.SIGN_IN_TIMEOUT ?? "120000"), // 2 minutes,
   /** Should users having a registered FIDO2 credential be forced to use that for signing in? If true, other custom auth flows, such as Magic Link sign-in, will be denied for users having FIDO2 credentials––to protect them from phishing */
@@ -87,8 +81,7 @@ export function configure(update?: Partial<typeof config>) {
 }
 
 export async function addChallengeToEvent(
-  event: CreateAuthChallengeTriggerEvent,
-  context: Context
+  event: CreateAuthChallengeTriggerEvent
 ) {
   if (config.fido2enabled) {
     logger.info("Adding FIDO2 challenge to event ...");
@@ -102,7 +95,6 @@ export async function addChallengeToEvent(
         userVerification: config.userVerification,
         exposeUserCredentialIds: config.exposeUserCredentialIds,
         userNotFound: event.request.userNotFound,
-        awsRequestId: context.awsRequestId,
       })
     );
     event.response.privateChallengeParameters.fido2options = fido2options;
@@ -111,7 +103,6 @@ export async function addChallengeToEvent(
 }
 
 export async function createChallenge({
-  awsRequestId,
   userId,
   relyingPartyId,
   exposeUserCredentialIds = config.exposeUserCredentialIds,
@@ -121,11 +112,10 @@ export async function createChallenge({
   timeout = config.timeout,
   userNotFound = false,
 }: {
-  awsRequestId: string;
   userId?: string;
   relyingPartyId?: string;
   exposeUserCredentialIds?: boolean;
-  challengeGenerator?: (awsRequestId: string) => Promise<string> | string;
+  challengeGenerator?: () => Promise<string> | string;
   userVerification?: UserVerificationRequirement;
   credentialGetter?: typeof getCredentialsForUser;
   timeout?: number;
@@ -159,7 +149,7 @@ export async function createChallenge({
   }
   return {
     relyingPartyId,
-    challenge: await challengeGenerator(awsRequestId),
+    challenge: await challengeGenerator(),
     credentials,
     timeout,
     userVerification,

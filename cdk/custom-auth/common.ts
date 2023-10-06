@@ -14,7 +14,6 @@
  */
 
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
-import { randomUUID, createHmac } from "crypto";
 import { APIGatewayProxyHandler } from "aws-lambda";
 
 export class UserFacingError extends Error {
@@ -95,43 +94,6 @@ function isUuid(cognitoUsername: string) {
   );
 }
 
-/**
- * TODO switch back to randomBytes
- * Generate a WebAuthn challenge in the context of an AWS Lambda function invocation
- *
- * This implementation opts to not use crypto.randomBytes() in order to side step concerns
- * around sustaining entropy in a multi-tenant environment such as AWS Lambda.
- * Instead, we use sources of entropy specific to the particular Lambda execution sandbox,
- * most notably the AWS_SECRET_ACCESS_KEY.
- *
- * @param awsRequestId The AWS Request ID from the Lambda execution context
- * @returns A 64 byte challenge that is infeasible to guess
- */
-export function generateWebAuthnChallengeForLambdaInvocation(
-  awsRequestId: string
-) {
-  const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN } =
-    process.env;
-  if (!AWS_ACCESS_KEY_ID) {
-    throw new Error("Missing environment variable AWS_ACCESS_KEY_ID");
-  }
-  if (!AWS_SECRET_ACCESS_KEY) {
-    throw new Error("Missing environment variable AWS_SECRET_ACCESS_KEY");
-  }
-  if (!AWS_SESSION_TOKEN) {
-    throw new Error("Missing environment variable AWS_SESSION_TOKEN");
-  }
-  return createHmac(
-    "SHA512", // 64 bytes
-    AWS_SECRET_ACCESS_KEY
-  )
-    .update(AWS_ACCESS_KEY_ID)
-    .update(AWS_SESSION_TOKEN)
-    .update(awsRequestId) // additional uniqueness per invocation (the AWS Request ID)
-    .update(randomUUID()) // add randomness
-    .digest("base64url");
-}
-
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS;
 const allowedMethods = process.env.CORS_ALLOWED_METHODS;
 const allowedHeaders = process.env.CORS_ALLOWED_HEADERS;
@@ -142,7 +104,9 @@ const corsHeaderAvailable = !!(
   allowedHeaders &&
   maxAge
 );
-export function withCorsHeaders<T extends APIGatewayProxyHandler>(handler: T) {
+export function withCommonHeaders<T extends APIGatewayProxyHandler>(
+  handler: T
+) {
   const wrapped: APIGatewayProxyHandler = (event, context, cb) => {
     return handler(event, context, () =>
       cb(
