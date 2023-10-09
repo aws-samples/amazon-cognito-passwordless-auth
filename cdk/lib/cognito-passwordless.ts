@@ -560,11 +560,17 @@ export class Passwordless extends Construct {
       this.userPool = props.userPool;
     }
     if (props.fido2) {
-      const corsOptions: cdk.aws_apigateway.CorsOptions = {
-        allowHeaders: ["Content-Type", "Authorization"],
+      const defaultCorsOptionsWithoutAuth = {
+        allowHeaders: ["Content-Type"],
         allowMethods: ["POST"],
         allowOrigins: props.allowedOrigins ?? [],
         maxAge: cdk.Duration.days(1),
+      };
+      const defaultCorsOptionsWithAuth = {
+        ...defaultCorsOptionsWithoutAuth,
+        allowHeaders: defaultCorsOptionsWithoutAuth.allowHeaders.concat([
+          "Authorization",
+        ]),
       };
       this.fido2Fn = new cdk.aws_lambda_nodejs.NodejsFunction(
         this,
@@ -600,10 +606,15 @@ export class Passwordless extends Construct {
             AUTHENTICATOR_REGISTRATION_TIMEOUT:
               props.fido2.timeouts?.credentialRegistration?.toString() ??
               "300000",
-            CORS_ALLOWED_ORIGINS: corsOptions.allowOrigins.join(","),
-            CORS_ALLOWED_HEADERS: corsOptions.allowHeaders?.join(",") ?? "",
-            CORS_ALLOWED_METHODS: corsOptions.allowMethods?.join(",") ?? "",
-            CORS_MAX_AGE: corsOptions.maxAge?.toSeconds().toString() ?? "",
+            CORS_ALLOWED_ORIGINS:
+              defaultCorsOptionsWithAuth.allowOrigins.join(","),
+            CORS_ALLOWED_HEADERS:
+              defaultCorsOptionsWithAuth.allowHeaders.join(","),
+            CORS_ALLOWED_METHODS:
+              defaultCorsOptionsWithAuth.allowMethods.join(","),
+            CORS_MAX_AGE: defaultCorsOptionsWithAuth.maxAge
+              .toSeconds()
+              .toString(),
             ...props.functionProps?.fido2?.environment,
           },
         }
@@ -629,10 +640,15 @@ export class Passwordless extends Construct {
             SIGN_IN_TIMEOUT:
               props.fido2.timeouts?.signIn?.toString() ?? "120000",
             USER_VERIFICATION: props.fido2.userVerification ?? "required",
-            CORS_ALLOWED_ORIGINS: corsOptions.allowOrigins.join(","),
-            CORS_ALLOWED_HEADERS: corsOptions.allowHeaders?.join(",") ?? "",
-            CORS_ALLOWED_METHODS: corsOptions.allowMethods?.join(",") ?? "",
-            CORS_MAX_AGE: corsOptions.maxAge?.toSeconds().toString() ?? "",
+            CORS_ALLOWED_ORIGINS:
+              defaultCorsOptionsWithoutAuth.allowOrigins.join(","),
+            CORS_ALLOWED_HEADERS:
+              defaultCorsOptionsWithoutAuth.allowHeaders.join(","),
+            CORS_ALLOWED_METHODS:
+              defaultCorsOptionsWithoutAuth.allowMethods.join(","),
+            CORS_MAX_AGE: defaultCorsOptionsWithoutAuth.maxAge
+              .toSeconds()
+              .toString(),
             ...props.functionProps?.fido2challenge?.environment,
           },
         }
@@ -777,6 +793,7 @@ export class Passwordless extends Construct {
         this.userPoolClients = props.userPoolClients;
       }
 
+      // Create resource structure
       const registerAuthenticatorResource = this.fido2Api.root.addResource(
         "register-authenticator"
       );
@@ -789,22 +806,156 @@ export class Passwordless extends Construct {
       const deleteResource = authenticatorsResource.addResource("delete");
       const updateResource = authenticatorsResource.addResource("update");
 
-      [
-        startResource,
-        completeResource,
-        listResource,
-        deleteResource,
-        updateResource,
-      ].forEach((r) => {
-        r.addCorsPreflight(corsOptions);
-        r.addMethod("POST", undefined, {
-          authorizer: authorizer,
-        });
+      const requestValidator = new cdk.aws_apigateway.RequestValidator(
+        scope,
+        "ReqValidator",
+        {
+          restApi: this.fido2Api,
+          requestValidatorName: "req-validator",
+          validateRequestBody: true,
+          validateRequestParameters: true,
+        }
+      );
+
+      // register-authenticator/start
+      startResource.addCorsPreflight(defaultCorsOptionsWithAuth);
+      startResource.addMethod("POST", undefined, {
+        authorizer: authorizer,
+        requestParameters: {
+          "method.request.querystring.rpId": true,
+        },
+        requestValidator,
       });
 
+      // register-authenticator/complete
+      const completeRegistrationModel = new cdk.aws_apigateway.Model(
+        scope,
+        `CompleteRegistrationModel${id}`,
+        {
+          restApi: this.fido2Api,
+          contentType: "application/json",
+          description: "Create FIDO2 credential request body",
+          modelName: "registerAuthenticatorComplete",
+          schema: {
+            type: cdk.aws_apigateway.JsonSchemaType.OBJECT,
+            required: [
+              "clientDataJSON_B64",
+              "attestationObjectB64",
+              "friendlyName",
+            ],
+            properties: {
+              clientDataJSON_B64: {
+                type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                minLength: 1,
+              },
+              attestationObjectB64: {
+                type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                minLength: 1,
+              },
+              friendlyName: {
+                type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                minLength: 1,
+                maxLength: 256,
+              },
+              transports: {
+                type: cdk.aws_apigateway.JsonSchemaType.ARRAY,
+                items: {
+                  type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                  enum: ["usb", "nfc", "ble", "internal", "hybrid"],
+                },
+              },
+            },
+          },
+        }
+      );
+      completeResource.addCorsPreflight(defaultCorsOptionsWithAuth);
+      completeResource.addMethod("POST", undefined, {
+        authorizer: authorizer,
+        requestValidator,
+        requestModels: {
+          "application/json": completeRegistrationModel,
+        },
+      });
+
+      // authenticators/list
+      listResource.addCorsPreflight(defaultCorsOptionsWithAuth);
+      listResource.addMethod("POST", undefined, {
+        authorizer: authorizer,
+        requestParameters: {
+          "method.request.querystring.rpId": true,
+        },
+        requestValidator,
+      });
+
+      // authenticators/delete
+      const deleteCredentialsModel = new cdk.aws_apigateway.Model(
+        scope,
+        `DeleteCredentialModel${id}`,
+        {
+          restApi: this.fido2Api,
+          contentType: "application/json",
+          description: "Delete FIDO2 credential request body",
+          modelName: "credentialDelete",
+          schema: {
+            type: cdk.aws_apigateway.JsonSchemaType.OBJECT,
+            required: ["credentialId"],
+            properties: {
+              credentialId: {
+                type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                minLength: 1,
+              },
+            },
+          },
+        }
+      );
+      deleteResource.addCorsPreflight(defaultCorsOptionsWithAuth);
+      deleteResource.addMethod("POST", undefined, {
+        authorizer: authorizer,
+        requestValidator,
+        requestModels: {
+          "application/json": deleteCredentialsModel,
+        },
+      });
+
+      // register-authenticator/update
+      const updateCredentialsModel = new cdk.aws_apigateway.Model(
+        scope,
+        `UpdateCredentialModel${id}`,
+        {
+          restApi: this.fido2Api,
+          contentType: "application/json",
+          description: "Update FIDO2 credential request body",
+          modelName: "credentialUpdate",
+          schema: {
+            type: cdk.aws_apigateway.JsonSchemaType.OBJECT,
+            required: ["credentialId", "friendlyName"],
+            properties: {
+              credentialId: {
+                type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                minLength: 1,
+              },
+              friendlyName: {
+                type: cdk.aws_apigateway.JsonSchemaType.STRING,
+                minLength: 1,
+                maxLength: 256,
+              },
+            },
+          },
+        }
+      );
+      updateResource.addCorsPreflight(defaultCorsOptionsWithAuth);
+      updateResource.addMethod("POST", undefined, {
+        authorizer: authorizer,
+        requestValidator,
+        requestModels: {
+          "application/json": updateCredentialsModel,
+        },
+      });
+
+      // sign-in-challenge
       const signInChallenge =
         this.fido2Api.root.addResource("sign-in-challenge");
-      signInChallenge.addCorsPreflight(corsOptions);
+      signInChallenge.addCorsPreflight(defaultCorsOptionsWithoutAuth);
       signInChallenge.addMethod(
         "POST",
         new cdk.aws_apigateway.LambdaIntegration(this.fido2challengeFn),

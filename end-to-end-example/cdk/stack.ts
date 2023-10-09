@@ -178,16 +178,6 @@ NagSuppressions.addResourceSuppressionsByPath(
     },
   ]
 );
-NagSuppressions.addResourceSuppressions(
-  stack.passwordless.fido2Api!,
-  [
-    {
-      id: "AwsSolutions-APIG2",
-      reason: "Request validation implemented as part of Lambda function",
-    },
-  ],
-  true
-);
 
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
 
