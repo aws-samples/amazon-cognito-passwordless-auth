@@ -33,6 +33,7 @@ export class Passwordless extends Construct {
   preSignUpFn?: cdk.aws_lambda.IFunction;
   preTokenGenerationFn?: cdk.aws_lambda.IFunction;
   fido2Fn?: cdk.aws_lambda.IFunction;
+  fido2NotificationFn?: cdk.aws_lambda.IFunction;
   fido2Api?: apigw.HttpApi;
   constructor(
     scope: Construct,
@@ -77,6 +78,8 @@ export class Passwordless extends Construct {
          * @default false
          */
         enforceFido2IfAvailable?: boolean;
+        enableFido2NotificationFn?: boolean;
+        sesFromAddress: string
       };
       /**
        * Enable sign-in with Magic Links by providing this config object
@@ -115,6 +118,7 @@ export class Passwordless extends Construct {
         preSignUp?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
         preTokenGeneration?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
         fido2?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
+        fido2Notification?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
       };
       /** Any keys in the clientMetadata that you specify here, will be persisted as claims in the ID-token, via the Amazon Cognito PreToken-generation trigger */
       clientMetadataTokenKeys?: string[];
@@ -535,6 +539,44 @@ export class Passwordless extends Construct {
       this.userPool = props.userPool;
     }
     if (props.fido2) {
+      if (props.fido2.enableFido2NotificationFn !== false) {
+        this.fido2NotificationFn = new cdk.aws_lambda_nodejs.NodejsFunction(
+          this,
+          `Fido2Notification${id}`,
+          {
+            entry: join(
+              __dirname,
+              "..",
+              "custom-auth",
+              "fido2-notification.js"
+            ),
+            runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+            architecture: cdk.aws_lambda.Architecture.ARM_64,
+            bundling: {
+              format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
+            },
+            timeout: cdk.Duration.seconds(30),
+            ...props.functionProps?.fido2Notification,
+            environment: {
+              LOG_LEVEL: props.logLevel ?? "INFO",
+              SES_FROM_ADDRESS: props.fido2.sesFromAddress ?? "",
+              ...props.functionProps?.fido2Notification?.environment,
+            },
+          }
+        );
+        this.fido2NotificationFn.addToRolePolicy(
+          new cdk.aws_iam.PolicyStatement({
+            effect: cdk.aws_iam.Effect.ALLOW,
+            resources: [
+              //TODO -- Introduce a new property to set a different region for SES
+              `arn:${cdk.Aws.PARTITION}:ses:${cdk.Aws.REGION
+              }:${cdk.Aws.ACCOUNT_ID}:identity/*`,
+            ],
+            actions: ["ses:SendEmail"],
+          })
+        );
+      }
+
       this.fido2Fn = new cdk.aws_lambda_nodejs.NodejsFunction(
         this,
         `Fido2${id}`,
@@ -566,10 +608,12 @@ export class Passwordless extends Construct {
             USER_VERIFICATION: props.fido2.userVerification ?? "required",
             AUTHENTICATOR_ATTACHMENT: props.fido2.authenticatorAttachment ?? "",
             REQUIRE_RESIDENT_KEY: props.fido2.residentKey ?? "",
+            FIDO2_NOTIFICATION_LAMBDA_ARN: this.fido2NotificationFn?.latestVersion.functionArn ?? "",
             ...props.functionProps?.fido2?.environment,
           },
         }
       );
+      this.fido2NotificationFn?.latestVersion.grantInvoke(this.fido2Fn);
       this.userPool.grant(this.fido2Fn, "cognito-idp:AdminGetUser");
       this.authenticatorsTable!.grantReadWriteData(this.fido2Fn);
       this.fido2Api = new apigw.HttpApi(this, `HttpApi${id}`, {

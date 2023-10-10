@@ -14,6 +14,7 @@
  */
 import { Handler } from "aws-lambda";
 import { randomBytes, createHash } from "crypto";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -59,6 +60,8 @@ const headers = {
   "Content-Type": "application/json",
   "Cache-Control": "no-store",
 };
+
+const lambdaClient = new LambdaClient({});
 
 export const handler: Handler<{
   requestContext: {
@@ -141,7 +144,8 @@ export const handler: Handler<{
       logger.info("Completing the new authenticator registration ...");
       const storedCredential = await handleCredentialsResponse(
         userHandle,
-        parseBody(event)
+        parseBody(event),
+        email,
       );
       return {
         statusCode: 200,
@@ -176,6 +180,8 @@ export const handler: Handler<{
       await deleteCredential({
         userId: userHandle,
         credentialId: parsed.credentialId,
+        userEmail: email,
+        friendlyName: parsed.friendlyName,
       });
       return { statusCode: 204 };
     } else if (event.pathParameters.fido2path === "authenticators/update") {
@@ -313,9 +319,13 @@ async function getExistingCredentialsForUser({
 async function deleteCredential({
   userId,
   credentialId,
+  userEmail,
+  friendlyName
 }: {
   userId: string;
   credentialId: unknown;
+  userEmail?: string,
+  friendlyName?: unknown;
 }) {
   if (typeof credentialId !== "string") {
     throw new UserFacingError(
@@ -331,6 +341,20 @@ async function deleteCredential({
       },
     })
   );
+  // add the notification when the device is deleted
+  if (process.env.FIDO2_NOTIFICATION_LAMBDA_ARN !== "") {
+    try {
+      const command = new InvokeCommand({
+        FunctionName: process.env.FIDO2_NOTIFICATION_LAMBDA_ARN,
+        InvocationType: "Event",
+        Payload: JSON.stringify({ userEmail, "friendlyName": friendlyName, "eventType": "DEVICE_REMOVED" }),
+      });
+      const response = await lambdaClient.send(command);
+      console.log("Response", response);
+    } catch (error) {
+      console.error("Errored invoking the lambda", error)
+    }
+  }
 }
 
 async function updateCredential({
@@ -524,7 +548,8 @@ function assertIsClientData(cd: unknown): asserts cd is {
 
 async function handleCredentialsResponse(
   userId: string,
-  body: unknown
+  body: unknown,
+  userEmail?: string,
 ): Promise<Credential> {
   assertBodyIsCredentialsResponse(body);
   const clientData: unknown = JSON.parse(
@@ -610,6 +635,21 @@ async function handleCredentialsResponse(
   }
   await assertCredentialIsNew(authData.credentialId);
   const createdAt = new Date();
+
+  // invoking the lamda to send the email notification if the feature is enabled
+  if (process.env.FIDO2_NOTIFICATION_LAMBDA_ARN !== "") {
+    try {
+      const command = new InvokeCommand({
+        FunctionName: process.env.FIDO2_NOTIFICATION_LAMBDA_ARN,
+        InvocationType: "Event",
+        Payload: JSON.stringify({ userEmail, "friendlyName": body.friendlyName, createdAt, "eventType": "DEVICE_REGISTERED" }),
+      });
+      const response = await lambdaClient.send(command);
+      console.log("Response", response);
+    } catch (error) {
+      console.error("Errored invoking the lambda", error)
+    }
+  }
   await storeUserCredential({
     userId,
     credentialId: authData.credentialId,
