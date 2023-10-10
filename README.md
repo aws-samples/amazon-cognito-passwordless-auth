@@ -49,31 +49,6 @@ We've wrapped the sample code in a NPM package for convenient installation and u
 npm install amazon-cognito-passwordless-auth
 ```
 
-<details>
-  <summary>If you run into ERESOLVE error</summary>
-  <blockquote>
-If you get the error `ERESOLVE unable to resolve dependency tree` while installing, this may mean that your current AWS CDK project uses an older version of `aws-cdk-lib` than the latest available. This may lead to issues with installing the latest versions of the alpha API Gateway constructs, that are pinned to the latest CDK version.
-
-Options to work around:
-
-1. update `aws-cdk-lib` first: `npm i aws-cdk-lib@latest constructs@latest`
-1. install with the `--force` flag: `npm install amazon-cognito-passwordless-auth --force`
-1. install the correct matching API Gateway construct versions first, see below.
-
-```shell
-# Install matching API Gateway construct versions
-# Say you have version 2.83.1 of aws-cdk-lib, then:
-npm install @aws-cdk/aws-apigatewayv2-alpha@2.83.1-alpha.0
-npm install @aws-cdk/aws-apigatewayv2-authorizers-alpha@2.83.1-alpha.0
-npm install @aws-cdk/aws-apigatewayv2-integrations-alpha@2.83.1-alpha.0
-
-# now this works
-npm install amazon-cognito-passwordless-auth
-```
-
-  </blockquote>
-</details>
-
 ## Getting Started
 
 Follow the **self-paced workshop** (duration: 60 minutes) to understand how to use this solution to implement sign-in with FIDO2 (WebAuthn) and Magic Links. The workshop will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
