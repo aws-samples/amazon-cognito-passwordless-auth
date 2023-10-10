@@ -102,12 +102,13 @@ function StepUpAuth() {
             }
             disabled={!fido2Credentials?.length || !consentId || busy}
             onClick={() =>
-              handleStepUpAuthentication(() =>
-                authenticateWithFido2({
-                  username: tokensParsed.idToken["cognito:username"],
-                  credentials: currentUser?.credentials,
-                  clientMetadata: { consent_id: consentId },
-                })
+              handleStepUpAuthentication(
+                () =>
+                  authenticateWithFido2({
+                    username: tokensParsed.idToken["cognito:username"],
+                    credentials: currentUser?.credentials,
+                    clientMetadata: { consent_id: consentId },
+                  }).signedIn
               )
             }
           >
@@ -126,7 +127,7 @@ function StepUpAuth() {
                     return awaitableSmsOtp();
                   },
                   clientMetadata: { consent_id: consentId },
-                }).finally(() => {
+                }).signedIn.finally(() => {
                   setSmsOtp("");
                   setSmsOtpPhoneNumber("");
                 })
