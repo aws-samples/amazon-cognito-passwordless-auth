@@ -184,9 +184,9 @@ There is also a design choice here: we could store a separate, self defined opaq
 
 Potential scenario's depending on your [User Pool's sign-in configuration](https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html#user-pool-settings-aliases):
 
-- If you have configured your Amazon Cognito User Pool to **only** use e-mail and/or phone number as username, then under the hood Amazon Cognito will generate an opaque username for you (same as `sub`) and usernameless authentication can work.
-- If you have configured your Amazon Cognito User Pool to use e-mail and/or phone number as username, but also allow an actual username, you must use a UUID as username––if so, usernameless authentication can work.
-- If you have configured your Amazon Cognito User Pool to only use the username field, usernameless authentication cannot work (unless, a very unlikely scenario, users use UUIDs for their username).
+- If you have configured your Amazon Cognito User Pool to **only** use e-mail and/or phone number to sign in with, then under the hood Amazon Cognito will generate an opaque username for you (same as `sub`) and usernameless authentication can work.
+- If you have configured your Amazon Cognito User Pool to use e-mail and/or phone number to sign in with, but also allow an actual username (user or admin supplied), you must use a UUID as username––if so, usernameless authentication can work.
+- If you have configured your Amazon Cognito User Pool to only use a username to sign in with, usernameless authentication cannot work (unless, a very unlikely scenario, users use UUIDs for their username).
 
 See below how the usernameless authentication flow works. Notes:
 
