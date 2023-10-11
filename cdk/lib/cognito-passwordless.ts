@@ -83,6 +83,18 @@ export class Passwordless extends Construct {
         enforceFido2IfAvailable?: boolean;
         api?: {
           /**
+           * The throttling burst limit for the deployment stage: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html
+           *
+           * @default 1000
+           */
+          throttlingBurstLimit?: 1000;
+          /**
+           * The throttling rate limit for the deployment stage: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html
+           *
+           * @default 2000
+           */
+          throttlingRateLimit?: 2000;
+          /**
            * Create a log role for API Gateway and add this to API Gateway account settings?
            * Set to false if you have already set this up in your account and region,
            * otherwise that config will be overwritten.
@@ -98,6 +110,12 @@ export class Passwordless extends Construct {
            * @default true
            */
           addWaf?: boolean;
+          /**
+           * The rate limit per unique IP (using X-Forwarded-For header) that AWS WAF will apply: https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-high-level-settings.html
+           *
+           * @default 100
+           */
+          wafRateLimitPerIp?: number;
         };
       };
       /**
@@ -691,8 +709,8 @@ export class Passwordless extends Construct {
             loggingLevel: cdk.aws_apigateway.MethodLoggingLevel.ERROR,
             metricsEnabled: true,
             stageName: "v1",
-            throttlingBurstLimit: 1000,
-            throttlingRateLimit: 2000,
+            throttlingBurstLimit: props.fido2.api?.throttlingBurstLimit ?? 1000,
+            throttlingRateLimit: props.fido2.api?.throttlingRateLimit ?? 2000,
             accessLogDestination: new cdk.aws_apigateway.LogGroupLogDestination(
               accessLogs
             ),
@@ -992,7 +1010,7 @@ export class Passwordless extends Construct {
                 },
                 statement: {
                   rateBasedStatement: {
-                    limit: 100, // max 100 requests per 5 minutes per IP address
+                    limit: props.fido2.api?.wafRateLimitPerIp ?? 100, // max 100 requests per 5 minutes per IP address
                     aggregateKeyType: "FORWARDED_IP",
                     forwardedIpConfig: {
                       headerName: "X-Forwarded-For",
