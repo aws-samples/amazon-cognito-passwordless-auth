@@ -52,27 +52,19 @@ export async function fido2CreateCredential({
 }: {
   friendlyName: string | (() => string | Promise<string>);
 }) {
-  const {
-    debug,
-    fido2: {
-      attestation,
-      authenticatorSelection,
-      extensions,
-      rp,
-      timeout,
-    } = {},
-  } = configure();
+  const { debug, fido2 } = configure();
   const publicKeyOptions = await fido2StartCreateCredential();
   const publicKey: CredentialCreationOptions["publicKey"] = {
     ...publicKeyOptions,
     rp: {
-      name: rp?.name ?? publicKeyOptions.rp.name,
-      id: rp?.id ?? publicKeyOptions.rp.id,
+      name: fido2?.rp?.name ?? publicKeyOptions.rp.name,
+      id: fido2?.rp?.id ?? publicKeyOptions.rp.id,
     },
-    attestation,
-    authenticatorSelection,
-    extensions,
-    timeout,
+    attestation: fido2?.attestation,
+    authenticatorSelection:
+      publicKeyOptions.authenticatorSelection ?? fido2?.authenticatorSelection,
+    extensions: fido2?.extensions,
+    timeout: publicKeyOptions.timeout ?? fido2?.timeout,
     challenge: bufferFromBase64Url(publicKeyOptions.challenge),
     user: {
       ...publicKeyOptions.user,
@@ -141,6 +133,14 @@ export interface ParsedCredential {
   transports?: string[]; // Should be: "usb" | "nfc" | "ble" | "internal" | "hybrid"
 }
 
+function getFullFido2Url(path: string) {
+  const { fido2 } = configure();
+  if (!fido2) {
+    throw new Error("Missing Fido2 config");
+  }
+  return `${fido2.baseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+}
+
 export async function fido2StartCreateCredential() {
   const { fido2, fetch, location } = configure();
   if (!fido2) {
@@ -150,19 +150,19 @@ export async function fido2StartCreateCredential() {
   if (!idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL(
-    `/register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`,
-    fido2.baseUrl
-  );
-  const method = "POST";
-  return fetch(url, {
-    method,
-    headers: {
-      accept: "application/json, text/javascript",
-      "content-type": "application/json; charset=UTF-8",
-      authorization: `Bearer ${idToken}`,
-    },
-  })
+  return fetch(
+    getFullFido2Url(
+      `register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`
+    ),
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json, text/javascript",
+        "content-type": "application/json; charset=UTF-8",
+        authorization: `Bearer ${idToken}`,
+      },
+    }
+  )
     .then(throwIfNot2xx)
     .then((res) => res.json() as Promise<StartCreateCredentialResponse>);
 }
@@ -174,16 +174,11 @@ export async function fido2CompleteCreateCredential({
   credential: PublicKeyCredential | ParsedCredential;
   friendlyName: string;
 }) {
-  const { fido2, fetch } = configure();
-  if (!fido2) {
-    throw new Error("Missing Fido2 config");
-  }
+  const { fetch } = configure();
   const { idToken } = (await retrieveTokens()) ?? {};
   if (!idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL("/register-authenticator/complete", fido2.baseUrl);
-  const method = "POST";
   const parsedCredential =
     "response" in credential
       ? await parseAuthenticatorAttestationResponse(
@@ -191,12 +186,12 @@ export async function fido2CompleteCreateCredential({
         )
       : credential;
 
-  return fetch(url, {
+  return fetch(getFullFido2Url("register-authenticator/complete"), {
     body: JSON.stringify({
       ...parsedCredential,
       friendlyName,
     }),
-    method,
+    method: "POST",
     headers: {
       accept: "application/json, text/javascript",
       "content-type": "application/json; charset=UTF-8",
@@ -231,18 +226,19 @@ export async function fido2ListCredentials() {
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL(
-    `/authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`,
-    fido2.baseUrl
-  );
-  return fetch(url, {
-    method: "POST",
-    headers: {
-      accept: "application/json, text/javascript",
-      "content-type": "application/json; charset=UTF-8",
-      authorization: `Bearer ${tokens.idToken}`,
-    },
-  })
+  return fetch(
+    getFullFido2Url(
+      `authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`
+    ),
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json, text/javascript",
+        "content-type": "application/json; charset=UTF-8",
+        authorization: `Bearer ${tokens.idToken}`,
+      },
+    }
+  )
     .then(throwIfNot2xx)
     .then(
       (res) =>
@@ -281,8 +277,7 @@ export async function fido2DeleteCredential({
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL("/authenticators/delete", fido2.baseUrl);
-  return fetch(url, {
+  return fetch(getFullFido2Url("authenticators/delete"), {
     method: "POST",
     body: JSON.stringify({ credentialId }),
     headers: {
@@ -308,8 +303,7 @@ export async function fido2UpdateCredential({
   if (!tokens?.idToken) {
     throw new Error("No JWT to invoke Fido2 API with");
   }
-  const url = new URL("/authenticators/update", fido2.baseUrl);
-  return fetch(url, {
+  return fetch(getFullFido2Url("authenticators/update"), {
     method: "POST",
     body: JSON.stringify({ credentialId, friendlyName }),
     headers: {
@@ -444,6 +438,21 @@ const parseAuthenticatorAssertionResponse = async (
   };
 };
 
+async function requestUsernamelessSignInChallenge() {
+  const { fido2, fetch } = configure();
+  if (!fido2) {
+    throw new Error("Missing Fido2 config");
+  }
+  return fetch(getFullFido2Url("sign-in-challenge"), {
+    method: "POST",
+    headers: {
+      accept: "application/json, text/javascript",
+    },
+  })
+    .then(throwIfNot2xx)
+    .then((res) => res.json() as unknown);
+}
+
 export function authenticateWithFido2({
   username,
   credentials,
@@ -455,8 +464,14 @@ export function authenticateWithFido2({
 }: {
   /**
    * Username, or alias (e-mail, phone number)
+   * If not specified, sign in with FIDO2 Passkey (discoverable credential) will be attempted
    */
-  username: string;
+  username?: string;
+  /**
+   * The FIDO2 credentials to use.
+   * Must be specified for non-discoverable credentials to work, optional for Passkeys (discoverable credentials).
+   * Ignored if username is not specified, to force the user agent to look for Passkeys (discoverable credentials).
+   */
   credentials?: { id: string; transports?: AuthenticatorTransport[] }[];
   tokensCb?: (tokens: TokensFromSignIn) => void | Promise<void>;
   statusCb?: (status: BusyState | IdleState) => void;
@@ -469,38 +484,85 @@ export function authenticateWithFido2({
   }
   const abort = new AbortController();
   const signedIn = (async () => {
-    const { debug } = configure();
+    const { debug, fido2 } = configure();
+    if (!fido2) {
+      throw new Error("Missing Fido2 config");
+    }
     statusCb?.("STARTING_SIGN_IN_WITH_FIDO2");
+    let fido2credential: Awaited<ReturnType<typeof credentialGetter>>,
+      session: string;
     try {
-      debug?.(`Invoking initiateAuth ...`);
-      const initAuthResponse = await initiateAuth({
-        authflow: "CUSTOM_AUTH",
-        authParameters: {
-          USERNAME: username,
-        },
-        abort: abort.signal,
-      });
-      debug?.(`Response from initiateAuth:`, initAuthResponse);
-      assertIsChallengeResponse(initAuthResponse);
-      if (!initAuthResponse.ChallengeParameters.fido2options) {
-        throw new Error("Server did not send a FIDO2 challenge");
+      if (username) {
+        debug?.(`Invoking initiateAuth ...`);
+        const initAuthResponse = await initiateAuth({
+          authflow: "CUSTOM_AUTH",
+          authParameters: {
+            USERNAME: username,
+          },
+          abort: abort.signal,
+        });
+        debug?.(`Response from initiateAuth:`, initAuthResponse);
+        assertIsChallengeResponse(initAuthResponse);
+        if (!initAuthResponse.ChallengeParameters.fido2options) {
+          throw new Error("Server did not send a FIDO2 challenge");
+        }
+        const fido2options: unknown = JSON.parse(
+          initAuthResponse.ChallengeParameters.fido2options
+        );
+        assertIsFido2Options(fido2options);
+        debug?.("FIDO2 options from Cognito challenge:", fido2options);
+        fido2credential = await credentialGetter({
+          ...fido2options,
+          relyingPartyId: fido2.rp?.id ?? fido2options.relyingPartyId,
+          timeout: fido2.timeout ?? fido2options.timeout,
+          userVerification:
+            fido2.authenticatorSelection?.userVerification ??
+            fido2options.userVerification,
+          credentials: (fido2options.credentials ?? []).concat(
+            credentials?.filter(
+              (cred) =>
+                !fido2options.credentials?.find(
+                  (optionsCred) => cred.id === optionsCred.id
+                )
+            ) ?? []
+          ),
+        });
+        session = initAuthResponse.Session;
+      } else {
+        debug?.("Starting usernameless authentication");
+        const fido2options = await requestUsernamelessSignInChallenge();
+        assertIsFido2Options(fido2options);
+        debug?.("FIDO2 options from usernameless challenge:", fido2options);
+        fido2credential = await credentialGetter({
+          ...fido2options,
+          relyingPartyId: fido2.rp?.id ?? fido2options.relyingPartyId,
+          timeout: fido2.timeout ?? fido2options.timeout,
+          userVerification:
+            fido2.authenticatorSelection?.userVerification ??
+            fido2options.userVerification,
+        });
+        if (!fido2credential.userHandleB64) {
+          throw new Error("No discoverable credentials available");
+        }
+        username = new TextDecoder().decode(
+          bufferFromBase64Url(fido2credential.userHandleB64)
+        );
+        debug?.(
+          `Proceeding with discovered credential for username: ${username} (b64: ${fido2credential.userHandleB64})`
+        );
+        debug?.(`Invoking initiateAuth ...`);
+        const initAuthResponse = await initiateAuth({
+          authflow: "CUSTOM_AUTH",
+          authParameters: {
+            USERNAME: username,
+          },
+          abort: abort.signal,
+        });
+        debug?.(`Response from initiateAuth:`, initAuthResponse);
+        assertIsChallengeResponse(initAuthResponse);
+        session = initAuthResponse.Session;
       }
-      const fido2options: unknown = JSON.parse(
-        initAuthResponse.ChallengeParameters.fido2options
-      );
-      assertIsFido2Options(fido2options);
-      fido2options.credentials = (fido2options.credentials ?? []).concat(
-        credentials?.filter(
-          (cred) =>
-            !fido2options.credentials?.find(
-              (optionsCred) => cred.id === optionsCred.id
-            )
-        ) ?? []
-      );
-      debug?.("FIDO2 options from Cognito:", fido2options);
-      const fido2credential = await credentialGetter(fido2options);
       statusCb?.("COMPLETING_SIGN_IN_WITH_FIDO2");
-      const session = initAuthResponse.Session;
       debug?.(`Invoking respondToAuthChallenge ...`);
       const authResult = await respondToAuthChallenge({
         challengeName: "CUSTOM_CHALLENGE",

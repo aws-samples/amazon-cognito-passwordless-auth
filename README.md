@@ -4,13 +4,19 @@ _**AWS Solution to implement Passwordless authenticaton with Amazon Cognito**_
 
 Passwordless authentication improves security, reduces friction and provides better user experience for end-users of customer facing applications. Amazon Cognito provides features to implement custom authentication flows, which can be used to expand authentication factors for your application. This solution demonstrates several patterns to support passwordless authentication and provides reference implementations for these methods:
 
-- **FIDO2**: aka **WebAuthn**, i.e. sign in with Face, Touch, YubiKey, etc. This includes support for **Passkeys**. [FIDO2 - architecture and details](./FIDO2.md).
+- **FIDO2**: aka **WebAuthn**, i.e. sign in with Face, Touch, YubiKey, etc. This includes support for **Passkeys** (i.e. usernameless authentication). [FIDO2 - architecture and details](./FIDO2.md).
 - **Magic Link Sign In**: sign in with a one-time-use secret link that's emailed to you (and works across browsers). [Magic Links - architecture and details](./MAGIC-LINKS.md).
 - **SMS based Step-Up auth**: let an already signed-in user verify their identity again with a SMS One-Time-Password (OTP) without requiring them to type in their password. [SMS OTP Step up - architecture and details](./SMS-OTP-STEPUP.md).
 
 The reference implementation of each of these auth methods uses several AWS resources. This solution contains both **CDK** code (TypeScript) for the back-end, as well as front-end code (TypeScript) to use in **Web**, **React** and **React Native** to help developers understand the building blocks needed and expand/adjust the solution as necessary.
 
 **IMPORTANT**: This AWS Solution is for demonstration purposes and uses several AWS resources, it is intended for developers with moderate to advanced AWS knowledge. If you plan to use these methods in production, you need to review, adjust and extend the sample code as necessary for your requirements.
+
+Sign in with passkey, without needing to type in your username:
+
+<img src="./drawings/passwordless-signin-passkey.png" alt="Passwordless Sign In" width="500px" />
+
+Sign in with non-discoverable FIDO2 credential, or Magic Link:
 
 <img src="./drawings/passwordless-signin.png" alt="Passwordless Sign In" width="500px" />
 
@@ -42,31 +48,6 @@ We've wrapped the sample code in a NPM package for convenient installation and u
 ```shell
 npm install amazon-cognito-passwordless-auth
 ```
-
-<details>
-  <summary>If you run into ERESOLVE error</summary>
-  <blockquote>
-If you get the error `ERESOLVE unable to resolve dependency tree` while installing, this may mean that your current AWS CDK project uses an older version of `aws-cdk-lib` than the latest available. This may lead to issues with installing the latest versions of the alpha API Gateway constructs, that are pinned to the latest CDK version.
-
-Options to work around:
-
-1. update `aws-cdk-lib` first: `npm i aws-cdk-lib@latest constructs@latest`
-1. install with the `--force` flag: `npm install amazon-cognito-passwordless-auth --force`
-1. install the correct matching API Gateway construct versions first, see below.
-
-```shell
-# Install matching API Gateway construct versions
-# Say you have version 2.83.1 of aws-cdk-lib, then:
-npm install @aws-cdk/aws-apigatewayv2-alpha@2.83.1-alpha.0
-npm install @aws-cdk/aws-apigatewayv2-authorizers-alpha@2.83.1-alpha.0
-npm install @aws-cdk/aws-apigatewayv2-integrations-alpha@2.83.1-alpha.0
-
-# now this works
-npm install amazon-cognito-passwordless-auth
-```
-
-  </blockquote>
-</details>
 
 ## Getting Started
 

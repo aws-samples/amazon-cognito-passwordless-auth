@@ -81,7 +81,7 @@ class End2EndExampleStack extends cdk.Stack {
       value: this.passwordless.userPoolClients!.at(0)!.userPoolClientId,
     });
     new cdk.CfnOutput(this, "Fido2Url", {
-      value: this.passwordless.fido2Api!.url!,
+      value: this.passwordless.fido2Api!.url,
     });
     new cdk.CfnOutput(this, "SpaUrl", {
       value: `https://${spa.distribution.distributionDomainName}`,
@@ -95,36 +95,33 @@ class End2EndExampleStack extends cdk.Stack {
 const app = new cdk.App();
 const stack = new End2EndExampleStack(app, stackName);
 
-NagSuppressions.addResourceSuppressions(
-  [stack.passwordless],
-  [
-    {
-      id: "AwsSolutions-IAM4",
-      reason: "Allow curated list of Managed Policies",
-      appliesTo: [
-        "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-      ],
-    },
-    {
-      id: "AwsSolutions-IAM5",
-      reason: "Allow query table indexes",
-      appliesTo: [
-        `Resource::<${stack.getLogicalId(
-          stack.passwordless.authenticatorsTable!.node
-            .defaultChild as cdk.CfnElement
-        )}.Arn>/index/*`,
-      ],
-    },
-    {
-      id: "AwsSolutions-IAM5",
-      reason: "Allow signing with *any* key via its alias",
-      appliesTo: [
-        "Resource::arn:<AWS::Partition>:kms:<AWS::Region>:<AWS::AccountId>:key/*",
-      ],
-    },
-  ],
-  true
-);
+NagSuppressions.addStackSuppressions(stack, [
+  {
+    id: "AwsSolutions-IAM4",
+    reason: "Allow curated list of Managed Policies",
+    appliesTo: [
+      "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+      "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs",
+    ],
+  },
+  {
+    id: "AwsSolutions-IAM5",
+    reason: "Allow query table indexes",
+    appliesTo: [
+      `Resource::<${stack.getLogicalId(
+        stack.passwordless.authenticatorsTable!.node
+          .defaultChild as cdk.CfnElement
+      )}.Arn>/index/*`,
+    ],
+  },
+  {
+    id: "AwsSolutions-IAM5",
+    reason: "Allow signing with *any* key via its alias",
+    appliesTo: [
+      "Resource::arn:<AWS::Partition>:kms:<AWS::Region>:<AWS::AccountId>:key/*",
+    ],
+  },
+]);
 NagSuppressions.addResourceSuppressions(
   stack.passwordless.createAuthChallengeFn,
   [
@@ -159,15 +156,27 @@ NagSuppressions.addResourceSuppressions(
   ],
   true
 );
-NagSuppressions.addResourceSuppressions(
-  stack.passwordless.fido2Api!,
+NagSuppressions.addResourceSuppressionsByPath(
+  stack,
+  [
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/sign-in-challenge/OPTIONS/Resource`,
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/sign-in-challenge/POST/Resource`,
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/register-authenticator/start/OPTIONS/Resource`,
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/register-authenticator/complete/OPTIONS/Resource`,
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/authenticators/list/OPTIONS/Resource`,
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/authenticators/delete/OPTIONS/Resource`,
+    `/${stack.node.id}/Passwordless/RestApiPasswordless/Default/authenticators/update/OPTIONS/Resource`,
+  ],
   [
     {
-      id: "AwsSolutions-APIG1",
-      reason: "Access logging is enabled using override, invisible to CDK Nag",
+      id: "AwsSolutions-APIG4",
+      reason: "These are public methods by intention",
     },
-  ],
-  true
+    {
+      id: "AwsSolutions-COG4",
+      reason: "These are public methods by intention",
+    },
+  ]
 );
 
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));

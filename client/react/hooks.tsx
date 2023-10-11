@@ -472,10 +472,10 @@ function _usePasswordless() {
       /**
        * Username, or alias (e-mail, phone number)
        */
-      username: string;
+      username?: string;
       credentials?: { id: string; transports?: AuthenticatorTransport[] }[];
       clientMetadata?: Record<string, string>;
-    }) => {
+    } = {}) => {
       setLastError(undefined);
       const signinIn = authenticateWithFido2({
         username,
@@ -485,7 +485,7 @@ function _usePasswordless() {
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),
       });
       signinIn.signedIn.catch(setLastError);
-      return signinIn.signedIn;
+      return signinIn;
     },
     /** Sign in with username and password (using SRP: Secure Remote Password, where the password isn't sent over the wire) */
     authenticateWithSRP: ({
@@ -512,7 +512,7 @@ function _usePasswordless() {
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),
       });
       signinIn.signedIn.catch(setLastError);
-      return signinIn.signedIn;
+      return signinIn;
     },
     /** Sign in with username and password (the password is sent in plaintext over the wire) */
     authenticateWithPlaintextPassword: ({
@@ -539,7 +539,7 @@ function _usePasswordless() {
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),
       });
       signinIn.signedIn.catch(setLastError);
-      return signinIn.signedIn;
+      return signinIn;
     },
     /** Sign-in again, using the user's current tokens (JWTs) and an OTP (One Time Password) that is sent to the user via SMS */
     stepUpAuthenticationWithSmsOtp: ({
@@ -563,7 +563,7 @@ function _usePasswordless() {
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),
       });
       signinIn.signedIn.catch(setLastError);
-      return signinIn.signedIn;
+      return signinIn;
     },
     /** Should the FIDO2 credential manager UI component be shown? */
     showAuthenticatorManager,
