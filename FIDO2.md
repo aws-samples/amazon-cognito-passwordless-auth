@@ -25,7 +25,7 @@ Here are some issues in other browsers that we know of today:
 
 ## AWS Architecture
 
-![FIDO2 AWS Architecture](./drawings/fido2.png)
+![FIDO2 AWS Architecture](./drawings/fido2.drawio.svg)
 
 ## Registering new FIDO2 Authenticators
 
