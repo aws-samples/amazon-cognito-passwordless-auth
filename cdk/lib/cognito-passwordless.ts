@@ -87,13 +87,13 @@ export class Passwordless extends Construct {
            *
            * @default 1000
            */
-          throttlingBurstLimit?: 1000;
+          throttlingBurstLimit?: number;
           /**
            * The throttling rate limit for the deployment stage: https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html
            *
            * @default 2000
            */
-          throttlingRateLimit?: 2000;
+          throttlingRateLimit?: number;
           /**
            * Create a log role for API Gateway and add this to API Gateway account settings?
            * Set to false if you have already set this up in your account and region,
