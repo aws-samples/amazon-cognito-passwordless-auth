@@ -22,6 +22,7 @@ import {
   fido2UpdateCredential,
   StoredCredential,
   authenticateWithFido2,
+  fido2getCredential,
 } from "../fido2.js";
 import { authenticateWithSRP } from "../srp.js";
 import { authenticateWithPlaintextPassword } from "../plaintext.js";
@@ -181,6 +182,8 @@ function _usePasswordless() {
   const [showAuthenticatorManager, setShowAuthenticatorManager] =
     useState(false);
   const [recheckSignInStatus, setRecheckSignInStatus] = useState(0);
+  const [, reCheck] = useState({});
+  const locationHref = configure().location.href;
 
   // At component mount, attempt sign-in with link
   // This is a no-op, if there's no secret hash in the location bar
@@ -192,7 +195,7 @@ function _usePasswordless() {
     });
     signingIn.signedIn.catch(setLastError);
     return signingIn.abort;
-  }, [setTokens]);
+  }, [setTokens, locationHref]);
   const busy = busyState.includes(signingInStatus as BusyState);
 
   // Schedule token refresh
@@ -380,6 +383,8 @@ function _usePasswordless() {
   useEffect(revalidateFido2Credentials, [isSignedIn, toFido2Credential]);
 
   return {
+    /** Force re-render from outside of the hook */
+    reCheck: useCallback(() => reCheck({}), []),
     /** The (raw) tokens: ID token, Access token and Refresh Token */
     tokens,
     /** The JSON parsed ID and Access token */
@@ -417,10 +422,11 @@ function _usePasswordless() {
     creatingCredential,
     /** Register a FIDO2 credential with the Relying Party */
     fido2CreateCredential: (
+      createCredential: typeof fido2CreateCredential = fido2CreateCredential,
       ...args: Parameters<typeof fido2CreateCredential>
     ) => {
       setCreatingCredential(true);
-      return fido2CreateCredential(...args)
+      return createCredential(...args)
         .then((storedCredential) => {
           setFido2Credentials((state) => {
             const credential = toFido2Credential(storedCredential);
@@ -468,6 +474,7 @@ function _usePasswordless() {
       username,
       credentials,
       clientMetadata,
+      credentialGetter,
     }: {
       /**
        * Username, or alias (e-mail, phone number)
@@ -475,12 +482,14 @@ function _usePasswordless() {
       username?: string;
       credentials?: { id: string; transports?: AuthenticatorTransport[] }[];
       clientMetadata?: Record<string, string>;
+      credentialGetter?: typeof fido2getCredential;
     } = {}) => {
       setLastError(undefined);
       const signinIn = authenticateWithFido2({
         username,
         credentials,
         clientMetadata,
+        credentialGetter,
         statusCb: setSigninInStatus,
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),
       });

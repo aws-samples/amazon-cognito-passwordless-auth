@@ -147,7 +147,10 @@
     "cdk-nag": ">=2.0.0",
     "constructs": ">=10.0.0",
     "esbuild": "*",
+    "expo-device": "^5.6.0",
+    "expo-linking": "^6.0.0",
     "react": ">=17.0.0",
-    "react-native-passkey": ">=1.1.1"
+    "react-native-passkey": ">=2.1.1",
+    "react-native-svg": "^13.14.0"
   }
 }

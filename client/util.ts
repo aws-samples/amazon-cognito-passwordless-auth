@@ -38,6 +38,7 @@ export async function throwIfNot2xx(res: MinimalResponse) {
 export function parseJwtPayload<
   T extends CognitoAccessTokenPayload | CognitoIdTokenPayload
 >(jwt: string) {
+  const { TextDecoder } = configure();
   const parts = jwt.split(".");
   const payload = parts[1];
   if (!payload) {

@@ -101,11 +101,11 @@ export const requestSignInLink = ({
 
 const failedFragmentIdentifieres = new Set<string>();
 function checkCurrentLocationForSignInLink() {
-  const { debug, location } = configure();
+  const { debug, location, URL } = configure();
   let url: URL;
   let fragmentIdentifier: string;
   try {
-    url = new URL(location.href);
+    url = new URL(location.href) as URL;
     fragmentIdentifier = url.hash?.slice(1);
     if (!fragmentIdentifier) {
       debug?.(
