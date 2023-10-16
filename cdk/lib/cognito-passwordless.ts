@@ -651,7 +651,7 @@ export class Passwordless extends Construct {
             format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
           },
           timeout: cdk.Duration.seconds(30),
-          ...props.functionProps?.fido2,
+          ...props.functionProps?.fido2challenge,
           environment: {
             LOG_LEVEL: props.logLevel ?? "INFO",
             DYNAMODB_AUTHENTICATORS_TABLE: this.authenticatorsTable!.tableName,
