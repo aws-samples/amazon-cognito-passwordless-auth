@@ -547,6 +547,15 @@ export function authenticateWithFido2({
         username = new TextDecoder().decode(
           bufferFromBase64Url(fido2credential.userHandleB64)
         );
+        // The userHandle must map to a username, not a sub
+        if (username.startsWith("s|")) {
+          debug?.(
+            "Credential userHandle isn't a username. In order to use the username as userHandle, so users can sign in without typing their username, usernames must be opaque"
+          );
+          throw new Error("Username is required for initiating sign-in");
+        }
+        // remove (potential) prefix to recover username
+        username = username.replace(/^u\|/, "");
         debug?.(
           `Proceeding with discovered credential for username: ${username} (b64: ${fido2credential.userHandleB64})`
         );

@@ -69,7 +69,9 @@ export const logLevel =
 export let logger = new Logger(logLevel);
 
 /**
- * Returns the cognitoUsername if it is opaque, i.e. if it looks like a UUID, or otherwise the sub
+ * Returns a suitable userHandle given the username and the sub
+ * If possible we'll use the username (so that usernameless sign-in can be supported),
+ * but this requires the username to be opaque.
  */
 export function determineUserHandle({
   sub,
@@ -78,10 +80,15 @@ export function determineUserHandle({
   sub?: string; // maybe undefined if userNotFound is true
   cognitoUsername: string;
 }) {
+  if (sub === cognitoUsername) return sub; // usernameless sign-in supported
   if (!sub || isOpaqueIdentifier(cognitoUsername)) {
-    return cognitoUsername;
+    /**
+     * prefix username with "u|" so it will never (accidentally, or maliciously) collide with the sub of another user
+     * (the Cognito sub is a hexadecimally represented UUID that will not start with "u|")
+     */
+    return `u|${cognitoUsername}`; // usernameless sign-in supported
   }
-  return sub;
+  return `s|${sub}`; // usernameless sign-in NOT supported, we prefix with "s|" so the UI can detect this
 }
 
 function isOpaqueIdentifier(cognitoUsername: string) {
