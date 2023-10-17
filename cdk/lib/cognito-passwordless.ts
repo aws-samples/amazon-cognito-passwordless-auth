@@ -1022,11 +1022,11 @@ export class Passwordless extends Construct {
             ],
           }
         );
+        new cdk.aws_wafv2.CfnWebACLAssociation(scope, `WafAssociation${id}`, {
+          resourceArn: this.fido2Api.deploymentStage.stageArn,
+          webAclArn: this.fido2ApiWebACL.attrArn,
+        });
       }
-      new cdk.aws_wafv2.CfnWebACLAssociation(scope, `WafAssociation${id}`, {
-        resourceArn: this.fido2Api.deploymentStage.stageArn,
-        webAclArn: this.fido2ApiWebACL!.attrArn,
-      });
     }
   }
 }
