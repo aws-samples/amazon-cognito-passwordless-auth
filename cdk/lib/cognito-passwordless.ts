@@ -116,6 +116,10 @@ export class Passwordless extends Construct {
            * @default 100
            */
           wafRateLimitPerIp?: number;
+          /**
+           * Pass any properties you want for the AWS Lambda Rest Api created, these will be merged with properties from this solution
+           */
+          restApiProps?: Partial<cdk.aws_apigateway.RestApiProps>;
         };
       };
       /**
@@ -705,6 +709,7 @@ export class Passwordless extends Construct {
         {
           proxy: false,
           handler: this.fido2Fn,
+          ...props.fido2.api?.restApiProps,
           deployOptions: {
             loggingLevel: cdk.aws_apigateway.MethodLoggingLevel.ERROR,
             metricsEnabled: true,
@@ -766,6 +771,7 @@ export class Passwordless extends Construct {
                   cdk.aws_apigateway.AccessLogField.contextDomainName(),
               })
             ),
+            ...props.fido2.api?.restApiProps?.deployOptions,
           },
         }
       );
