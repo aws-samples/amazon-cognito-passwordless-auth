@@ -6,7 +6,7 @@ Prerequisites:
 
 1. You have cloned this repository
 1. You have NodeJS installed
-1. To be able to send Magic Links, you must have at least 1 verified e-mail address in Amazon SES. This e-mail address will be used as the FROM-address for the magic links. If you don't have a verified e-mail address in Amazon SES, create one now.
+1. To be able to send Magic Links and FIDO2 notifications, you must have at least 1 verified e-mail address in Amazon SES. This e-mail address will be used as the FROM-address for the magic links and FIDO2 notifications. If you don't have a verified e-mail address in Amazon SES, create one now.
 1. To send Magic Links to e-mail addresses that you didn't explicitly verify, you need to verify the SES domain. Alternatively, verify each e-mail address in Amazon SES explicitly.
 
 Steps to deploy:

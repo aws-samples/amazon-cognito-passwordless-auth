@@ -17,6 +17,7 @@ import {
   APIGatewayProxyHandler,
 } from "aws-lambda";
 import { createHash, randomBytes } from "crypto";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -33,12 +34,14 @@ import {
   UserFacingError,
   withCommonHeaders,
 } from "./common.js";
+import { NotificationPayload } from "./fido2-notification.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
   marshallOptions: {
     removeUndefinedValues: true,
   },
 });
+const lambdaClient = new LambdaClient({});
 const allowedRelyingPartyIds = (
   process.env.ALLOWED_RELYING_PARTY_IDS ?? ""
 ).split(",");
@@ -56,6 +59,7 @@ if (!allowedOrigins.length)
 const authenticatorRegistrationTimeout = Number(
   process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000"
 );
+const notificationsEnabled = !!process.env.FIDO2_NOTIFICATION_LAMBDA_ARN;
 const allowedKty: Record<number, string> = { 2: "EC", 3: "RSA" };
 const allowedAlg: Record<number, string> = { "-7": "ES256", "-257": "RS256" };
 const headers = {
@@ -117,9 +121,15 @@ const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (event) => {
       logger.info("Completing the new authenticator registration ...");
       const storedCredential = await handleCredentialsResponse(
         userHandle,
-        parseBody(event),
-        email,
+        parseBody(event)
       );
+      if (notificationsEnabled) {
+        await enqueueFido2Notification({
+          cognitoUsername,
+          eventType: "FIDO2_CREDENTIAL_CREATED",
+          friendlyName: storedCredential.friendlyName,
+        });
+      }
       return {
         statusCode: 200,
         body: JSON.stringify(storedCredential),
@@ -150,12 +160,17 @@ const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (event) => {
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
       logger.debug("CredentialId:", parsed.credentialId);
-      await deleteCredential({
+      const deletedCredential = await deleteCredential({
         userId: userHandle,
         credentialId: parsed.credentialId,
-        userEmail: email,
-        friendlyName: parsed.friendlyName,
       });
+      if (deletedCredential && notificationsEnabled) {
+        await enqueueFido2Notification({
+          cognitoUsername,
+          eventType: "FIDO2_CREDENTIAL_DELETED",
+          friendlyName: deletedCredential.friendlyName,
+        });
+      }
       return { statusCode: 204, body: "", headers };
     } else if (event.path === "/authenticators/update") {
       const parsed = parseBody(event);
@@ -293,42 +308,26 @@ async function getExistingCredentialsForUser({
 async function deleteCredential({
   userId,
   credentialId,
-  userEmail,
-  friendlyName
 }: {
   userId: string;
   credentialId: unknown;
-  userEmail?: string,
-  friendlyName?: unknown;
 }) {
   if (typeof credentialId !== "string") {
     throw new UserFacingError(
       `credentialId should be a string, received ${typeof credentialId}`
     );
   }
-  await ddbDocClient.send(
+  const { Attributes: credential } = await ddbDocClient.send(
     new DeleteCommand({
       TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
       Key: {
         pk: `USER#${userId}`,
         sk: `CREDENTIAL#${credentialId}`,
       },
+      ReturnValues: "ALL_OLD",
     })
   );
-  // add the notification when the device is deleted
-  if (process.env.FIDO2_NOTIFICATION_LAMBDA_ARN !== "") {
-    try {
-      const command = new InvokeCommand({
-        FunctionName: process.env.FIDO2_NOTIFICATION_LAMBDA_ARN,
-        InvocationType: "Event",
-        Payload: JSON.stringify({ userEmail, "friendlyName": friendlyName, "eventType": "DEVICE_REMOVED" }),
-      });
-      const response = await lambdaClient.send(command);
-      console.log("Response", response);
-    } catch (error) {
-      console.error("Errored invoking the lambda", error)
-    }
-  }
+  return credential as StoredCredential;
 }
 
 async function updateCredential({
@@ -522,8 +521,7 @@ function assertIsClientData(cd: unknown): asserts cd is {
 
 async function handleCredentialsResponse(
   userId: string,
-  body: unknown,
-  userEmail?: string,
+  body: unknown
 ): Promise<Credential> {
   assertBodyIsCredentialsResponse(body);
   const clientData: unknown = JSON.parse(
@@ -609,21 +607,6 @@ async function handleCredentialsResponse(
   }
   await assertCredentialIsNew(authData.credentialId);
   const createdAt = new Date();
-
-  // invoking the lamda to send the email notification if the feature is enabled
-  if (process.env.FIDO2_NOTIFICATION_LAMBDA_ARN !== "") {
-    try {
-      const command = new InvokeCommand({
-        FunctionName: process.env.FIDO2_NOTIFICATION_LAMBDA_ARN,
-        InvocationType: "Event",
-        Payload: JSON.stringify({ userEmail, "friendlyName": body.friendlyName, createdAt, "eventType": "DEVICE_REGISTERED" }),
-      });
-      const response = await lambdaClient.send(command);
-      console.log("Response", response);
-    } catch (error) {
-      console.error("Errored invoking the lambda", error)
-    }
-  }
   await storeUserCredential({
     userId,
     credentialId: authData.credentialId,
@@ -886,5 +869,20 @@ function cborDecode(b: Buffer, name: string) {
   } catch (err) {
     logger.error(err);
     throw new UserFacingError(`Invalid ${name}`);
+  }
+}
+
+async function enqueueFido2Notification(payload: NotificationPayload) {
+  try {
+    const command = new InvokeCommand({
+      FunctionName: process.env.FIDO2_NOTIFICATION_LAMBDA_ARN!,
+      InvocationType: "Event",
+      Payload: JSON.stringify(payload),
+    });
+    await lambdaClient.send(command);
+    logger.info("Successfully enqueued notification to user");
+  } catch (error) {
+    // Since the notification is best effort, we'll log but otherwise swallow the error
+    logger.error("Failed to enqueue notification to user:", error);
   }
 }

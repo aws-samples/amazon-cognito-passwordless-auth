@@ -57,7 +57,9 @@ class End2EndExampleStack extends cdk.Stack {
         ],
         attestation: "none",
         userVerification: "required",
-        sesFromAddress
+        updatedCredentialsNotification: {
+          sesFromAddress,
+        },
       },
       smsOtpStepUp: {},
       userPoolClientProps: {
@@ -136,19 +138,21 @@ NagSuppressions.addResourceSuppressions(
   ],
   true
 );
-NagSuppressions.addResourceSuppressions(
-  stack.passwordless.fido2NotificationFn!,
-  [
-    {
-      id: "AwsSolutions-IAM5",
-      reason: "Allow ses:sendMail to *",
-      appliesTo: [
-        "Resource::arn:<AWS::Partition>:ses:<AWS::Region>:<AWS::AccountId>:identity/*",
-      ],
-    },
-  ],
-  true
-);
+if (stack.passwordless.fido2NotificationFn) {
+  NagSuppressions.addResourceSuppressions(
+    stack.passwordless.fido2NotificationFn,
+    [
+      {
+        id: "AwsSolutions-IAM5",
+        reason: "Allow ses:sendMail to *",
+        appliesTo: [
+          "Resource::arn:<AWS::Partition>:ses:<AWS::Region>:<AWS::AccountId>:identity/*",
+        ],
+      },
+    ],
+    true
+  );
+}
 NagSuppressions.addResourceSuppressions(
   stack.passwordless.userPool,
   [
