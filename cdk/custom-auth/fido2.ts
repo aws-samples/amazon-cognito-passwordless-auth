@@ -22,9 +22,10 @@ import {
   QueryCommand,
   UpdateCommand,
   GetCommand,
+  DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { randomBytes, JsonWebKey } from "crypto";
-import { createVerify, createHash, createPublicKey } from "crypto";
+import { JsonWebKey } from "crypto";
+import { createVerify, createHash, createPublicKey, randomBytes } from "crypto";
 import { logger, UserFacingError, determineUserHandle } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -55,9 +56,10 @@ let config = {
   /** Expose credential IDs to users signing in? If you want users to use non-discoverable credentials you should set this to true */
   exposeUserCredentialIds: !!process.env.EXPOSE_USER_CREDENTIAL_IDS,
   /** Function to generate FIDO2 challenges that user's authenticators must sign. Override to e.g. implement transaction signing */
-  challengeGenerator: () => randomBytes(64).toString("base64url"),
+  challengeGenerator: (): Promise<string> | string =>
+    randomBytes(64).toString("base64url"),
   /** Timeout for the sign-in attempt (per WebAuthn standard) */
-  timeout: 120000, // 2 minutes,
+  timeout: Number(process.env.SIGN_IN_TIMEOUT ?? "120000"), // 2 minutes,
   /** Should users having a registered FIDO2 credential be forced to use that for signing in? If true, other custom auth flows, such as Magic Link sign-in, will be denied for users having FIDO2 credentials––to protect them from phishing */
   enforceFido2IfAvailable: !!process.env.ENFORCE_FIDO2_IF_AVAILABLE,
   /** Salt to use for storing hashed FIDO2 credential data */
@@ -258,10 +260,6 @@ export async function verifyChallenge({
   ) {
     throw new Error(`Unknown credential ID: ${credentialId}`);
   }
-  const storedCredential = await credentialGetter({ userId, credentialId });
-  if (!storedCredential) {
-    throw new Error(`Unknown credential ID: ${credentialId}`);
-  }
 
   // Verify Client Data
   const cData = Buffer.from(clientDataJSON_B64, "base64url");
@@ -270,15 +268,8 @@ export async function verifyChallenge({
   if (clientData.type !== "webauthn.get") {
     throw new Error(`Invalid clientData type: ${clientData.type}`);
   }
-  if (
-    !Buffer.from(clientData.challenge, "base64url").equals(
-      Buffer.from(fido2options.challenge, "base64url")
-    )
-  ) {
-    throw new Error(
-      `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
-    );
-  }
+
+  // Verify origin
   if (
     !requireConfig("allowedOrigins").includes(new URL(clientData.origin).origin)
   ) {
@@ -323,6 +314,25 @@ export async function verifyChallenge({
     throw new Error("User is not verified");
   }
 
+  // Verify the challenge was created by us
+  if (
+    !(
+      Buffer.from(clientData.challenge, "base64url").equals(
+        Buffer.from(fido2options.challenge, "base64url")
+      ) || (await ensureUsernamelessChallengeExists(clientData.challenge))
+    )
+  ) {
+    throw new Error(
+      `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
+    );
+  }
+
+  // Retrieve credential
+  const storedCredential = await credentialGetter({ userId, credentialId });
+  if (!storedCredential) {
+    throw new Error(`Unknown credential ID: ${credentialId}`);
+  }
+
   // Verify flagBackupEligibility is unchanged
   if (flagBackupEligibility !== storedCredential.flagBackupEligibility) {
     throw new Error("Credential backup eligibility changed");
@@ -365,6 +375,27 @@ export async function verifyChallenge({
     signCount,
     flagBackupState,
   });
+}
+
+async function ensureUsernamelessChallengeExists(challenge: string) {
+  const { Attributes: usernamelessChallenge } = await ddbDocClient.send(
+    new DeleteCommand({
+      TableName: process.env.DYNAMODB_AUTHENTICATORS_TABLE!,
+      Key: {
+        pk: `CHALLENGE#${challenge}`,
+        sk: `USERNAMELESS_SIGN_IN`,
+      },
+      ReturnValues: "ALL_OLD",
+    })
+  );
+  logger.debug(
+    "Usernameless challenge:",
+    JSON.stringify(usernamelessChallenge)
+  );
+  return (
+    !!usernamelessChallenge &&
+    (usernamelessChallenge.exp as number) * 1000 > Date.now()
+  );
 }
 
 function assertIsClientData(cd: unknown): asserts cd is {

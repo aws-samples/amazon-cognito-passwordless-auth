@@ -67,6 +67,10 @@ A prefab sample login component, that supports signing in with FIDO2 and Magic L
 
 <img src="../../drawings/passwordless-signin.png" alt="Passwordless Sign In" width="500px" />
 
+Users can also sign in with their Passkey, without typing in their username:
+
+<img src="../../drawings/passwordless-signin-passkey.png" alt="Passwordless Sign In" width="500px" />
+
 You should wrap your own in app in this component (as child). The component will render your app (the child), instead of itself, once the user successfully signs in:
 
 ```jsx
@@ -163,10 +167,11 @@ Passwordless.configure({
   fido2: {
     baseUrl: "<fido2 base url>",
     /**
-     * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure:
+     * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure.
+     * (this client side config is essentially an override, that's merged on top of the config received from the backend)
      */
     authenticatorSelection: {
-      userVerification: "required", // even though optional, this one you probably want to explicitly specify as "required"
+      userVerification: "required",
       requireResidentKey: true,
       residentKey: "preferred",
       authenticatorAttachment: "platform",

@@ -1,6 +1,6 @@
 {
   "name": "amazon-cognito-passwordless-auth",
-  "version": "0.7.1",
+  "version": "0.9.1",
   "description": "Passwordless authentication with Amazon Cognito: FIDO2 (WebAuthn, support for Passkeys), Magic Link, SMS OTP Step Up",
   "keywords": [
     "AWS",
@@ -144,9 +144,6 @@
     "cbor": "^8.1.0"
   },
   "peerDependencies": {
-    "@aws-cdk/aws-apigatewayv2-alpha": "*",
-    "@aws-cdk/aws-apigatewayv2-authorizers-alpha": "*",
-    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "*",
     "aws-cdk-lib": ">=2.0.0",
     "cdk-nag": ">=2.0.0",
     "constructs": ">=10.0.0",

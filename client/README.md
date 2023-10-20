@@ -16,10 +16,11 @@ Passwordless.configure({
   fido2: {
     baseUrl: "<fido2 base url>",
     /**
-     * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure:
+     * all other FIDO2 config is optional, values below are examples only to illustrate what you might configure.
+     * (this client side config is essentially an override, that's merged on top of the config received from the backend)
      */
     authenticatorSelection: {
-      userVerification: "required", // even though optional, this one you probably want to explicitly specify as "required"
+      userVerification: "required",
       requireResidentKey: true,
       residentKey: "preferred",
       authenticatorAttachment: "platform",

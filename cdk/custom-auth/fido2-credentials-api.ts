@@ -12,9 +12,11 @@
  * ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-import { Handler } from "aws-lambda";
-import { randomBytes, createHash } from "crypto";
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import {
+  APIGatewayProxyWithCognitoAuthorizerHandler,
+  APIGatewayProxyHandler,
+} from "aws-lambda";
+import { createHash, randomBytes } from "crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -29,6 +31,7 @@ import {
   logger,
   handleConditionalCheckFailedException,
   UserFacingError,
+  withCommonHeaders,
 } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
@@ -61,38 +64,10 @@ const headers = {
   "Cache-Control": "no-store",
 };
 
-const lambdaClient = new LambdaClient({});
-
-export const handler: Handler<{
-  requestContext: {
-    authorizer: {
-      jwt: {
-        claims: {
-          email?: string;
-          phone_number?: string;
-          name?: string;
-          sub: string;
-          "cognito:username": string;
-          token_use: "id" | "access";
-        };
-      };
-    };
-  };
-  body?: string;
-  isBase64Encoded: boolean;
-  pathParameters: {
-    fido2path: string;
-  };
-  queryStringParameters?: {
-    rpId?: string;
-  };
-}> = async (event) => {
+const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (event) => {
   logger.debug(JSON.stringify(event, null, 2));
-  logger.info(
-    "FIDO2 credentials API invocation:",
-    event.pathParameters.fido2path
-  );
-  if (event.requestContext.authorizer.jwt.claims.token_use !== "id") {
+  logger.info("FIDO2 credentials API invocation:", event.path);
+  if (event.requestContext.authorizer?.claims.token_use !== "id") {
     logger.info("ERROR: This API must be accessed using the ID Token");
     return {
       statusCode: 400,
@@ -107,11 +82,11 @@ export const handler: Handler<{
       phone_number: phoneNumber,
       name,
       "cognito:username": cognitoUsername,
-    } = event.requestContext.authorizer.jwt.claims;
+    } = event.requestContext.authorizer.claims;
     const userHandle = determineUserHandle({ sub, cognitoUsername });
     const userName = email ?? phoneNumber ?? name ?? cognitoUsername;
     const displayName = name ?? email;
-    if (event.pathParameters.fido2path === "register-authenticator/start") {
+    if (event.path === "/register-authenticator/start") {
       logger.info("Starting a new authenticator registration ...");
       if (!userName) {
         throw new Error("Unable to determine name for user");
@@ -138,9 +113,7 @@ export const handler: Handler<{
         body: JSON.stringify(options),
         headers,
       };
-    } else if (
-      event.pathParameters.fido2path === "register-authenticator/complete"
-    ) {
+    } else if (event.path === "/register-authenticator/complete") {
       logger.info("Completing the new authenticator registration ...");
       const storedCredential = await handleCredentialsResponse(
         userHandle,
@@ -152,7 +125,7 @@ export const handler: Handler<{
         body: JSON.stringify(storedCredential),
         headers,
       };
-    } else if (event.pathParameters.fido2path === "authenticators/list") {
+    } else if (event.path === "/authenticators/list") {
       logger.info("Listing authenticators ...");
       const rpId = event.queryStringParameters?.rpId;
       if (!rpId) {
@@ -172,7 +145,7 @@ export const handler: Handler<{
         }),
         headers,
       };
-    } else if (event.pathParameters.fido2path === "authenticators/delete") {
+    } else if (event.path === "/authenticators/delete") {
       logger.info("Deleting authenticator ...");
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
@@ -183,8 +156,8 @@ export const handler: Handler<{
         userEmail: email,
         friendlyName: parsed.friendlyName,
       });
-      return { statusCode: 204 };
-    } else if (event.pathParameters.fido2path === "authenticators/update") {
+      return { statusCode: 204, body: "", headers };
+    } else if (event.path === "/authenticators/update") {
       const parsed = parseBody(event);
       assertBodyIsObject(parsed);
       await updateCredential({
@@ -192,7 +165,7 @@ export const handler: Handler<{
         credentialId: parsed.credentialId,
         friendlyName: parsed.friendlyName,
       });
-      return { statusCode: 200, headers };
+      return { statusCode: 200, body: "", headers };
     }
     return {
       statusCode: 404,
@@ -214,6 +187,7 @@ export const handler: Handler<{
     };
   }
 };
+export const handler = withCommonHeaders(_handler as APIGatewayProxyHandler);
 
 interface UserDetails {
   id: string;
@@ -581,7 +555,7 @@ async function handleCredentialsResponse(
       })
     )
     .catch(handleConditionalCheckFailedException("Challenge not found"));
-  if (!storedChallenge) {
+  if (!storedChallenge || (storedChallenge.exp as number) * 1000 < Date.now()) {
     throw new UserFacingError("Challenge not found");
   }
   logger.debug("Challenge found:", JSON.stringify(storedChallenge));
@@ -891,7 +865,7 @@ class TypedMap extends Map<unknown, unknown> {
   }
 }
 
-function parseBody(event: { body?: string; isBase64Encoded: boolean }) {
+function parseBody(event: { body?: string | null; isBase64Encoded: boolean }) {
   try {
     return event.body
       ? (JSON.parse(

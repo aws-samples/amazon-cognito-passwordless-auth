@@ -14,6 +14,8 @@
  */
 
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
+import { APIGatewayProxyHandler } from "aws-lambda";
+
 export class UserFacingError extends Error {
   constructor(msg: string) {
     super(msg);
@@ -67,7 +69,9 @@ export const logLevel =
 export let logger = new Logger(logLevel);
 
 /**
- * Returns the cognitoUsername if it is opaque, i.e. if it looks like a UUID, or otherwise the sub
+ * Returns a suitable userHandle given the username and the sub
+ * If possible we'll use the username (so that usernameless sign-in can be supported),
+ * but this requires the username to be opaque.
  */
 export function determineUserHandle({
   sub,
@@ -76,10 +80,15 @@ export function determineUserHandle({
   sub?: string; // maybe undefined if userNotFound is true
   cognitoUsername: string;
 }) {
+  if (sub === cognitoUsername) return sub; // usernameless sign-in supported
   if (!sub || isOpaqueIdentifier(cognitoUsername)) {
-    return cognitoUsername;
+    /**
+     * prefix username with "u|" so it will never (accidentally, or maliciously) collide with the sub of another user
+     * (the Cognito sub is a hexadecimally represented UUID that will not start with "u|")
+     */
+    return `u|${cognitoUsername}`; // usernameless sign-in supported
   }
-  return sub;
+  return `s|${sub}`; // usernameless sign-in NOT supported, we prefix with "s|" so the UI can detect this
 }
 
 function isOpaqueIdentifier(cognitoUsername: string) {
@@ -90,4 +99,53 @@ function isUuid(cognitoUsername: string) {
   return !!cognitoUsername.match(
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   );
+}
+
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS;
+const allowedMethods = process.env.CORS_ALLOWED_METHODS;
+const allowedHeaders = process.env.CORS_ALLOWED_HEADERS;
+const maxAge = process.env.CORS_MAX_AGE;
+const corsHeaderAvailable = !!(
+  allowedOrigins &&
+  allowedMethods &&
+  allowedHeaders &&
+  maxAge
+);
+export function withCommonHeaders<T extends APIGatewayProxyHandler>(
+  handler: T
+) {
+  const wrapped: APIGatewayProxyHandler = (event, context, cb) => {
+    return handler(event, context, () =>
+      cb(
+        new Error("Callback style response from wrapped handler not supported")
+      )
+    )?.then((response) => {
+      const origin =
+        event.headers &&
+        Object.entries(event.headers).find(
+          ([k, v]) => k.toLowerCase() === "origin" && v
+        )?.[1];
+      const headers = {
+        "Strict-Transport-Security":
+          "max-age=31536000; includeSubdomains; preload",
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      };
+      if (
+        origin &&
+        corsHeaderAvailable &&
+        allowedOrigins.split(",").includes(origin)
+      ) {
+        Object.assign(headers, {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Methods": allowedMethods,
+          "Access-Control-Allow-Headers": allowedHeaders,
+          "Access-Control-Max-Age": maxAge,
+        });
+      }
+      response.headers = { ...response.headers, ...headers };
+      return response;
+    });
+  };
+  return wrapped as T;
 }
