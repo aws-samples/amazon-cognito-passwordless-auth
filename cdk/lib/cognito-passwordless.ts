@@ -33,6 +33,7 @@ export class Passwordless extends Construct {
   fido2challengeFn?: cdk.aws_lambda.IFunction;
   fido2Api?: cdk.aws_apigateway.RestApi;
   fido2ApiWebACL?: cdk.aws_wafv2.CfnWebACL;
+  fido2NotificationFn?: cdk.aws_lambda.IFunction;
   constructor(
     scope: Construct,
     id: string,
@@ -121,6 +122,15 @@ export class Passwordless extends Construct {
            */
           restApiProps?: Partial<cdk.aws_apigateway.RestApiProps>;
         };
+        /**
+         * Send an informational notification to users when a FIDO2 credential was created or deleted for them?
+         */
+        updatedCredentialsNotification?: {
+          /** The e-mail address you want to use as the FROM address of the notification e-mails */
+          sesFromAddress: string;
+          /** The AWS region you want to use Amazon SES from. Use this to specify a different region where you're no longer in the SES sandbox */
+          sesRegion?: string;
+        };
       };
       /**
        * Enable sign-in with Magic Links by providing this config object
@@ -161,6 +171,7 @@ export class Passwordless extends Construct {
         preTokenGeneration?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
         fido2?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
         fido2challenge?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
+        fido2notification?: Partial<cdk.aws_lambda_nodejs.NodejsFunctionProps>;
       };
       /** Any keys in the clientMetadata that you specify here, will be persisted as claims in the ID-token, via the Amazon Cognito PreToken-generation trigger */
       clientMetadataTokenKeys?: string[];
@@ -594,6 +605,53 @@ export class Passwordless extends Construct {
           "Authorization",
         ]),
       };
+      if (props.fido2.updatedCredentialsNotification) {
+        this.fido2NotificationFn = new cdk.aws_lambda_nodejs.NodejsFunction(
+          this,
+          `Fido2Notification${id}`,
+          {
+            entry: join(
+              __dirname,
+              "..",
+              "custom-auth",
+              "fido2-notification.js"
+            ),
+            runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+            architecture: cdk.aws_lambda.Architecture.ARM_64,
+            bundling: {
+              format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
+            },
+            timeout: cdk.Duration.seconds(30),
+            ...props.functionProps?.fido2notification,
+            environment: {
+              LOG_LEVEL: props.logLevel ?? "INFO",
+              SES_FROM_ADDRESS:
+                props.fido2.updatedCredentialsNotification.sesFromAddress,
+              SES_REGION:
+                props.fido2.updatedCredentialsNotification.sesRegion ?? "",
+              USER_POOL_ID: this.userPool.userPoolId,
+              ...props.functionProps?.fido2notification?.environment,
+            },
+          }
+        );
+        this.fido2NotificationFn.addToRolePolicy(
+          new cdk.aws_iam.PolicyStatement({
+            effect: cdk.aws_iam.Effect.ALLOW,
+            resources: [
+              `arn:${cdk.Aws.PARTITION}:ses:${
+                props.fido2.updatedCredentialsNotification.sesRegion ??
+                cdk.Aws.REGION
+              }:${cdk.Aws.ACCOUNT_ID}:identity/*`,
+            ],
+            actions: ["ses:SendEmail"],
+          })
+        );
+        this.userPool.grant(
+          this.fido2NotificationFn,
+          "cognito-idp:AdminGetUser"
+        );
+      }
+
       this.fido2Fn = new cdk.aws_lambda_nodejs.NodejsFunction(
         this,
         `Fido2${id}`,
@@ -637,11 +695,13 @@ export class Passwordless extends Construct {
             CORS_MAX_AGE: defaultCorsOptionsWithAuth.maxAge
               .toSeconds()
               .toString(),
+            FIDO2_NOTIFICATION_LAMBDA_ARN:
+              this.fido2NotificationFn?.latestVersion.functionArn ?? "",
             ...props.functionProps?.fido2?.environment,
           },
         }
       );
-      this.userPool.grant(this.fido2Fn, "cognito-idp:AdminGetUser");
+      this.fido2NotificationFn?.latestVersion.grantInvoke(this.fido2Fn);
       this.authenticatorsTable!.grantReadWriteData(this.fido2Fn);
 
       this.fido2challengeFn = new cdk.aws_lambda_nodejs.NodejsFunction(

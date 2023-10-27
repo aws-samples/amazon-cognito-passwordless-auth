@@ -7,3 +7,4 @@ dist
 ./custom-auth/**/*
 ./lib/**/*
 ./react/**/*
+**/.DS_Store
