@@ -56,8 +56,8 @@ const allowedOrigins =
   process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
     .map((url) => url.origin) ?? [];
-if (!allowedApplicationOrigins.length && !allowedOrigins.length)
-  throw new Error("Environment variable ALLOWED_ORIGINS or ALLOWED_APPLICATION_ORIGINS is not set");
+if (!allowedOrigins.length)
+  throw new Error("Environment variable ALLOWED_ORIGINS is not set");
 const authenticatorRegistrationTimeout = Number(
   process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000"
 );
@@ -559,7 +559,7 @@ async function handleCredentialsResponse(
     throw new UserFacingError("Challenge not found");
   }
   logger.debug("Challenge found:", JSON.stringify(storedChallenge));
-  if (!checkClientOrigin(clientData.origin)) {
+  if (!checkClientOrigin(clientData.origin, allowedOrigins, allowedApplicationOrigins)) {
     throw new UserFacingError(
       `Invalid clientData origin: ${clientData.origin}`
     );

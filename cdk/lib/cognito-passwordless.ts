@@ -58,7 +58,7 @@ export class Passwordless extends Construct {
        */
       allowedOrigins?: string[];
       /**
-       * Probably write something
+       * The non web-app origins that will be allowed to authenticate via FIDO2. These may include origins which are not URLs.
        */
       allowedApplicationOrigins?: string[]
       /**
