@@ -51,7 +51,8 @@ const allowedRelyingPartyIdHashes = allowedRelyingPartyIds.map(
     createHash("sha256").update(relyingPartyId).digest("base64url")
 );
 const relyingPartyName = process.env.RELYING_PARTY_NAME!;
-const allowedApplicationOrigins = process.env.ALLOWED_APPLICATION_ORIGINS?.split(",") ?? [];
+const allowedApplicationOrigins =
+  process.env.ALLOWED_APPLICATION_ORIGINS?.split(",") ?? [];
 const allowedOrigins =
   process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
@@ -559,7 +560,13 @@ async function handleCredentialsResponse(
     throw new UserFacingError("Challenge not found");
   }
   logger.debug("Challenge found:", JSON.stringify(storedChallenge));
-  if (!checkClientOrigin(clientData.origin, allowedOrigins, allowedApplicationOrigins)) {
+  if (
+    !checkClientOrigin(
+      clientData.origin,
+      allowedOrigins,
+      allowedApplicationOrigins
+    )
+  ) {
     throw new UserFacingError(
       `Invalid clientData origin: ${clientData.origin}`
     );

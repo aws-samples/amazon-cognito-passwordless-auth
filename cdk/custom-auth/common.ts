@@ -150,9 +150,13 @@ export function withCommonHeaders<T extends APIGatewayProxyHandler>(
   return wrapped as T;
 }
 
-export function checkClientOrigin(origin: string, allowedOrigins: string[], allowedApplicationOrigins: string[]): boolean {
+export function checkClientOrigin(
+  origin: string,
+  allowedOrigins: string[],
+  allowedApplicationOrigins: string[]
+): boolean {
   if (allowedApplicationOrigins.includes(origin)) {
-    return true
+    return true;
   }
 
   return allowedOrigins.includes(new URL(origin).origin);

@@ -26,7 +26,12 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { JsonWebKey } from "crypto";
 import { createVerify, createHash, createPublicKey, randomBytes } from "crypto";
-import {logger, UserFacingError, determineUserHandle, checkClientOrigin} from "./common.js";
+import {
+  logger,
+  UserFacingError,
+  determineUserHandle,
+  checkClientOrigin,
+} from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 interface StoredCredential {
@@ -46,7 +51,8 @@ let config = {
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
     .map((url) => url.origin),
-  allowedApplicationOrigins: process.env.ALLOWED_APPLICATION_ORIGINS?.split(","),
+  allowedApplicationOrigins:
+    process.env.ALLOWED_APPLICATION_ORIGINS?.split(","),
   /** The set of Relying Party IDs thay may initiate FIDO2 sign-in */
   allowedRelyingPartyIds: process.env.ALLOWED_RELYING_PARTY_IDS?.split(","),
   /** The Relying Party ID to use (optional, if not set user agents will use the current domain) */
@@ -271,7 +277,13 @@ export async function verifyChallenge({
   }
 
   // Verify origin
-  if (!checkClientOrigin(clientData.origin, requireConfig("allowedOrigins"), config.allowedApplicationOrigins ?? [])) {
+  if (
+    !checkClientOrigin(
+      clientData.origin,
+      requireConfig("allowedOrigins"),
+      config.allowedApplicationOrigins ?? []
+    )
+  ) {
     throw new Error(`Invalid clientData origin: ${clientData.origin}`);
   }
 
