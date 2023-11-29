@@ -149,3 +149,16 @@ export function withCommonHeaders<T extends APIGatewayProxyHandler>(
   };
   return wrapped as T;
 }
+
+export function checkClientOrigin(origin: string): boolean {
+  const allowedApplicationOrigins = process.env.ALLOWED_APPLICATION_ORIGINS?.split(",") ?? [];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",")
+      .map((href) => new URL(href))
+      .map((url) => url.origin) ?? [];
+
+  if (allowedApplicationOrigins.length > 0 && allowedApplicationOrigins.includes(origin)) {
+    return true
+  }
+
+  return allowedOrigins.length > 0 && allowedOrigins.includes(new URL(origin).origin);
+}

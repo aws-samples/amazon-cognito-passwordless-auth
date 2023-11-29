@@ -33,6 +33,7 @@ import {
   handleConditionalCheckFailedException,
   UserFacingError,
   withCommonHeaders,
+  checkClientOrigin,
 } from "./common.js";
 import { NotificationPayload } from "./fido2-notification.js";
 
@@ -50,12 +51,13 @@ const allowedRelyingPartyIdHashes = allowedRelyingPartyIds.map(
     createHash("sha256").update(relyingPartyId).digest("base64url")
 );
 const relyingPartyName = process.env.RELYING_PARTY_NAME!;
+const allowedApplicationOrigins = process.env.ALLOWED_APPLICATION_ORIGINS?.split(",") ?? [];
 const allowedOrigins =
   process.env.ALLOWED_ORIGINS?.split(",")
     .map((href) => new URL(href))
     .map((url) => url.origin) ?? [];
-if (!allowedOrigins.length)
-  throw new Error("Environment variable ALLOWED_ORIGINS is not set");
+if (!allowedApplicationOrigins.length && !allowedOrigins.length)
+  throw new Error("Environment variable ALLOWED_ORIGINS or ALLOWED_APPLICATION_ORIGINS is not set");
 const authenticatorRegistrationTimeout = Number(
   process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000"
 );
@@ -557,7 +559,7 @@ async function handleCredentialsResponse(
     throw new UserFacingError("Challenge not found");
   }
   logger.debug("Challenge found:", JSON.stringify(storedChallenge));
-  if (!allowedOrigins.includes(new URL(clientData.origin).origin)) {
+  if (!checkClientOrigin(clientData.origin)) {
     throw new UserFacingError(
       `Invalid clientData origin: ${clientData.origin}`
     );
