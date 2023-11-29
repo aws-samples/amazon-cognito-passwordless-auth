@@ -58,6 +58,10 @@ export class Passwordless extends Construct {
        */
       allowedOrigins?: string[];
       /**
+       * Probably write something
+       */
+      allowedApplicationOrigins?: string[]
+      /**
        * Enable sign-in with FIDO2 by providing this config object.
        */
       fido2?: {
@@ -274,6 +278,7 @@ export class Passwordless extends Construct {
 
     const createAuthChallengeEnvironment: Record<string, string> = {
       ALLOWED_ORIGINS: props.allowedOrigins?.join(",") ?? "",
+      ALLOWED_APPLICATION_ORIGINS: props.allowedApplicationOrigins?.join(",") ?? "",
       LOG_LEVEL: props.logLevel ?? "INFO",
     };
     if (props.magicLink) {
@@ -401,6 +406,7 @@ export class Passwordless extends Construct {
     });
     const verifyAuthChallengeResponseEnvironment: Record<string, string> = {
       ALLOWED_ORIGINS: props.allowedOrigins?.join(",") ?? "",
+      ALLOWED_APPLICATION_ORIGINS: props.allowedApplicationOrigins?.join(",") ?? "",
       LOG_LEVEL: props.logLevel ?? "INFO",
     };
     if (props.magicLink) {
@@ -679,6 +685,7 @@ export class Passwordless extends Construct {
             ALLOWED_RELYING_PARTY_IDS:
               props.fido2.allowedRelyingPartyIds.join(",") ?? "",
             ALLOWED_ORIGINS: props.allowedOrigins?.join(",") ?? "",
+            ALLOWED_APPLICATION_ORIGINS: props.allowedApplicationOrigins?.join(",") ?? "",
             ATTESTATION: props.fido2.attestation ?? "none",
             USER_VERIFICATION: props.fido2.userVerification ?? "required",
             AUTHENTICATOR_ATTACHMENT: props.fido2.authenticatorAttachment ?? "",
