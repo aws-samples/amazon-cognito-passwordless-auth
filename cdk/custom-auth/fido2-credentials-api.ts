@@ -33,7 +33,7 @@ import {
   handleConditionalCheckFailedException,
   UserFacingError,
   withCommonHeaders,
-  checkClientOrigin,
+  isValidOrigin,
 } from "./common.js";
 import { NotificationPayload } from "./fido2-notification.js";
 
@@ -561,11 +561,7 @@ async function handleCredentialsResponse(
   }
   logger.debug("Challenge found:", JSON.stringify(storedChallenge));
   if (
-    !checkClientOrigin(
-      clientData.origin,
-      allowedOrigins,
-      allowedApplicationOrigins
-    )
+    !isValidOrigin(clientData.origin, allowedOrigins, allowedApplicationOrigins)
   ) {
     throw new UserFacingError(
       `Invalid clientData origin: ${clientData.origin}`

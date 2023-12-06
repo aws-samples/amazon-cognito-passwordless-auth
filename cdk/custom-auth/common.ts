@@ -150,14 +150,14 @@ export function withCommonHeaders<T extends APIGatewayProxyHandler>(
   return wrapped as T;
 }
 
-export function checkClientOrigin(
+export function isValidOrigin(
   origin: string,
-  allowedOrigins: string[],
+  allowedWebOrigins: string[],
   allowedApplicationOrigins: string[]
 ): boolean {
-  if (allowedApplicationOrigins.includes(origin)) {
-    return true;
-  }
-
-  return allowedOrigins.includes(new URL(origin).origin);
+  return (
+    !!origin &&
+    (allowedApplicationOrigins.includes(origin) ||
+      allowedWebOrigins.includes(origin))
+  );
 }

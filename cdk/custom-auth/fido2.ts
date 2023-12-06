@@ -30,7 +30,7 @@ import {
   logger,
   UserFacingError,
   determineUserHandle,
-  checkClientOrigin,
+  isValidOrigin,
 } from "./common.js";
 
 const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -278,7 +278,7 @@ export async function verifyChallenge({
 
   // Verify origin
   if (
-    !checkClientOrigin(
+    !isValidOrigin(
       clientData.origin,
       requireConfig("allowedOrigins"),
       config.allowedApplicationOrigins ?? []
