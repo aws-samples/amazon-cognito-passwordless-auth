@@ -697,7 +697,7 @@ function _useLocalUserCache() {
     (user: StoredUser): "YES" | "NO" | "ASK" | "INDETERMINATE" => {
       const { fido2 } = configure();
       if (!fido2) {
-        throw new Error("Missing Fido2 config");
+        return "NO";
       }
       if (hasFido2Credentials === undefined) {
         return "INDETERMINATE";
