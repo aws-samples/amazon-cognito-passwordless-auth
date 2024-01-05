@@ -61,8 +61,6 @@ let config = {
   kmsKeyId: process.env.KMS_KEY_ID,
   /** The name of the DynamoDB table where (hashes of) Magic Links will be stored */
   dynamodbSecretsTableName: process.env.DYNAMODB_SECRETS_TABLE,
-  /** Function to mask the e-mail address that will be visible in the public challenge parameters */
-  emailMasker: maskEmail,
   /** Function that will send the actual Magic Link e-mails. Override this to e.g. use another e-mail provider instead of Amazon SES */
   emailSender: sendEmailWithLink,
   /** A salt to use for storing hashes of magic links in the DynamoDB table */
@@ -128,16 +126,15 @@ export async function addChallengeToEvent(
     redirectUri,
   });
   let email = event.request.userAttributes.email;
+  // userNotFound event only available when "Prevent user existence errors" is *unchecked*
+  // in the Cognito app client. Be aware that this setting potentially allows for user enumeration.
+  // Additional guardrails are advisable.
   if (event.request.userNotFound) {
     logger.info("User not found");
-    const chars = [...event.userName].filter((c) => c.match(/[a-z]/i));
-    const name = chars.join("");
-    const domain = chars.reverse().slice(1, 6).join("");
-    email = `${name}@${domain}.***`;
   }
-  event.response.publicChallengeParameters = {
-    email: config.emailMasker(email),
-  };
+  // Current implementation has no use for publicChallengeParameters - feel free to provide them
+  // if you want to use them in your front-end.
+  // event.response.publicChallengeParameters = {};
   event.response.privateChallengeParameters = {
     email: email,
   };
@@ -286,6 +283,7 @@ async function createAndSendMagicLink(
     "base64url"
   )}.${Buffer.from(signature).toString("base64url")}`;
   logger.debug("Sending magic link ...");
+  // userNotFound event only available when "Prevent user existence errors" is *unchecked* in app client. (see above)
   if (event.request.userNotFound) {
     return;
   }
@@ -302,6 +300,7 @@ export async function addChallengeVerificationResultToEvent(
   event: VerifyAuthChallengeResponseTriggerEvent
 ) {
   logger.info("Verifying MagicLink Challenge Response ...");
+  // userNotFound event only available when "Prevent user existence errors" is *unchecked* in app client. (see above)
   if (event.request.userNotFound) {
     logger.info("User not found");
   }
@@ -443,31 +442,4 @@ function assertIsMessage(
   ) {
     throw new Error("Invalid magic link");
   }
-}
-
-/**
- * Mask an e-mail address
- *
- * Example:
- *   input: johndoe@sub.example.co.uk
- *   output: j****e@***.e*****e.**.**
- *
- * @param emailAddress
- * @returns maskedEmailAdress
- */
-function maskEmail(emailAddress: string) {
-  const [start, end] = emailAddress.split("@");
-  const maskedDomain = end
-    .split(".")
-    .map((d) => {
-      if (d.length <= 3) {
-        return new Array(d.length).fill("*").join("");
-      } else {
-        return `${d.at(0)}${new Array(d.length - 2).fill("*").join("")}${d.at(
-          -1
-        )}`;
-      }
-    })
-    .join(".");
-  return `${start.at(0)}****${start.at(-1)}@${maskedDomain}`;
 }
