@@ -126,10 +126,9 @@ export async function addChallengeToEvent(
     redirectUri,
   });
   const email = event.request.userAttributes.email;
-  // The event.request.userNotFound is only present in the Lambda trigger if  with "Prevent user existence errors"
-  // in the Cognito app client.
-  // Be aware that this setting potentially allows for user enumeration.
-  // Additional guardrails are advisable.
+  // The event.request.userNotFound is only present in the Lambda trigger if "Prevent user existence errors" is checked
+  // in the Cognito app client. If it is *not* checked, the client receives the error, which potentially allows for
+  // user enumeration. Additional guardrails are advisable.
   if (event.request.userNotFound) {
     logger.info("User not found");
   }
