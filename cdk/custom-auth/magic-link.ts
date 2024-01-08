@@ -125,15 +125,15 @@ export async function addChallengeToEvent(
   await createAndSendMagicLink(event, {
     redirectUri,
   });
-  let email = event.request.userAttributes.email;
-  // userNotFound event only available when "Prevent user existence errors" is *unchecked*
-  // in the Cognito app client. Be aware that this setting potentially allows for user enumeration.
+  const email = event.request.userAttributes.email;
+  // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client.
+  // Be aware that this setting potentially allows for user enumeration.
   // Additional guardrails are advisable.
   if (event.request.userNotFound) {
     logger.info("User not found");
   }
   // Current implementation has no use for publicChallengeParameters - feel free to provide them
-  // if you want to use them in your front-end.
+  // if you want to use them in your front-end:
   // event.response.publicChallengeParameters = {};
   event.response.privateChallengeParameters = {
     email: email,
@@ -283,7 +283,7 @@ async function createAndSendMagicLink(
     "base64url"
   )}.${Buffer.from(signature).toString("base64url")}`;
   logger.debug("Sending magic link ...");
-  // userNotFound event only available when "Prevent user existence errors" is *unchecked* in app client. (see above)
+  // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client. (see above)
   if (event.request.userNotFound) {
     return;
   }
@@ -300,7 +300,7 @@ export async function addChallengeVerificationResultToEvent(
   event: VerifyAuthChallengeResponseTriggerEvent
 ) {
   logger.info("Verifying MagicLink Challenge Response ...");
-  // userNotFound event only available when "Prevent user existence errors" is *unchecked* in app client. (see above)
+  // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client. (see above)
   if (event.request.userNotFound) {
     logger.info("User not found");
   }
