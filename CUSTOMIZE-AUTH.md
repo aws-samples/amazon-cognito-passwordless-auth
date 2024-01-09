@@ -9,9 +9,9 @@ You can override many pieces of configuration by specifying the right property v
 - Use your own template for One-Time-Password (OTP) SMS messages
 - Use custom FIDO2 challenges, to e.g. implement transaction signing.
 
-In such cases you can still use the Lambda function code from this solution: the custom auth implementations (FIDO2, Magic Links, SMS OTP) have a `configure()` method that you can use to swap in pieces of your own logic. Here's how that works, there's 2 steps to it:
+In such cases you can still use the Lambda function code from this solution: the custom auth implementations (FIDO2, Magic Links, SMS OTP) have a `configure()` method that you can use to add pieces of your own logic. Here's how that works, there's 2 steps to it:
 
-### 1. Create your own Lambda function, using this library, and call `configure()`
+### 1. Create your own Lambda function logic, using this library, and call `configure()`
 
 As an example, suppose you want to use your own template for magic link e-mails. In that case you can override the `contentCreator` config like so:
 
@@ -24,7 +24,7 @@ export { createAuthChallengeHandler as handler } from "amazon-cognito-passwordle
 // Calling configure() without arguments retrieves the current configuration:
 const defaultConfig = magicLink.configure();
 
-// Swap in your own logic:
+// Add your own logic:
 magicLink.configure({
   async contentCreator({ secretLoginLink }) {
     return {
@@ -47,9 +47,11 @@ magicLink.configure({
 });
 ```
 
-### 2. Configure the Passwordless solution to use YOUR custom Lambda function
+There is no need to create a Lambda function construct in this case. Next, the code above will be merged with `createAuthChallenge` function from this library.
 
-Use the `functionProps` parameter to swap in your own Lambda function code. The Lambda functions used by this solution are defined as [NodejsFunction](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs.NodejsFunction.html) and you can override all of the properties that are used in their instantiation. The final properties will be the ones set by this solution, with the properties you specify in `functionProps` merged on top:
+### 2. Configure the Passwordless solution to use YOUR custom Lambda function logic
+
+Use the `functionProps` parameter to add your own Lambda function code. The Lambda functions used by this solution are defined as [NodejsFunction](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs.NodejsFunction.html) and you can override all of the properties that are used in their instantiation. The final properties will be the ones set by this solution, with the properties you specify in `functionProps` merged on top:
 
 ```typescript
 const passwordless = new Passwordless(this, "Passwordless", {
@@ -62,6 +64,8 @@ const passwordless = new Passwordless(this, "Passwordless", {
   },
 });
 ```
+
+The `createAuthChallenge` Lambda function deployed will contain this library logic and your custom logic.
 
 ## Supported Customizations
 
