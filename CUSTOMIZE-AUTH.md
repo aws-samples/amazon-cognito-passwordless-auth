@@ -58,6 +58,10 @@ const passwordless = new Passwordless(this, "Passwordless", {
     createAuthChallenge: {
       // Override entry, to point to your custom code:
       entry: join(__dirname, "create-auth-challenge/index.ts"),
+      bundling: {
+        // Solves `Dynamic require of "stream" is not supported"` error:
+        banner: "import{createRequire}from 'module';const require=createRequire(import.meta.url);"
+      }
     },
   },
 });
