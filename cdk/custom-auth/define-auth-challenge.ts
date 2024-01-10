@@ -86,9 +86,6 @@ function handleFido2Response(event: DefineAuthChallengeTriggerEvent) {
   const lastResponse = event.request.session.slice(-1)[0];
   if (lastResponse.challengeResult === true) {
     return allow(event);
-  } else if (countAttempts(event, false) === 0) {
-    logger.info("No challenge yet, creating one ...");
-    return customChallenge(event);
   }
   return deny(event, "Failed to authenticate with FIDO2");
 }
