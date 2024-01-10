@@ -121,26 +121,26 @@ export interface CustomStorage {
 }
 
 export function configureFromAmplify(
-  amplifyConfig: AmplifyAuthConfig | AmplifyConfig
+  amplifyConfig: AmplifyAuthConfig | AmplifyConfig,
 ) {
   const { region, userPoolId, userPoolWebClientId } = isAmplifyConfig(
-    amplifyConfig
+    amplifyConfig,
   )
     ? amplifyConfig.Auth
     : amplifyConfig;
   if (typeof region !== "string") {
     throw new Error(
-      "Invalid Amplify configuration provided: invalid or missing region"
+      "Invalid Amplify configuration provided: invalid or missing region",
     );
   }
   if (typeof userPoolId !== "string") {
     throw new Error(
-      "Invalid Amplify configuration provided: invalid or missing userPoolId"
+      "Invalid Amplify configuration provided: invalid or missing userPoolId",
     );
   }
   if (typeof userPoolWebClientId !== "string") {
     throw new Error(
-      "Invalid Amplify configuration provided: invalid or missing userPoolWebClientId"
+      "Invalid Amplify configuration provided: invalid or missing userPoolWebClientId",
     );
   }
   configure({
@@ -150,7 +150,7 @@ export function configureFromAmplify(
   });
   return {
     with: (
-      config: Omit<Config, "cognitoIdpEndpoint" | "userPoolId" | "clientId">
+      config: Omit<Config, "cognitoIdpEndpoint" | "userPoolId" | "clientId">,
     ) => {
       return configure({
         cognitoIdpEndpoint: region,
@@ -248,7 +248,7 @@ export type MinimalFetch = (
         method?: string;
         body?: string;
       }
-    | undefined
+    | undefined,
 ) => Promise<MinimalResponse>;
 
 export interface MinimalHistory {

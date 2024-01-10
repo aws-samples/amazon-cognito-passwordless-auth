@@ -44,7 +44,7 @@ import React, {
 } from "react";
 
 const PasswordlessContext = React.createContext<UsePasswordless | undefined>(
-  undefined
+  undefined,
 );
 
 /** React hook that provides convenient access to the Passwordless lib's features */
@@ -52,7 +52,7 @@ export function usePasswordless() {
   const context = useContext(PasswordlessContext);
   if (!context) {
     throw new Error(
-      "The PasswordlessContextProvider must be added above this consumer in the React component tree"
+      "The PasswordlessContextProvider must be added above this consumer in the React component tree",
     );
   }
   return context;
@@ -67,7 +67,7 @@ export function useLocalUserCache() {
   const context = useContext(LocalUserCacheContext);
   if (!context) {
     throw new Error(
-      "The localUserCache must be enabled in the PasswordlessContextProvider: <PasswordlessContextProvider enableLocalUserCache={true}>"
+      "The localUserCache must be enabled in the PasswordlessContextProvider: <PasswordlessContextProvider enableLocalUserCache={true}>",
     );
   }
   return context;
@@ -114,7 +114,7 @@ type UsePasswordless = ReturnType<typeof _usePasswordless>;
 
 function _usePasswordless() {
   const [signingInStatus, setSigninInStatus] = useState<BusyState | IdleState>(
-    "CHECKING_FOR_SIGNIN_LINK"
+    "CHECKING_FOR_SIGNIN_LINK",
   );
   const [
     initiallyRetrievingTokensFromStorage,
@@ -157,24 +157,25 @@ function _usePasswordless() {
       setFido2Credentials((state) => {
         if (!state) return state;
         const index = state.findIndex(
-          (i) => i.credentialId === update.credentialId
+          (i) => i.credentialId === update.credentialId,
         );
         if (index === -1) return state;
         // eslint-disable-next-line security/detect-object-injection
         state[index] = { ...state[index], ...update };
         return [...state];
       }),
-    []
+    [],
   );
   const deleteFido2Credential = useCallback(
     (credentialId: string) =>
-      setFido2Credentials((state) =>
-        state?.filter(
-          (remainingAuthenticator) =>
-            credentialId !== remainingAuthenticator.credentialId
-        )
+      setFido2Credentials(
+        (state) =>
+          state?.filter(
+            (remainingAuthenticator) =>
+              credentialId !== remainingAuthenticator.credentialId,
+          ),
       ),
-    []
+    [],
   );
   const [isSchedulingRefresh, setIsSchedulingRefresh] = useState<boolean>();
   const [isRefreshingTokens, setIsRefreshingTokens] = useState<boolean>();
@@ -206,7 +207,7 @@ function _usePasswordless() {
         tokensCb: (newTokens) =>
           newTokens &&
           storeTokens(newTokens).then(() =>
-            setTokens((tokens) => ({ ...tokens, ...newTokens }))
+            setTokens((tokens) => ({ ...tokens, ...newTokens })),
           ),
         isRefreshingCb: setIsRefreshingTokens,
       }).finally(() => setIsSchedulingRefresh(false));
@@ -226,7 +227,7 @@ function _usePasswordless() {
       tokensCb: (newTokens) =>
         newTokens &&
         storeTokens(newTokens).then(() =>
-          setTokens((tokens) => ({ ...tokens, ...newTokens }))
+          setTokens((tokens) => ({ ...tokens, ...newTokens })),
         ),
       isRefreshingCb: setIsRefreshingTokens,
     }).catch(() => {
@@ -256,7 +257,7 @@ function _usePasswordless() {
           const { debug } = configure();
           debug?.(
             "Failed to determine if a user verifying platform authenticator is available:",
-            err
+            err,
           );
         });
     } else {
@@ -290,7 +291,7 @@ function _usePasswordless() {
                 ...update,
                 credentialId: credential.credentialId,
                 busy: false,
-              })
+              }),
             );
         },
         delete: async () => {
@@ -312,7 +313,7 @@ function _usePasswordless() {
         },
       };
     },
-    [deleteFido2Credential, updateFido2Credential]
+    [deleteFido2Credential, updateFido2Credential],
   );
 
   // Determine sign-in status
@@ -321,20 +322,20 @@ function _usePasswordless() {
     return tokensParsed && tokensParsed.expireAt.valueOf() >= Date.now()
       ? ("SIGNED_IN" as const)
       : tokensParsed && (isSchedulingRefresh || isRefreshingTokens)
-      ? ("REFRESHING_SIGN_IN" as const)
-      : busyState
-          .filter(
-            (state) =>
-              !["SIGNING_OUT", "CHECKING_FOR_SIGNIN_LINK"].includes(state)
-          )
-          .includes(signingInStatus as BusyState)
-      ? ("SIGNING_IN" as const)
-      : initiallyRetrievingTokensFromStorage ||
-        signingInStatus === "CHECKING_FOR_SIGNIN_LINK"
-      ? ("CHECKING" as const)
-      : signingInStatus === "SIGNING_OUT"
-      ? ("SIGNING_OUT" as const)
-      : ("NOT_SIGNED_IN" as const);
+        ? ("REFRESHING_SIGN_IN" as const)
+        : busyState
+              .filter(
+                (state) =>
+                  !["SIGNING_OUT", "CHECKING_FOR_SIGNIN_LINK"].includes(state),
+              )
+              .includes(signingInStatus as BusyState)
+          ? ("SIGNING_IN" as const)
+          : initiallyRetrievingTokensFromStorage ||
+              signingInStatus === "CHECKING_FOR_SIGNIN_LINK"
+            ? ("CHECKING" as const)
+            : signingInStatus === "SIGNING_OUT"
+              ? ("SIGNING_OUT" as const)
+              : ("NOT_SIGNED_IN" as const);
   }, [
     tokensParsed,
     isSchedulingRefresh,
@@ -353,7 +354,7 @@ function _usePasswordless() {
       const { debug } = configure();
       debug?.(
         "Checking signInStatus as tokens have expired at:",
-        tokens.expireAt?.toISOString()
+        tokens.expireAt?.toISOString(),
       );
       setRecheckSignInStatus((s) => s + 1);
     }, checkIn);
@@ -393,7 +394,7 @@ function _usePasswordless() {
         tokensCb: (newTokens) =>
           newTokens &&
           storeTokens(newTokens).then(() =>
-            setTokens((tokens) => ({ ...tokens, ...newTokens }))
+            setTokens((tokens) => ({ ...tokens, ...newTokens })),
           ),
         isRefreshingCb: setIsRefreshingTokens,
       }),
@@ -570,7 +571,7 @@ function _usePasswordless() {
     /** Toggle showing the FIDO2 credential manager UI component */
     toggleShowAuthenticatorManager: useCallback(
       () => setShowAuthenticatorManager((state) => !state),
-      []
+      [],
     ),
   };
 }
@@ -604,7 +605,7 @@ async function registerSignedInUser(user: StoredUser) {
   debug?.(`Registering user in storage: ${JSON.stringify(user)}`);
   const lastUsers = await getLastSignedInUsers();
   const index = lastUsers.findIndex(
-    (lastUser) => lastUser.username === user.username
+    (lastUser) => lastUser.username === user.username,
   );
   if (index !== -1) {
     lastUsers.splice(index, 1);
@@ -612,7 +613,7 @@ async function registerSignedInUser(user: StoredUser) {
   lastUsers.unshift(user);
   await storage.setItem(
     `Passwordless.${clientId}.lastUsers`,
-    JSON.stringify(lastUsers.slice(0, 10))
+    JSON.stringify(lastUsers.slice(0, 10)),
   );
 }
 
@@ -657,7 +658,8 @@ function _useLocalUserCache() {
     if (lastSignedInUsers) {
       const found = lastSignedInUsers.find(
         (lastUser) =>
-          lastUser.username && lastUser.username === idToken["cognito:username"]
+          lastUser.username &&
+          lastUser.username === idToken["cognito:username"],
       );
       if (found) {
         user.useFido = found.useFido;
@@ -668,7 +670,7 @@ function _useLocalUserCache() {
       }
     }
     setCurrentUser((state) =>
-      JSON.stringify(state) === JSON.stringify(user) ? state : user
+      JSON.stringify(state) === JSON.stringify(user) ? state : user,
     );
   }, [lastSignedInUsers, idToken]);
 
@@ -724,7 +726,7 @@ function _useLocalUserCache() {
       hasFido2Credentials,
       fidoPreferenceOverride,
       justSignedInWithMagicLink,
-    ]
+    ],
   );
 
   // 4 Update user FIDO preference

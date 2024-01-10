@@ -25,7 +25,7 @@ export async function scheduleRefresh(
 ) {
   if (!schedulingRefresh) {
     schedulingRefresh = _scheduleRefresh(...args).finally(
-      () => (schedulingRefresh = undefined)
+      () => (schedulingRefresh = undefined),
     );
   }
   return schedulingRefresh;
@@ -58,23 +58,25 @@ async function _scheduleRefresh({
     (tokens?.expireAt ?? new Date()).valueOf() -
       Date.now() -
       30 * 1000 -
-      (Math.random() - 0.5) * 30 * 1000
+      (Math.random() - 0.5) * 30 * 1000,
   );
   if (refreshIn >= 1000) {
     debug?.(
-      `Scheduling refresh of tokens in ${(refreshIn / 1000).toFixed(1)} seconds`
+      `Scheduling refresh of tokens in ${(refreshIn / 1000).toFixed(
+        1,
+      )} seconds`,
     );
     clearScheduledRefresh = setTimeoutWallClock(
       () =>
         refreshTokens({ abort, tokensCb, isRefreshingCb, tokens }).catch(
-          (err) => debug?.("Failed to refresh tokens:", err)
+          (err) => debug?.("Failed to refresh tokens:", err),
         ),
-      refreshIn
+      refreshIn,
     );
     abort?.addEventListener("abort", clearScheduledRefresh);
   } else {
-    refreshTokens({ abort, tokensCb, isRefreshingCb, tokens }).catch((err) =>
-      debug?.("Failed to refresh tokens:", err)
+    refreshTokens({ abort, tokensCb, isRefreshingCb, tokens }).catch(
+      (err) => debug?.("Failed to refresh tokens:", err),
     );
   }
   return clearScheduledRefresh;
@@ -86,7 +88,7 @@ export async function refreshTokens(
 ) {
   if (!refreshingTokens) {
     refreshingTokens = _refreshTokens(...args).finally(
-      () => (refreshingTokens = undefined)
+      () => (refreshingTokens = undefined),
     );
   }
   return refreshingTokens;
@@ -116,7 +118,7 @@ async function _refreshTokens({
     }
     if (invalidRefreshTokens.has(refreshToken)) {
       throw new Error(
-        `Will not attempt refresh using token that failed previously: ${refreshToken}`
+        `Will not attempt refresh using token that failed previously: ${refreshToken}`,
       );
     }
     debug?.("Refreshing tokens using refresh token ...");
@@ -134,7 +136,7 @@ async function _refreshTokens({
       accessToken: authResult.AuthenticationResult.AccessToken,
       idToken: authResult.AuthenticationResult.IdToken,
       expireAt: new Date(
-        Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000
+        Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000,
       ),
       username,
     };

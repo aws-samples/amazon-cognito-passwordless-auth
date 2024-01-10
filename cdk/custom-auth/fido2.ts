@@ -74,7 +74,7 @@ let config = {
 };
 
 function requireConfig<K extends keyof typeof config>(
-  k: K
+  k: K,
 ): NonNullable<(typeof config)[K]> {
   // eslint-disable-next-line security/detect-object-injection
   const value = config[k];
@@ -88,7 +88,7 @@ export function configure(update?: Partial<typeof config>) {
 }
 
 export async function addChallengeToEvent(
-  event: CreateAuthChallengeTriggerEvent
+  event: CreateAuthChallengeTriggerEvent,
 ) {
   if (config.fido2enabled) {
     logger.info("Adding FIDO2 challenge to event ...");
@@ -102,7 +102,7 @@ export async function addChallengeToEvent(
         userVerification: config.userVerification,
         exposeUserCredentialIds: config.exposeUserCredentialIds,
         userNotFound: event.request.userNotFound,
-      })
+      }),
     );
     event.response.privateChallengeParameters.fido2options = fido2options;
     event.response.publicChallengeParameters.fido2options = fido2options;
@@ -134,7 +134,7 @@ export async function createChallenge({
   if (exposeUserCredentialIds) {
     if (!userId) {
       throw new Error(
-        "userId param is mandatory when exposeUserCredentialIds is true"
+        "userId param is mandatory when exposeUserCredentialIds is true",
       );
     }
     credentials = await credentialGetter({
@@ -164,7 +164,7 @@ export async function createChallenge({
 }
 
 export async function addChallengeVerificationResultToEvent(
-  event: VerifyAuthChallengeResponseTriggerEvent
+  event: VerifyAuthChallengeResponseTriggerEvent,
 ) {
   logger.info("Verifying FIDO2 Challenge Response ...");
   if (event.request.userNotFound) {
@@ -174,7 +174,7 @@ export async function addChallengeVerificationResultToEvent(
     throw new UserFacingError("Sign-in with FIDO2 (Face/Touch) not supported");
   try {
     const authenticatorAssertion: unknown = JSON.parse(
-      event.request.challengeAnswer
+      event.request.challengeAnswer,
     );
     assertIsAuthenticatorAssertion(authenticatorAssertion);
     await verifyChallenge({
@@ -183,7 +183,7 @@ export async function addChallengeVerificationResultToEvent(
         cognitoUsername: event.userName,
       }),
       fido2options: JSON.parse(
-        event.request.privateChallengeParameters.fido2options
+        event.request.privateChallengeParameters.fido2options,
       ) as Parameters<typeof verifyChallenge>[0]["fido2options"],
       authenticatorAssertion,
     });
@@ -203,7 +203,7 @@ interface SerializedAuthenticatorAssertion {
 }
 
 function assertIsAuthenticatorAssertion(
-  a: unknown
+  a: unknown,
 ): asserts a is SerializedAuthenticatorAssertion {
   if (
     !a ||
@@ -252,7 +252,7 @@ export async function verifyChallenge({
     userHandleB64 && Buffer.from(userHandleB64, "base64url").toString();
   if (userHandle && userHandle !== userId) {
     throw new Error(
-      `User handle mismatch, got ${userHandle} but expected ${userId}`
+      `User handle mismatch, got ${userHandle} but expected ${userId}`,
     );
   }
 
@@ -281,7 +281,7 @@ export async function verifyChallenge({
     !isValidOrigin(
       clientData.origin,
       requireConfig("allowedOrigins"),
-      config.allowedApplicationOrigins ?? []
+      config.allowedApplicationOrigins ?? [],
     )
   ) {
     throw new Error(`Invalid clientData origin: ${clientData.origin}`);
@@ -298,16 +298,16 @@ export async function verifyChallenge({
   } = parseAuthenticatorData(authenticatorData);
 
   const allowedRelyingPartyIdHashes = requireConfig(
-    "allowedRelyingPartyIds"
+    "allowedRelyingPartyIds",
   ).map((relyingPartyId) =>
-    createHash("sha256").update(relyingPartyId).digest("base64url")
+    createHash("sha256").update(relyingPartyId).digest("base64url"),
   );
   // Verify RP ID HASH
   if (!allowedRelyingPartyIdHashes.includes(rpIdHash)) {
     throw new Error(
       `Wrong rpIdHash: ${rpIdHash}, expected one of: ${allowedRelyingPartyIdHashes.join(
-        ", "
-      )}`
+        ", ",
+      )}`,
     );
   }
 
@@ -329,12 +329,12 @@ export async function verifyChallenge({
   if (
     !(
       Buffer.from(clientData.challenge, "base64url").equals(
-        Buffer.from(fido2options.challenge, "base64url")
+        Buffer.from(fido2options.challenge, "base64url"),
       ) || (await ensureUsernamelessChallengeExists(clientData.challenge))
     )
   ) {
     throw new Error(
-      `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`
+      `Challenge mismatch, got ${clientData.challenge} but expected ${fido2options.challenge}`,
     );
   }
 
@@ -363,7 +363,7 @@ export async function verifyChallenge({
         format: "jwk",
       }),
       signatureB64,
-      "base64url"
+      "base64url",
     );
   if (!valid) {
     throw new Error("Signature not valid");
@@ -374,7 +374,7 @@ export async function verifyChallenge({
   if (storedSignCount !== 0 || signCount !== 0) {
     if (signCount <= storedSignCount) {
       throw new Error(
-        `Sign count mismatch, got ${signCount} but expected a number greater than ${storedSignCount}`
+        `Sign count mismatch, got ${signCount} but expected a number greater than ${storedSignCount}`,
       );
     }
   }
@@ -397,11 +397,11 @@ async function ensureUsernamelessChallengeExists(challenge: string) {
         sk: `USERNAMELESS_SIGN_IN`,
       },
       ReturnValues: "ALL_OLD",
-    })
+    }),
   );
   logger.debug(
     "Usernameless challenge:",
-    JSON.stringify(usernamelessChallenge)
+    JSON.stringify(usernamelessChallenge),
   );
   return (
     !!usernamelessChallenge &&
@@ -484,7 +484,7 @@ async function getCredentialsForUser({
           ExclusiveStartKey: exclusiveStartKey,
           ProjectionExpression: "credentialId, transports",
           Limit: limit,
-        })
+        }),
       );
       Items?.forEach((item) => {
         credentials.push({
@@ -514,14 +514,14 @@ async function getCredentialForUser({
       },
       ProjectionExpression:
         "credentialId, transports, jwk, signCount, flagBackupEligibility",
-    })
+    }),
   );
   return (
     storedCredential &&
     ({
       ...storedCredential,
       id: Buffer.from(storedCredential.credentialId as number[]).toString(
-        "base64url"
+        "base64url",
       ),
     } as StoredCredential)
   );
@@ -558,12 +558,12 @@ async function updateCredential({
         ":signCount": signCount,
         ":flagBackupState": flagBackupState,
       },
-    })
+    }),
   );
 }
 
 export async function assertFido2SignInOptional(
-  event: VerifyAuthChallengeResponseTriggerEvent
+  event: VerifyAuthChallengeResponseTriggerEvent,
 ) {
   if (!config.fido2enabled) return;
   if (!config.enforceFido2IfAvailable) return;
@@ -578,10 +578,10 @@ export async function assertFido2SignInOptional(
   if (credentials.length) {
     logger.info(
       "Denying non-FIDO2 sign-in as at least 1 existing FIDO2 credential is available to user:",
-      userId
+      userId,
     );
     throw new UserFacingError(
-      "You must sign-in with FIDO2 (e.g. Face or Touch)"
+      "You must sign-in with FIDO2 (e.g. Face or Touch)",
     );
   }
 }

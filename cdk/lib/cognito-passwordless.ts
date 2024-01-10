@@ -186,7 +186,7 @@ export class Passwordless extends Construct {
        * @default "INFO"
        */
       logLevel?: "DEBUG" | "INFO" | "ERROR";
-    }
+    },
   ) {
     super(scope, id);
 
@@ -223,7 +223,7 @@ export class Passwordless extends Construct {
             type: cdk.aws_dynamodb.AttributeType.BINARY,
           },
           timeToLiveAttribute: "exp",
-        }
+        },
       );
       const autoConfirmUsers = props.magicLink.autoConfirmUsers ?? true;
       if (autoConfirmUsers) {
@@ -242,7 +242,7 @@ export class Passwordless extends Construct {
               LOG_LEVEL: props.logLevel ?? "INFO",
               ...props.functionProps?.preSignUp?.environment,
             },
-          }
+          },
         );
       }
     }
@@ -264,7 +264,7 @@ export class Passwordless extends Construct {
             type: cdk.aws_dynamodb.AttributeType.STRING,
           },
           timeToLiveAttribute: "exp",
-        }
+        },
       );
       this.authenticatorsTable.addGlobalSecondaryIndex({
         indexName: "credentialId",
@@ -338,7 +338,7 @@ export class Passwordless extends Construct {
           ...createAuthChallengeEnvironment,
           ...props.functionProps?.createAuthChallenge?.environment,
         },
-      }
+      },
     );
     this.secretsTable?.grantReadWriteData(this.createAuthChallengeFn);
     this.authenticatorsTable?.grantReadData(this.createAuthChallengeFn);
@@ -352,7 +352,7 @@ export class Passwordless extends Construct {
             }:${cdk.Aws.ACCOUNT_ID}:identity/*`,
           ],
           actions: ["ses:SendEmail"],
-        })
+        }),
       );
     }
     this.createAuthChallengeFn.addToRolePolicy(
@@ -360,7 +360,7 @@ export class Passwordless extends Construct {
         effect: cdk.aws_iam.Effect.ALLOW,
         actions: ["SNS:Publish"],
         notResources: ["arn:aws:sns:*:*:*"], // Only allow SMS sending, not publishing to topics
-      })
+      }),
     );
     [this.kmsKey, props.magicLink?.rotatedKmsKey].forEach((key) => {
       if (!key) return;
@@ -383,10 +383,10 @@ export class Passwordless extends Construct {
           new cdk.aws_iam.PolicyStatement({
             ...permissions,
             principals: [this.createAuthChallengeFn.role!.grantPrincipal],
-          })
+          }),
         );
         this.createAuthChallengeFn.addToRolePolicy(
-          new cdk.aws_iam.PolicyStatement(permissions)
+          new cdk.aws_iam.PolicyStatement(permissions),
         );
       } else {
         const permissions = {
@@ -398,10 +398,10 @@ export class Passwordless extends Construct {
           new cdk.aws_iam.PolicyStatement({
             ...permissions,
             principals: [this.createAuthChallengeFn.role!.grantPrincipal],
-          })
+          }),
         );
         this.createAuthChallengeFn.addToRolePolicy(
-          new cdk.aws_iam.PolicyStatement(permissions)
+          new cdk.aws_iam.PolicyStatement(permissions),
         );
       }
     });
@@ -445,7 +445,7 @@ export class Passwordless extends Construct {
             __dirname,
             "..",
             "custom-auth",
-            "verify-auth-challenge-response.js"
+            "verify-auth-challenge-response.js",
           ),
           runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
@@ -458,11 +458,11 @@ export class Passwordless extends Construct {
             ...verifyAuthChallengeResponseEnvironment,
             ...props.functionProps?.verifyAuthChallengeResponse?.environment,
           },
-        }
+        },
       );
     this.secretsTable?.grantReadWriteData(this.verifyAuthChallengeResponseFn);
     this.authenticatorsTable?.grantReadWriteData(
-      this.verifyAuthChallengeResponseFn
+      this.verifyAuthChallengeResponseFn,
     );
     [this.kmsKey, props.magicLink?.rotatedKmsKey]
       .filter(Boolean)
@@ -481,7 +481,7 @@ export class Passwordless extends Construct {
                   "kms:RequestAlias": (key as cdk.aws_kms.IAlias).aliasName,
                 },
               },
-            })
+            }),
           );
         } else {
           this.verifyAuthChallengeResponseFn.addToRolePolicy(
@@ -489,7 +489,7 @@ export class Passwordless extends Construct {
               effect: cdk.aws_iam.Effect.ALLOW,
               resources: [key.keyArn],
               actions: ["kms:GetPublicKey"],
-            })
+            }),
           );
         }
       });
@@ -503,7 +503,7 @@ export class Passwordless extends Construct {
             __dirname,
             "..",
             "custom-auth",
-            "define-auth-challenge.js"
+            "define-auth-challenge.js",
           ),
           runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
@@ -516,7 +516,7 @@ export class Passwordless extends Construct {
             LOG_LEVEL: props.logLevel ?? "INFO",
             ...props.functionProps?.defineAuthChallenge?.environment,
           },
-        }
+        },
       );
 
     if (props.clientMetadataTokenKeys) {
@@ -539,7 +539,7 @@ export class Passwordless extends Construct {
             ].join(","),
             ...props.functionProps?.preTokenGeneration?.environment,
           },
-        }
+        },
       );
     }
 
@@ -571,31 +571,31 @@ export class Passwordless extends Construct {
       this.userPool = new cdk.aws_cognito.UserPool(
         scope,
         `UserPool${id}`,
-        mergedProps
+        mergedProps,
       );
     } else {
       props.userPool.addTrigger(
         cdk.aws_cognito.UserPoolOperation.CREATE_AUTH_CHALLENGE,
-        this.createAuthChallengeFn
+        this.createAuthChallengeFn,
       );
       props.userPool.addTrigger(
         cdk.aws_cognito.UserPoolOperation.DEFINE_AUTH_CHALLENGE,
-        this.defineAuthChallengeResponseFn
+        this.defineAuthChallengeResponseFn,
       );
       props.userPool.addTrigger(
         cdk.aws_cognito.UserPoolOperation.VERIFY_AUTH_CHALLENGE_RESPONSE,
-        this.verifyAuthChallengeResponseFn
+        this.verifyAuthChallengeResponseFn,
       );
       if (this.preSignUpFn) {
         props.userPool.addTrigger(
           cdk.aws_cognito.UserPoolOperation.PRE_SIGN_UP,
-          this.preSignUpFn
+          this.preSignUpFn,
         );
       }
       if (this.preTokenGenerationFn) {
         props.userPool.addTrigger(
           cdk.aws_cognito.UserPoolOperation.PRE_TOKEN_GENERATION,
-          this.preTokenGenerationFn
+          this.preTokenGenerationFn,
         );
       }
       this.userPool = props.userPool;
@@ -622,7 +622,7 @@ export class Passwordless extends Construct {
               __dirname,
               "..",
               "custom-auth",
-              "fido2-notification.js"
+              "fido2-notification.js",
             ),
             runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
             architecture: cdk.aws_lambda.Architecture.ARM_64,
@@ -640,7 +640,7 @@ export class Passwordless extends Construct {
               USER_POOL_ID: this.userPool.userPoolId,
               ...props.functionProps?.fido2notification?.environment,
             },
-          }
+          },
         );
         this.fido2NotificationFn.addToRolePolicy(
           new cdk.aws_iam.PolicyStatement({
@@ -652,11 +652,11 @@ export class Passwordless extends Construct {
               }:${cdk.Aws.ACCOUNT_ID}:identity/*`,
             ],
             actions: ["ses:SendEmail"],
-          })
+          }),
         );
         this.userPool.grant(
           this.fido2NotificationFn,
-          "cognito-idp:AdminGetUser"
+          "cognito-idp:AdminGetUser",
         );
       }
 
@@ -668,7 +668,7 @@ export class Passwordless extends Construct {
             __dirname,
             "..",
             "custom-auth",
-            "fido2-credentials-api.js"
+            "fido2-credentials-api.js",
           ),
           runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
@@ -709,7 +709,7 @@ export class Passwordless extends Construct {
               this.fido2NotificationFn?.latestVersion.functionArn ?? "",
             ...props.functionProps?.fido2?.environment,
           },
-        }
+        },
       );
       this.fido2NotificationFn?.latestVersion.grantInvoke(this.fido2Fn);
       this.authenticatorsTable!.grantReadWriteData(this.fido2Fn);
@@ -743,7 +743,7 @@ export class Passwordless extends Construct {
               .toString(),
             ...props.functionProps?.fido2challenge?.environment,
           },
-        }
+        },
       );
       this.fido2challengeFn.addToRolePolicy(
         new cdk.aws_iam.PolicyStatement({
@@ -755,7 +755,7 @@ export class Passwordless extends Construct {
               "dynamodb:Attributes": ["pk", "sk", "exp"],
             },
           },
-        })
+        }),
       );
 
       const accessLogs = new cdk.aws_logs.LogGroup(
@@ -763,7 +763,7 @@ export class Passwordless extends Construct {
         `ApigwAccessLogs${id}`,
         {
           retention: cdk.aws_logs.RetentionDays.INFINITE,
-        }
+        },
       );
       const authorizer = new cdk.aws_apigateway.CognitoUserPoolsAuthorizer(
         scope,
@@ -771,7 +771,7 @@ export class Passwordless extends Construct {
         {
           cognitoUserPools: [this.userPool],
           resultsCacheTtl: cdk.Duration.minutes(1),
-        }
+        },
       );
       this.fido2Api = new cdk.aws_apigateway.LambdaRestApi(
         this,
@@ -787,34 +787,34 @@ export class Passwordless extends Construct {
             throttlingBurstLimit: props.fido2.api?.throttlingBurstLimit ?? 1000,
             throttlingRateLimit: props.fido2.api?.throttlingRateLimit ?? 2000,
             accessLogDestination: new cdk.aws_apigateway.LogGroupLogDestination(
-              accessLogs
+              accessLogs,
             ),
             accessLogFormat: cdk.aws_apigateway.AccessLogFormat.custom(
               JSON.stringify({
                 requestId: cdk.aws_apigateway.AccessLogField.contextRequestId(),
                 jwtSub:
                   cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
-                    "sub"
+                    "sub",
                   ),
                 jwtIat:
                   cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
-                    "iat"
+                    "iat",
                   ),
                 jwtEventId:
                   cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
-                    "event_id"
+                    "event_id",
                   ),
                 jwtJti:
                   cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
-                    "jti"
+                    "jti",
                   ),
                 jwtOriginJti:
                   cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
-                    "origin_jti"
+                    "origin_jti",
                   ),
                 jwtSignInMethod:
                   cdk.aws_apigateway.AccessLogField.contextAuthorizerClaims(
-                    "sign_in_method"
+                    "sign_in_method",
                   ),
                 userAgent:
                   cdk.aws_apigateway.AccessLogField.contextIdentityUserAgent(),
@@ -839,11 +839,11 @@ export class Passwordless extends Construct {
                   cdk.aws_apigateway.AccessLogField.contextResponseLatency(),
                 domainName:
                   cdk.aws_apigateway.AccessLogField.contextDomainName(),
-              })
+              }),
             ),
             ...props.fido2.api?.restApiProps?.deployOptions,
           },
-        }
+        },
       );
       if (props.fido2.api?.addCloudWatchLogsRoleAndAccountSetting !== false) {
         const logRole = new cdk.aws_iam.Role(
@@ -851,21 +851,21 @@ export class Passwordless extends Construct {
           "ApiGatewayCloudWatchLogsRole",
           {
             assumedBy: new cdk.aws_iam.ServicePrincipal(
-              "apigateway.amazonaws.com"
+              "apigateway.amazonaws.com",
             ),
             managedPolicies: [
               cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
-                "service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+                "service-role/AmazonAPIGatewayPushToCloudWatchLogs",
               ),
             ],
-          }
+          },
         );
         const accountSetting = new cdk.aws_apigateway.CfnAccount(
           scope,
           "ApiGatewayAccountSetting",
           {
             cloudWatchRoleArn: logRole.roleArn,
-          }
+          },
         );
         this.fido2Api.node.addDependency(accountSetting);
       }
@@ -889,7 +889,7 @@ export class Passwordless extends Construct {
 
       // Create resource structure
       const registerAuthenticatorResource = this.fido2Api.root.addResource(
-        "register-authenticator"
+        "register-authenticator",
       );
       const startResource = registerAuthenticatorResource.addResource("start");
       const completeResource =
@@ -908,7 +908,7 @@ export class Passwordless extends Construct {
           requestValidatorName: "req-validator",
           validateRequestBody: true,
           validateRequestParameters: true,
-        }
+        },
       );
 
       // register-authenticator/start
@@ -960,7 +960,7 @@ export class Passwordless extends Construct {
               },
             },
           },
-        }
+        },
       );
       completeResource.addCorsPreflight(defaultCorsOptionsWithAuth);
       completeResource.addMethod("POST", undefined, {
@@ -1000,7 +1000,7 @@ export class Passwordless extends Construct {
               },
             },
           },
-        }
+        },
       );
       deleteResource.addCorsPreflight(defaultCorsOptionsWithAuth);
       deleteResource.addMethod("POST", undefined, {
@@ -1035,7 +1035,7 @@ export class Passwordless extends Construct {
               },
             },
           },
-        }
+        },
       );
       updateResource.addCorsPreflight(defaultCorsOptionsWithAuth);
       updateResource.addMethod("POST", undefined, {
@@ -1055,7 +1055,7 @@ export class Passwordless extends Construct {
         new cdk.aws_apigateway.LambdaIntegration(this.fido2challengeFn),
         {
           authorizer: undefined, // public API
-        }
+        },
       );
 
       if (props.fido2.api?.addWaf !== false) {
@@ -1096,7 +1096,7 @@ export class Passwordless extends Construct {
                 },
               },
             ],
-          }
+          },
         );
         new cdk.aws_wafv2.CfnWebACLAssociation(scope, `WafAssociation${id}`, {
           resourceArn: this.fido2Api.deploymentStage.stageArn,

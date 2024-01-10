@@ -57,7 +57,7 @@ export const handler: CreateAuthChallengeTriggerHandler = async (event) => {
 };
 
 async function provideAuthParameters(
-  event: CreateAuthChallengeTriggerEvent
+  event: CreateAuthChallengeTriggerEvent,
 ): Promise<void> {
   logger.info("Creating challenge: PROVIDE_AUTH_PARAMETERS");
   event.response.challengeMetadata = "PROVIDE_AUTH_PARAMETERS";

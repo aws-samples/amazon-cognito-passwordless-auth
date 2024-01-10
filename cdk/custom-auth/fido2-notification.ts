@@ -41,7 +41,7 @@ let config = {
 };
 
 function requireConfig<K extends keyof typeof config>(
-  k: K
+  k: K,
 ): NonNullable<(typeof config)[K]> {
   // eslint-disable-next-line security/detect-object-injection
   const value = config[k];
@@ -70,7 +70,7 @@ export const handler: Handler<NotificationPayload> = async (event) => {
   if (!emailAddress) {
     logger.info(
       "Failed to determine e-mail address, therefore skipping sending of notification for event:",
-      event.eventType
+      event.eventType,
     );
     return;
   }
@@ -146,7 +146,7 @@ async function sendEmail({
           },
         },
         Source: requireConfig("sesFromAddress"),
-      })
+      }),
     )
     .catch((err) => {
       if (
@@ -155,7 +155,7 @@ async function sendEmail({
       ) {
         logger.error(err);
         throw new UserFacingError(
-          "E-mail address must still be verified in the e-mail service"
+          "E-mail address must still be verified in the e-mail service",
         );
       }
       throw err;
@@ -167,7 +167,7 @@ async function getUserEmail(username: string) {
     new AdminGetUserCommand({
       UserPoolId: requireConfig("userPoolId"),
       Username: username,
-    })
+    }),
   );
   if (!UserAttributes) {
     logger.debug(`User ${username} doesn't exist`);
@@ -178,12 +178,11 @@ async function getUserEmail(username: string) {
     logger.debug(`User ${username} doesn't have an e-mail address`);
     return;
   }
-  const emailVerified = UserAttributes?.find(
-    (a) => a.Name === "email_verified"
-  )?.Value;
+  const emailVerified = UserAttributes?.find((a) => a.Name === "email_verified")
+    ?.Value;
   if (!emailVerified) {
     logger.debug(
-      `User with ${username} doesn't have a verified e-mail address`
+      `User with ${username} doesn't have a verified e-mail address`,
     );
     return;
   }

@@ -74,7 +74,7 @@ export async function fido2CreateCredential({
       (credential) => ({
         ...credential,
         id: bufferFromBase64Url(credential.id),
-      })
+      }),
     ),
   };
   debug?.("Assembled public key options:", publicKey);
@@ -89,7 +89,7 @@ export async function fido2CreateCredential({
     !(credential.response instanceof AuthenticatorAttestationResponse)
   ) {
     throw new Error(
-      "credential.response is not an instance of AuthenticatorAttestationResponse"
+      "credential.response is not an instance of AuthenticatorAttestationResponse",
     );
   }
   const response: AuthenticatorAttestationResponseWithOptionalMembers =
@@ -152,7 +152,7 @@ export async function fido2StartCreateCredential() {
   }
   return fetch(
     getFullFido2Url(
-      `register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`
+      `register-authenticator/start?rpId=${fido2.rp?.id ?? location.hostname}`,
     ),
     {
       method: "POST",
@@ -161,7 +161,7 @@ export async function fido2StartCreateCredential() {
         "content-type": "application/json; charset=UTF-8",
         authorization: `Bearer ${idToken}`,
       },
-    }
+    },
   )
     .then(throwIfNot2xx)
     .then((res) => res.json() as Promise<StartCreateCredentialResponse>);
@@ -182,7 +182,7 @@ export async function fido2CompleteCreateCredential({
   const parsedCredential =
     "response" in credential
       ? await parseAuthenticatorAttestationResponse(
-          credential.response as AuthenticatorAttestationResponseWithOptionalMembers
+          credential.response as AuthenticatorAttestationResponseWithOptionalMembers,
         )
       : credential;
 
@@ -206,14 +206,14 @@ export async function fido2CompleteCreateCredential({
           credentialId: string;
           createdAt: string;
           signCount: number;
-        }>
+        }>,
     )
     .then(
       (res) =>
         ({
           ...res,
           createdAt: new Date(res.createdAt),
-        } as StoredCredential)
+        }) as StoredCredential,
     );
 }
 
@@ -228,7 +228,7 @@ export async function fido2ListCredentials() {
   }
   return fetch(
     getFullFido2Url(
-      `authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`
+      `authenticators/list?rpId=${fido2.rp?.id ?? location.hostname}`,
     ),
     {
       method: "POST",
@@ -237,7 +237,7 @@ export async function fido2ListCredentials() {
         "content-type": "application/json; charset=UTF-8",
         authorization: `Bearer ${tokens.idToken}`,
       },
-    }
+    },
   )
     .then(throwIfNot2xx)
     .then(
@@ -250,7 +250,7 @@ export async function fido2ListCredentials() {
             signCount: number;
             lastSignIn?: string;
           }[];
-        }>
+        }>,
     )
     .then(({ authenticators }) => ({
       authenticators: authenticators.map((authenticator) => ({
@@ -341,7 +341,7 @@ function assertIsFido2Options(o: unknown): asserts o is Fido2Options {
           typeof c.id === "string" &&
           (!("transports" in c) ||
             (Array.isArray(c.transports) &&
-              (c.transports as unknown[]).every((t) => typeof t === "string")))
+              (c.transports as unknown[]).every((t) => typeof t === "string"))),
       ))
   ) {
     const { debug } = configure();
@@ -383,25 +383,25 @@ async function fido2getCredential({
     !(credential.response instanceof AuthenticatorAssertionResponse)
   ) {
     throw new Error(
-      "credential.response is not an instance of AuthenticatorAssertionResponse"
+      "credential.response is not an instance of AuthenticatorAssertionResponse",
     );
   }
   debug?.("Credential:", credential);
   return parseAuthenticatorAssertionResponse(
     credential.rawId,
-    credential.response
+    credential.response,
   );
 }
 
 const parseAuthenticatorAttestationResponse = async (
-  response: AuthenticatorAttestationResponseWithOptionalMembers
+  response: AuthenticatorAttestationResponseWithOptionalMembers,
 ) => {
   const [attestationObjectB64, clientDataJSON_B64] = await Promise.all([
     bufferToBase64Url(response.attestationObject),
     bufferToBase64Url(response.clientDataJSON),
   ]);
   const transports = (response.getTransports?.() || []).filter((transport) =>
-    ["ble", "hybrid", "internal", "nfc", "usb"].includes(transport)
+    ["ble", "hybrid", "internal", "nfc", "usb"].includes(transport),
   );
   return {
     attestationObjectB64,
@@ -412,7 +412,7 @@ const parseAuthenticatorAttestationResponse = async (
 
 const parseAuthenticatorAssertionResponse = async (
   rawId: ArrayBuffer,
-  response: AuthenticatorAssertionResponse
+  response: AuthenticatorAssertionResponse,
 ) => {
   const [
     credentialIdB64,
@@ -507,7 +507,7 @@ export function authenticateWithFido2({
           throw new Error("Server did not send a FIDO2 challenge");
         }
         const fido2options: unknown = JSON.parse(
-          initAuthResponse.ChallengeParameters.fido2options
+          initAuthResponse.ChallengeParameters.fido2options,
         );
         assertIsFido2Options(fido2options);
         debug?.("FIDO2 options from Cognito challenge:", fido2options);
@@ -522,9 +522,9 @@ export function authenticateWithFido2({
             credentials?.filter(
               (cred) =>
                 !fido2options.credentials?.find(
-                  (optionsCred) => cred.id === optionsCred.id
-                )
-            ) ?? []
+                  (optionsCred) => cred.id === optionsCred.id,
+                ),
+            ) ?? [],
           ),
         });
         session = initAuthResponse.Session;
@@ -545,19 +545,19 @@ export function authenticateWithFido2({
           throw new Error("No discoverable credentials available");
         }
         username = new TextDecoder().decode(
-          bufferFromBase64Url(fido2credential.userHandleB64)
+          bufferFromBase64Url(fido2credential.userHandleB64),
         );
         // The userHandle must map to a username, not a sub
         if (username.startsWith("s|")) {
           debug?.(
-            "Credential userHandle isn't a username. In order to use the username as userHandle, so users can sign in without typing their username, usernames must be opaque"
+            "Credential userHandle isn't a username. In order to use the username as userHandle, so users can sign in without typing their username, usernames must be opaque",
           );
           throw new Error("Username is required for initiating sign-in");
         }
         // remove (potential) prefix to recover username
         username = username.replace(/^u\|/, "");
         debug?.(
-          `Proceeding with discovered credential for username: ${username} (b64: ${fido2credential.userHandleB64})`
+          `Proceeding with discovered credential for username: ${username} (b64: ${fido2credential.userHandleB64})`,
         );
         debug?.(`Invoking initiateAuth ...`);
         const initAuthResponse = await initiateAuth({
@@ -593,10 +593,10 @@ export function authenticateWithFido2({
         idToken: authResult.AuthenticationResult.IdToken,
         refreshToken: authResult.AuthenticationResult.RefreshToken,
         expireAt: new Date(
-          Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000
+          Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000,
         ),
         username: parseJwtPayload<CognitoIdTokenPayload>(
-          authResult.AuthenticationResult.IdToken
+          authResult.AuthenticationResult.IdToken,
         )["cognito:username"],
       };
       tokensCb

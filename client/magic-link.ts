@@ -47,7 +47,7 @@ export const requestSignInLink = ({
   const { clientId, storage, debug } = configure();
   if (currentStatus && busyState.includes(currentStatus as BusyState)) {
     throw new Error(
-      `Can't request sign-in link while in status ${currentStatus}`
+      `Can't request sign-in link while in status ${currentStatus}`,
     );
   }
   statusCb?.("REQUESTING_SIGNIN_LINK");
@@ -82,7 +82,7 @@ export const requestSignInLink = ({
       if (username && res.Session) {
         await storage.setItem(
           `Passwordless.${clientId}.${username}.session`,
-          res.Session
+          res.Session,
         );
       }
       statusCb?.("SIGNIN_LINK_REQUESTED");
@@ -109,13 +109,13 @@ function checkCurrentLocationForSignInLink() {
     fragmentIdentifier = url.hash?.slice(1);
     if (!fragmentIdentifier) {
       debug?.(
-        "Current location.href has no fragment identifier, nothing to do"
+        "Current location.href has no fragment identifier, nothing to do",
       );
       return;
     }
     if (failedFragmentIdentifieres.has(fragmentIdentifier)) {
       debug?.(
-        "Current location.href has a fragment identifier that failed before, ignoring"
+        "Current location.href has a fragment identifier that failed before, ignoring",
       );
       return;
     }
@@ -140,7 +140,7 @@ function checkCurrentLocationForSignInLink() {
   if (!message.userName || typeof message.userName !== "string") {
     debug?.(
       `Ignoring fragment identifier with invalid username:`,
-      message.userName
+      message.userName,
     );
     return;
   }
@@ -156,7 +156,7 @@ function checkCurrentLocationForSignInLink() {
 }
 
 function assertIsMessage(
-  msg: unknown
+  msg: unknown,
 ): asserts msg is { userName: string; exp: number; iat: number } {
   if (
     !msg ||
@@ -193,7 +193,7 @@ async function authenticateWithSignInLink({
   const { clientId, storage, debug } = configure();
   if (currentStatus && busyState.includes(currentStatus as BusyState)) {
     throw new Error(
-      `Can't authenticate with link while in status ${currentStatus}`
+      `Can't authenticate with link while in status ${currentStatus}`,
     );
   }
   session ??=
@@ -239,10 +239,10 @@ async function authenticateWithSignInLink({
     idToken: authResult.AuthenticationResult.IdToken,
     refreshToken: authResult.AuthenticationResult.RefreshToken,
     expireAt: new Date(
-      Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000
+      Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000,
     ),
     username: parseJwtPayload<CognitoIdTokenPayload>(
-      authResult.AuthenticationResult.IdToken
+      authResult.AuthenticationResult.IdToken,
     )["cognito:username"],
   };
 }

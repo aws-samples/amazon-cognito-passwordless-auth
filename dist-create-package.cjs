@@ -22,5 +22,5 @@ fs.writeFileSync(
     name,
     version,
     type,
-  })
+  }),
 );

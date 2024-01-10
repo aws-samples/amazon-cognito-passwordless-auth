@@ -73,7 +73,7 @@ let config = {
 };
 
 function requireConfig<K extends keyof typeof config>(
-  k: K
+  k: K,
 ): NonNullable<(typeof config)[K]> {
   // eslint-disable-next-line security/detect-object-injection
   const value = config[k];
@@ -100,7 +100,7 @@ const ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
 let ses = new SESClient({ region: config.sesRegion });
 
 export async function addChallengeToEvent(
-  event: CreateAuthChallengeTriggerEvent
+  event: CreateAuthChallengeTriggerEvent,
 ): Promise<void> {
   if (!config.magicLinkEnabled)
     throw new UserFacingError("Sign-in with Magic Link not supported");
@@ -148,7 +148,7 @@ async function createEmailContent({
   return {
     html: {
       data: `<html><body><p>Your secret sign-in link: <a href="${secretLoginLink}">sign in</a></p>This link is valid for ${Math.floor(
-        config.secondsUntilExpiry / 60
+        config.secondsUntilExpiry / 60,
       )} minutes<p></p></body></html>`,
       charSet: "UTF-8",
     },
@@ -195,7 +195,7 @@ async function sendEmailWithLink({
           },
         },
         Source: requireConfig("sesFromAddress"),
-      })
+      }),
     )
     .catch((err) => {
       if (
@@ -204,7 +204,7 @@ async function sendEmailWithLink({
       ) {
         logger.error(err);
         throw new UserFacingError(
-          "E-mail address must still be verified in the e-mail service"
+          "E-mail address must still be verified in the e-mail service",
         );
       }
       throw err;
@@ -217,7 +217,7 @@ async function createAndSendMagicLink(
     redirectUri,
   }: {
     redirectUri: string;
-  }
+  },
 ): Promise<void> {
   logger.debug("Creating new magic link ...");
   const exp = Math.floor(Date.now() / 1000 + config.secondsUntilExpiry);
@@ -227,13 +227,13 @@ async function createAndSendMagicLink(
       userName: event.userName,
       iat,
       exp,
-    })
+    }),
   );
   const messageContext = Buffer.from(
     JSON.stringify({
       userPoolId: event.userPoolId,
       clientId: event.callerContext.clientId,
-    })
+    }),
   );
   const kmsKeyId = requireConfig("kmsKeyId");
   const { Signature: signature } = await kms.send(
@@ -244,7 +244,7 @@ async function createAndSendMagicLink(
         .digest(),
       SigningAlgorithm: "RSASSA_PSS_SHA_512",
       MessageType: "DIGEST",
-    })
+    }),
   );
   if (!signature) {
     throw new Error("Failed to create signature with KMS");
@@ -276,11 +276,11 @@ async function createAndSendMagicLink(
         ExpressionAttributeValues: {
           ":iat": Math.floor(Date.now() / 1000) - config.minimumSecondsBetween,
         },
-      })
+      }),
     )
     .catch(handleConditionalCheckFailedException(config.notNowMsg));
   const secretLoginLink = `${redirectUri}#${message.toString(
-    "base64url"
+    "base64url",
   )}.${Buffer.from(signature).toString("base64url")}`;
   logger.debug("Sending magic link ...");
   // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client. (see above)
@@ -297,7 +297,7 @@ async function createAndSendMagicLink(
 }
 
 export async function addChallengeVerificationResultToEvent(
-  event: VerifyAuthChallengeResponseTriggerEvent
+  event: VerifyAuthChallengeResponseTriggerEvent,
 ) {
   logger.info("Verifying MagicLink Challenge Response ...");
   // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client. (see above)
@@ -318,7 +318,7 @@ export async function addChallengeVerificationResultToEvent(
     {
       userPoolId: event.userPoolId,
       clientId: event.callerContext.clientId,
-    }
+    },
   );
 }
 
@@ -327,7 +327,7 @@ async function downloadPublicKey(kmsKeyId: string) {
   const { PublicKey: publicKey } = await kms.send(
     new GetPublicKeyCommand({
       KeyId: kmsKeyId,
-    })
+    }),
   );
   if (!publicKey) {
     throw new Error("Failed to download public key from KMS");
@@ -342,11 +342,11 @@ async function downloadPublicKey(kmsKeyId: string) {
 async function verifyMagicLink(
   magicLinkFragmentIdentifier: string,
   userName: string,
-  context: { userPoolId: string; clientId: string }
+  context: { userPoolId: string; clientId: string },
 ) {
   logger.debug(
     "Verifying magic link fragment identifier:",
-    magicLinkFragmentIdentifier
+    magicLinkFragmentIdentifier,
   );
   const [messageB64, signatureB64] = magicLinkFragmentIdentifier.split(".");
   const signature = Buffer.from(signatureB64, "base64url");
@@ -375,12 +375,12 @@ async function verifyMagicLink(
             .end(signature)
             .digest(),
         },
-      })
+      }),
     ));
   } catch (err) {
     if (err instanceof ConditionalCheckFailedException) {
       logger.error(
-        "Attempt to use invalid (potentially superseeded) magic link"
+        "Attempt to use invalid (potentially superseeded) magic link",
       );
       return false;
     }
@@ -405,7 +405,7 @@ async function verifyMagicLink(
       padding: constants.RSA_PKCS1_PSS_PADDING,
       saltLength: constants.RSA_PSS_SALTLEN_DIGEST,
     },
-    signature
+    signature,
   );
   logger.debug(`Magic link signature is ${valid ? "" : "NOT "}valid`);
   if (!valid) return false;
@@ -428,7 +428,7 @@ async function verifyMagicLink(
 }
 
 function assertIsMessage(
-  msg: unknown
+  msg: unknown,
 ): asserts msg is { userName: string; exp: number; iat: number } {
   if (
     !msg ||
