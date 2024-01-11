@@ -20,7 +20,7 @@ import * as magicLink from "./magic-link.js";
 import { logger, UserFacingError } from "./common.js";
 
 export const handler: VerifyAuthChallengeResponseTriggerHandler = async (
-  event,
+  event
 ) => {
   logger.debug(JSON.stringify(event, null, 2));
   try {
@@ -46,7 +46,7 @@ export const handler: VerifyAuthChallengeResponseTriggerHandler = async (
     logger.debug(JSON.stringify(event, null, 2));
     logger.info(
       "Verification result, answerCorrect:",
-      event.response.answerCorrect,
+      event.response.answerCorrect
     );
     return event;
   } catch (err) {

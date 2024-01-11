@@ -45,7 +45,7 @@ function StepUpAuth() {
   } = useAwaitableState(smsOtp);
 
   function handleStepUpAuthentication(
-    stepUpAuthFn: () => Promise<{ idToken: string }>,
+    stepUpAuthFn: () => Promise<{ idToken: string }>
   ) {
     setLastError(undefined);
     setStepUpAuthIdToken("");
@@ -108,7 +108,7 @@ function StepUpAuth() {
                     username: tokensParsed.idToken["cognito:username"],
                     credentials: currentUser?.credentials,
                     clientMetadata: { consent_id: consentId },
-                  }).signedIn,
+                  }).signedIn
               )
             }
           >
@@ -130,7 +130,7 @@ function StepUpAuth() {
                 }).signedIn.finally(() => {
                   setSmsOtp("");
                   setSmsOtpPhoneNumber("");
-                }),
+                })
               );
             }}
           >
@@ -175,7 +175,7 @@ function StepUpAuth() {
                 type="button"
                 onClick={() =>
                   cancelWaitingForSmsOtp(
-                    new Error("SMS OTP step up authentication cancelled"),
+                    new Error("SMS OTP step up authentication cancelled")
                   )
                 }
               >

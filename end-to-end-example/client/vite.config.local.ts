@@ -26,7 +26,7 @@ export default defineConfig({
     alias: {
       "amazon-cognito-passwordless-auth": path.resolve(
         __dirname,
-        "../../client",
+        "../../client"
       ),
     },
   },

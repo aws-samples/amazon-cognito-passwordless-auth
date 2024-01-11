@@ -218,8 +218,8 @@ export const Passwordless = ({
             : "NO",
         }
       : showSignInOptionsForUser === "LAST_USER"
-        ? lastUser
-        : undefined;
+      ? lastUser
+      : undefined;
 
   return (
     <FlexContainer brand={brand}>
@@ -784,7 +784,7 @@ function AuthenticatorsManager() {
                         </button>
                       </td>
                     </tr>
-                  ),
+                  )
                 )}
               </tbody>
             </table>
@@ -890,6 +890,6 @@ function determineMobileDeviceName() {
   ] as const;
   return mobileDevices.find((dev) =>
     // eslint-disable-next-line security/detect-non-literal-regexp
-    navigator.userAgent.match(new RegExp(dev, "i")),
+    navigator.userAgent.match(new RegExp(dev, "i"))
   );
 }

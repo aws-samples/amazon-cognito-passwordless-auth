@@ -30,7 +30,7 @@ magicLink.configure({
     return {
       html: {
         data: `<html><body><p>Your secret sign-in link: <a href="${secretLoginLink}">sign in</a></p>This link is valid for ${Math.floor(
-          defaultConfig.secondsUntilExpiry / 60,
+          defaultConfig.secondsUntilExpiry / 60
         )} minutes<p></p></body></html>`,
         charSet: "UTF-8",
       },

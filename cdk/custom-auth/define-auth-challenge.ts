@@ -31,7 +31,7 @@ export const handler: DefineAuthChallengeTriggerHandler = async (event) => {
   // We only accept custom challenges
   if (
     event.request.session.find(
-      (attempt) => attempt.challengeName !== "CUSTOM_CHALLENGE",
+      (attempt) => attempt.challengeName !== "CUSTOM_CHALLENGE"
     )
   ) {
     return deny(event, "Expected CUSTOM_CHALLENGE");
@@ -39,9 +39,7 @@ export const handler: DefineAuthChallengeTriggerHandler = async (event) => {
 
   const { signInMethod } = event.request.clientMetadata ?? {};
   logger.info(
-    `Requested signInMethod: ${signInMethod} (attempt: ${countAttempts(
-      event,
-    )})`,
+    `Requested signInMethod: ${signInMethod} (attempt: ${countAttempts(event)})`
   );
 
   if (signInMethod === "MAGIC_LINK") {
@@ -117,10 +115,10 @@ function customChallenge(event: DefineAuthChallengeTriggerEvent) {
 
 function countAttempts(
   event: DefineAuthChallengeTriggerEvent,
-  excludeProvideAuthParameters = true,
+  excludeProvideAuthParameters = true
 ) {
   if (!excludeProvideAuthParameters) return event.request.session.length;
   return event.request.session.filter(
-    (entry) => entry.challengeMetadata !== "PROVIDE_AUTH_PARAMETERS",
+    (entry) => entry.challengeMetadata !== "PROVIDE_AUTH_PARAMETERS"
   ).length;
 }

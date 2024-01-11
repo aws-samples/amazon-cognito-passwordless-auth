@@ -113,7 +113,7 @@ NagSuppressions.addStackSuppressions(stack, [
     appliesTo: [
       `Resource::<${stack.getLogicalId(
         stack.passwordless.authenticatorsTable!.node
-          .defaultChild as cdk.CfnElement,
+          .defaultChild as cdk.CfnElement
       )}.Arn>/index/*`,
     ],
   },
@@ -136,7 +136,7 @@ NagSuppressions.addResourceSuppressions(
       ],
     },
   ],
-  true,
+  true
 );
 if (stack.passwordless.fido2NotificationFn) {
   NagSuppressions.addResourceSuppressions(
@@ -150,7 +150,7 @@ if (stack.passwordless.fido2NotificationFn) {
         ],
       },
     ],
-    true,
+    true
   );
 }
 NagSuppressions.addResourceSuppressions(
@@ -162,7 +162,7 @@ NagSuppressions.addResourceSuppressions(
       reason: "Don't require Cognito Advanced Security",
     },
   ],
-  true,
+  true
 );
 NagSuppressions.addResourceSuppressions(
   stack.passwordless.secretsTable!,
@@ -172,7 +172,7 @@ NagSuppressions.addResourceSuppressions(
       reason: "Don't need recovery for temporary hashes",
     },
   ],
-  true,
+  true
 );
 NagSuppressions.addResourceSuppressionsByPath(
   stack,
@@ -194,7 +194,7 @@ NagSuppressions.addResourceSuppressionsByPath(
       id: "AwsSolutions-COG4",
       reason: "These are public methods by intention",
     },
-  ],
+  ]
 );
 
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
@@ -207,7 +207,7 @@ export function cloudfrontServedEmptySpaBucket(
     domainNames?: string[];
     certificate?: cdk.aws_certificatemanager.ICertificate;
     webAclId?: string;
-  },
+  }
 ) {
   const bucket = new cdk.aws_s3.Bucket(scope, `${id}Bucket`, {
     bucketName: props?.bucketName,
@@ -225,7 +225,7 @@ export function cloudfrontServedEmptySpaBucket(
       actions: ["s3:*"],
       resources: [bucket.bucketArn, bucket.bucketArn + "/*"],
       conditions: { Bool: { "aws:SecureTransport": "false" } },
-    }),
+    })
   );
   NagSuppressions.addResourceSuppressions(
     [bucket],
@@ -235,11 +235,11 @@ export function cloudfrontServedEmptySpaBucket(
         reason:
           "The S3 Bucket has server access logs disabled––Not a concern for example stack",
       },
-    ],
+    ]
   );
   const originAccessIdentity = new cdk.aws_cloudfront.OriginAccessIdentity(
     scope,
-    `${id}OAI`,
+    `${id}OAI`
   );
   const distribution = new cdk.aws_cloudfront.Distribution(
     scope,
@@ -285,7 +285,7 @@ export function cloudfrontServedEmptySpaBucket(
                 modeBlock: true,
               },
             },
-          },
+          }
         ),
       },
       defaultRootObject: "index.html",
@@ -293,7 +293,7 @@ export function cloudfrontServedEmptySpaBucket(
       domainNames: props?.domainNames,
       certificate: props?.certificate,
       webAclId: props?.webAclId,
-    },
+    }
   );
   NagSuppressions.addResourceSuppressions(
     [distribution],
@@ -318,7 +318,7 @@ export function cloudfrontServedEmptySpaBucket(
         reason:
           "The CloudFront distribution allows for SSLv3 or TLSv1 for HTTPS viewer connections.––No concern for example stack",
       },
-    ],
+    ]
   );
   return { bucket, distribution };
 }
@@ -342,7 +342,7 @@ function readEnvFile() {
     tryReadEntry(".env", "CDK_STACK_SES_FROM_ADDRESS");
   if (!sesFromAddress) {
     throw new Error(
-      "Failed to read CDK_STACK_SES_FROM_ADDRESS config from .env file",
+      "Failed to read CDK_STACK_SES_FROM_ADDRESS config from .env file"
     );
   }
   const stackName =
