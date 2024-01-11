@@ -4,7 +4,7 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:security/recommended",
+    "plugin:security/recommended-legacy",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -48,7 +48,7 @@ function getCdkOverrides(basedir) {
     },
     extends: [
       "eslint:recommended",
-      "plugin:security/recommended",
+      "plugin:security/recommended-legacy",
       "plugin:@typescript-eslint/recommended",
       "plugin:@typescript-eslint/recommended-requiring-type-checking",
     ],
@@ -72,7 +72,7 @@ function getClientOverrides(basedir) {
     },
     extends: [
       "eslint:recommended",
-      "plugin:security/recommended",
+      "plugin:security/recommended-legacy",
       "plugin:react/recommended",
       "plugin:react-hooks/recommended",
       "plugin:@typescript-eslint/recommended",

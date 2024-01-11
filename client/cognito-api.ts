@@ -155,7 +155,7 @@ export async function initiateAuth<
     | "CUSTOM_AUTH"
     | "REFRESH_TOKEN_AUTH"
     | "USER_SRP_AUTH"
-    | "USER_PASSWORD_AUTH"
+    | "USER_PASSWORD_AUTH",
 >({
   authflow,
   authParameters,
@@ -606,7 +606,7 @@ function extractInitiateAuthResponse<
     | "CUSTOM_AUTH"
     | "REFRESH_TOKEN_AUTH"
     | "USER_SRP_AUTH"
-    | "USER_PASSWORD_AUTH"
+    | "USER_PASSWORD_AUTH",
 >(authflow: T) {
   return async (res: MinimalResponse) => {
     await throwIfNot2xx(res);

@@ -168,11 +168,12 @@ function _usePasswordless() {
   );
   const deleteFido2Credential = useCallback(
     (credentialId: string) =>
-      setFido2Credentials((state) =>
-        state?.filter(
-          (remainingAuthenticator) =>
-            credentialId !== remainingAuthenticator.credentialId
-        )
+      setFido2Credentials(
+        (state) =>
+          state?.filter(
+            (remainingAuthenticator) =>
+              credentialId !== remainingAuthenticator.credentialId
+          )
       ),
     []
   );
@@ -209,13 +210,18 @@ function _usePasswordless() {
             setTokens((tokens) => ({ ...tokens, ...newTokens }))
           ),
         isRefreshingCb: setIsRefreshingTokens,
-      }).finally(() => setIsSchedulingRefresh(false));
+      })
+        .catch((err) => {
+          const { debug } = configure();
+          debug?.("Failed to schedule token refresh:", err);
+        })
+        .finally(() => setIsSchedulingRefresh(false));
       return () => abort.abort();
     }
   }, [setTokens, refreshToken, expireAtTime]);
 
   // If we have some tokens, but not all, attempt a refresh
-  // (looks like e.g. a developer deleted some keys from storage)
+  // (`lo`oks like e.g. a developer deleted some keys from storage)
   if (
     tokens &&
     (!tokens.idToken || !tokens.accessToken || !tokens.expireAt) &&
@@ -238,6 +244,10 @@ function _usePasswordless() {
   useEffect(() => {
     retrieveTokens()
       .then(setTokens)
+      .catch((err) => {
+        const { debug } = configure();
+        debug?.("Failed to retrieve tokens from storage:", err);
+      })
       .finally(() => setInitiallyRetrievingTokensFromStorage(false));
   }, [setTokens]);
 
@@ -321,20 +331,20 @@ function _usePasswordless() {
     return tokensParsed && tokensParsed.expireAt.valueOf() >= Date.now()
       ? ("SIGNED_IN" as const)
       : tokensParsed && (isSchedulingRefresh || isRefreshingTokens)
-      ? ("REFRESHING_SIGN_IN" as const)
-      : busyState
-          .filter(
-            (state) =>
-              !["SIGNING_OUT", "CHECKING_FOR_SIGNIN_LINK"].includes(state)
-          )
-          .includes(signingInStatus as BusyState)
-      ? ("SIGNING_IN" as const)
-      : initiallyRetrievingTokensFromStorage ||
-        signingInStatus === "CHECKING_FOR_SIGNIN_LINK"
-      ? ("CHECKING" as const)
-      : signingInStatus === "SIGNING_OUT"
-      ? ("SIGNING_OUT" as const)
-      : ("NOT_SIGNED_IN" as const);
+        ? ("REFRESHING_SIGN_IN" as const)
+        : busyState
+              .filter(
+                (state) =>
+                  !["SIGNING_OUT", "CHECKING_FOR_SIGNIN_LINK"].includes(state)
+              )
+              .includes(signingInStatus as BusyState)
+          ? ("SIGNING_IN" as const)
+          : initiallyRetrievingTokensFromStorage ||
+              signingInStatus === "CHECKING_FOR_SIGNIN_LINK"
+            ? ("CHECKING" as const)
+            : signingInStatus === "SIGNING_OUT"
+              ? ("SIGNING_OUT" as const)
+              : ("NOT_SIGNED_IN" as const);
   }, [
     tokensParsed,
     isSchedulingRefresh,

@@ -178,9 +178,8 @@ async function getUserEmail(username: string) {
     logger.debug(`User ${username} doesn't have an e-mail address`);
     return;
   }
-  const emailVerified = UserAttributes?.find(
-    (a) => a.Name === "email_verified"
-  )?.Value;
+  const emailVerified = UserAttributes?.find((a) => a.Name === "email_verified")
+    ?.Value;
   if (!emailVerified) {
     logger.debug(
       `User with ${username} doesn't have a verified e-mail address`
