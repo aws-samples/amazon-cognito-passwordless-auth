@@ -55,5 +55,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       </React.StrictMode>
     </PasswordlessComponent>
     <Fido2Toast /> {/* Add Fido2Toast below App so it is rendered on top */}
-  </PasswordlessContextProvider>,
+  </PasswordlessContextProvider>
 );

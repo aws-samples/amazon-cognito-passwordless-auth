@@ -18,7 +18,7 @@ import { logger, UserFacingError } from "./common.js";
 
 const CLIENT_METADATA_PERSISTED_KEYS =
   process.env.CLIENT_METADATA_PERSISTED_KEYS?.split(",").map((key) =>
-    key.trim(),
+    key.trim()
   ) ?? [];
 
 export const handler: PreTokenGenerationTriggerHandler = async (event) => {
@@ -28,12 +28,12 @@ export const handler: PreTokenGenerationTriggerHandler = async (event) => {
     const clientMetadataToPersist =
       event.request.clientMetadata &&
       Object.entries(event.request.clientMetadata).filter(([key]) =>
-        CLIENT_METADATA_PERSISTED_KEYS.includes(key),
+        CLIENT_METADATA_PERSISTED_KEYS.includes(key)
       );
     if (clientMetadataToPersist) {
       logger.info(
         "There is client metadata to persist:",
-        clientMetadataToPersist.map(([key]) => key).join(", "),
+        clientMetadataToPersist.map(([key]) => key).join(", ")
       );
       event.response.claimsOverrideDetails = {
         claimsToAddOrOverride: {},

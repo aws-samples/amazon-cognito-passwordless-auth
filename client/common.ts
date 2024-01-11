@@ -33,7 +33,7 @@ export const defaultTokensCb = async ({
   abort?: AbortSignal;
 }) => {
   const storeAndScheduleRefresh = async (
-    tokens: TokensFromSignIn | TokensFromRefresh,
+    tokens: TokensFromSignIn | TokensFromRefresh
   ) => {
     await storeTokens(tokens);
     scheduleRefresh({
@@ -61,7 +61,7 @@ export const signOut = (props?: {
   const { currentStatus, statusCb } = props ?? {};
   if (currentStatus && busyState.includes(currentStatus as BusyState)) {
     debug?.(
-      `Initiating sign-out despite being in a busy state: ${currentStatus}`,
+      `Initiating sign-out despite being in a busy state: ${currentStatus}`
     );
   }
   statusCb?.("SIGNING_OUT");
@@ -85,19 +85,19 @@ export const signOut = (props?: {
       await Promise.all([
         storage.removeItem(`${amplifyKeyPrefix}.${tokens.username}.idToken`),
         storage.removeItem(
-          `${amplifyKeyPrefix}.${tokens.username}.accessToken`,
+          `${amplifyKeyPrefix}.${tokens.username}.accessToken`
         ),
         storage.removeItem(
-          `${amplifyKeyPrefix}.${tokens.username}.refreshToken`,
+          `${amplifyKeyPrefix}.${tokens.username}.refreshToken`
         ),
         storage.removeItem(
-          `${amplifyKeyPrefix}.${tokens.username}.tokenScopesString`,
+          `${amplifyKeyPrefix}.${tokens.username}.tokenScopesString`
         ),
         storage.removeItem(`${amplifyKeyPrefix}.${tokens.username}.userData`),
         storage.removeItem(`${amplifyKeyPrefix}.LastAuthUser`),
         storage.removeItem(`${customKeyPrefix}.${tokens.username}.expireAt`),
         storage.removeItem(
-          `Passwordless.${clientId}.${tokens.username}.refreshingTokens`,
+          `Passwordless.${clientId}.${tokens.username}.refreshingTokens`
         ),
       ]);
       props?.tokensRemovedLocallyCb?.();

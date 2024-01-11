@@ -97,7 +97,7 @@ function isOpaqueIdentifier(cognitoUsername: string) {
 
 function isUuid(cognitoUsername: string) {
   return !!cognitoUsername.match(
-    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/,
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
   );
 }
 
@@ -112,18 +112,18 @@ const corsHeaderAvailable = !!(
   maxAge
 );
 export function withCommonHeaders<T extends APIGatewayProxyHandler>(
-  handler: T,
+  handler: T
 ) {
   const wrapped: APIGatewayProxyHandler = (event, context, cb) => {
     return handler(event, context, () =>
       cb(
-        new Error("Callback style response from wrapped handler not supported"),
-      ),
+        new Error("Callback style response from wrapped handler not supported")
+      )
     )?.then((response) => {
       const origin =
         event.headers &&
         Object.entries(event.headers).find(
-          ([k, v]) => k.toLowerCase() === "origin" && v,
+          ([k, v]) => k.toLowerCase() === "origin" && v
         )?.[1];
       const headers = {
         "Strict-Transport-Security":
@@ -153,7 +153,7 @@ export function withCommonHeaders<T extends APIGatewayProxyHandler>(
 export function isValidOrigin(
   origin: string,
   allowedWebOrigins: string[],
-  allowedApplicationOrigins: string[],
+  allowedApplicationOrigins: string[]
 ): boolean {
   return (
     !!origin &&

@@ -55,7 +55,7 @@ export function stepUpAuthenticationWithSmsOtp({
       const { accessToken } = (await retrieveTokens()) ?? {};
       if (!accessToken) {
         throw new Error(
-          "Missing access token. You must be signed-in already for step-up auth",
+          "Missing access token. You must be signed-in already for step-up auth"
         );
       }
       let session: string;
@@ -131,10 +131,10 @@ export function stepUpAuthenticationWithSmsOtp({
         idToken: authResult.AuthenticationResult.IdToken,
         refreshToken: authResult.AuthenticationResult.RefreshToken,
         expireAt: new Date(
-          Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000,
+          Date.now() + authResult.AuthenticationResult.ExpiresIn * 1000
         ),
         username: parseJwtPayload<CognitoIdTokenPayload>(
-          authResult.AuthenticationResult.IdToken,
+          authResult.AuthenticationResult.IdToken
         )["cognito:username"],
       };
       tokensCb

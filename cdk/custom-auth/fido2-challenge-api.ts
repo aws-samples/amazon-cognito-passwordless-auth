@@ -44,7 +44,7 @@ const _handler: APIGatewayProxyHandler = async (event) => {
             sk: `USERNAMELESS_SIGN_IN`,
             exp: Math.floor((Date.now() + signInTimeout) / 1000),
           },
-        }),
+        })
       );
       return {
         statusCode: 200,
