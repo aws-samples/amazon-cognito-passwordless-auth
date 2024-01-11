@@ -44,14 +44,14 @@ async function getConstants() {
         "ABF5AE8CDB0933D71E8C94E04A25619DCEE3D2261AD2EE6B" +
         "F12FFA06D98A0864D87602733EC86A64521F2B18177B200C" +
         "BBE117577A615D6C770988C0BAD946E208E24FA074E5AB31" +
-        "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF"
+        "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF",
     );
     const { crypto } = configure();
     const k = arrayBufferToBigInt(
       await crypto.subtle.digest(
         "SHA-256",
-        hexToArrayBuffer(`${padHex(N.toString(16))}${padHex(g.toString(16))}`)
-      )
+        hexToArrayBuffer(`${padHex(N.toString(16))}${padHex(g.toString(16))}`),
+      ),
     );
     _CONSTANTS = {
       g,
@@ -126,7 +126,7 @@ async function calculateSrpSignature({
   const [, userPoolName] = userPoolId.split("_");
   const usernamePasswordHash = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(`${userPoolName}${username}:${password}`)
+    new TextEncoder().encode(`${userPoolName}${username}:${password}`),
   );
 
   const x = await crypto.subtle.digest(
@@ -134,7 +134,7 @@ async function calculateSrpSignature({
     await new Blob([
       hexToArrayBuffer(padHex(salt)),
       usernamePasswordHash,
-    ]).arrayBuffer()
+    ]).arrayBuffer(),
   );
 
   const { g, N, k } = await getConstants();
@@ -143,7 +143,7 @@ async function calculateSrpSignature({
   const s = modPow(
     int,
     smallA + arrayBufferToBigInt(u) * arrayBufferToBigInt(x),
-    N
+    N,
   );
   const ikmHex = padHex(s.toString(16));
   const saltHkdfHex = padHex(arrayBufferToHex(u));
@@ -159,12 +159,12 @@ async function calculateSrpSignature({
       hash: { name: "SHA-256" },
     },
     false,
-    ["sign"]
+    ["sign"],
   );
   const prk = await crypto.subtle.sign(
     "HMAC",
     prkKey,
-    hexToArrayBuffer(ikmHex)
+    hexToArrayBuffer(ikmHex),
   );
   const hkdfKey = await crypto.subtle.importKey(
     "raw",
@@ -174,11 +174,11 @@ async function calculateSrpSignature({
       hash: { name: "SHA-256" },
     },
     false,
-    ["sign"]
+    ["sign"],
   );
   const hkdf = (await crypto.subtle.sign("HMAC", hkdfKey, infoBits)).slice(
     0,
-    16
+    16,
   );
 
   const timestamp = formatDate(new Date());
@@ -199,7 +199,7 @@ async function calculateSrpSignature({
       hash: { name: "SHA-256" },
     },
     false,
-    ["sign"]
+    ["sign"],
   );
 
   const signatureString = await crypto.subtle.sign("HMAC", signatureKey, msg);
@@ -315,7 +315,7 @@ export function authenticateWithSRP({
           userPoolId,
           password,
           secretBlock: secretBlockB64,
-        }
+        },
       );
       debug?.(`Invoking respondToAuthChallenge ...`);
       const authResult = await respondToAuthChallenge({

@@ -41,7 +41,7 @@ export async function storeTokens(tokens: TokensToStore) {
     "cognito:username": username,
   } = parseJwtPayload<CognitoIdTokenPayload>(tokens.idToken);
   const { scope } = parseJwtPayload<CognitoAccessTokenPayload>(
-    tokens.accessToken
+    tokens.accessToken,
   );
   const amplifyKeyPrefix = `CognitoIdentityServiceProvider.${clientId}`;
   const customKeyPrefix = `Passwordless.${clientId}`;
@@ -49,20 +49,20 @@ export async function storeTokens(tokens: TokensToStore) {
   const promises: (void | Promise<void>)[] = [];
   promises.push(storage.setItem(`${amplifyKeyPrefix}.LastAuthUser`, username));
   promises.push(
-    storage.setItem(`${amplifyKeyPrefix}.${username}.idToken`, tokens.idToken)
+    storage.setItem(`${amplifyKeyPrefix}.${username}.idToken`, tokens.idToken),
   );
   promises.push(
     storage.setItem(
       `${amplifyKeyPrefix}.${username}.accessToken`,
-      tokens.accessToken
-    )
+      tokens.accessToken,
+    ),
   );
   if (tokens.refreshToken) {
     promises.push(
       storage.setItem(
         `${amplifyKeyPrefix}.${username}.refreshToken`,
-        tokens.refreshToken
-      )
+        tokens.refreshToken,
+      ),
     );
   }
   promises.push(
@@ -80,17 +80,17 @@ export async function storeTokens(tokens: TokensToStore) {
           },
         ],
         Username: username,
-      })
-    )
+      }),
+    ),
   );
   promises.push(
-    storage.setItem(`${amplifyKeyPrefix}.${username}.tokenScopesString`, scope)
+    storage.setItem(`${amplifyKeyPrefix}.${username}.tokenScopesString`, scope),
   );
   promises.push(
     storage.setItem(
       `${customKeyPrefix}.${username}.expireAt`,
-      tokens.expireAt.toISOString()
-    )
+      tokens.expireAt.toISOString(),
+    ),
   );
   await Promise.all(promises.filter((p) => !!p));
 }

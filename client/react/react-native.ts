@@ -112,7 +112,7 @@ export async function fido2CreateCredential({
   const passkey = new Passkey(config.fido2.passkeyDomain, config.fido2.rp.name);
   const credential = await passkey.register(
     toBase64String(response.challenge),
-    response.user.id
+    response.user.id,
   );
 
   return await fido2CompleteCreateCredential({
@@ -251,14 +251,14 @@ class RNTextDecoder {
         codePoints.push(
           ((byte & 0x0f) << 12) |
             ((readContinuationByte() & 0x3f) << 6) |
-            (readContinuationByte() & 0x3f)
+            (readContinuationByte() & 0x3f),
         );
       } else if (byte >> 3 === 0b11110) {
         codePoints.push(
           ((byte & 0x07) << 18) |
             ((readContinuationByte() & 0x3f) << 12) |
             ((readContinuationByte() & 0x3f) << 6) |
-            (readContinuationByte() & 0x3f)
+            (readContinuationByte() & 0x3f),
         );
       } else {
         RNTextDecoder.throwMalformedInputError();

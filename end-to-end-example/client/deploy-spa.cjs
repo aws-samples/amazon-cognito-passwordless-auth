@@ -44,7 +44,7 @@ function readEnvFile() {
     tryReadEntry(".env.local") ?? tryReadEntry(".env");
   if (!sesSenderEmailIdentityArn) {
     throw new Error(
-      "Failed to read CDK_STACK_SPA_BUCKET_NAME config from .env file"
+      "Failed to read CDK_STACK_SPA_BUCKET_NAME config from .env file",
     );
   }
   return sesSenderEmailIdentityArn;

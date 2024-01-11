@@ -42,7 +42,7 @@ let config = {
 };
 
 function requireConfig<K extends keyof typeof config>(
-  k: K
+  k: K,
 ): NonNullable<(typeof config)[K]> {
   // eslint-disable-next-line security/detect-object-injection
   const value = config[k];
@@ -56,11 +56,11 @@ export function configure(update?: Partial<typeof config>) {
 }
 
 export async function addChallengeToEvent(
-  event: CreateAuthChallengeTriggerEvent
+  event: CreateAuthChallengeTriggerEvent,
 ) {
   if (!config.smsOtpStepUpEnabled)
     throw new UserFacingError(
-      "Step-up authentication with SMS OTP not supported"
+      "Step-up authentication with SMS OTP not supported",
     );
 
   logger.info("Adding SMS OTP Step up challenge to event ...");
@@ -98,13 +98,13 @@ async function createChallenge(event: CreateAuthChallengeTriggerEvent) {
   // rather then needing to send the user an all new code again.
   const previousChallenge = event.request.session.slice(-1)[0];
   const previousSecretCode = previousChallenge.challengeMetadata?.match(
-    /SMS-OTP-STEPUP-CODE-(\d+)/
+    /SMS-OTP-STEPUP-CODE-(\d+)/,
   )?.[1];
 
   let secretCode: string;
   if (!previousSecretCode) {
     logger.info(
-      "SMS Code has not been sent yet, generating and sending one ..."
+      "SMS Code has not been sent yet, generating and sending one ...",
     );
     secretCode = [...new Array<unknown>(requireConfig("secretCodeLength"))]
       .map(() => randomInt(0, 9))
@@ -137,7 +137,7 @@ async function createChallenge(event: CreateAuthChallengeTriggerEvent) {
             },
             ...attributes,
           },
-        })
+        }),
       );
     }
   } else {
@@ -160,7 +160,7 @@ async function createSmsContent({
 }
 
 export async function addChallengeVerificationResultToEvent(
-  event: VerifyAuthChallengeResponseTriggerEvent
+  event: VerifyAuthChallengeResponseTriggerEvent,
 ) {
   logger.info("Verifying SMS OTP StepUp Challenge Response ...");
   if (event.request.userNotFound) {
@@ -168,7 +168,7 @@ export async function addChallengeVerificationResultToEvent(
   }
   if (!config.smsOtpStepUpEnabled)
     throw new UserFacingError(
-      "Step-up authentication with SMS OTP not supported"
+      "Step-up authentication with SMS OTP not supported",
     );
   if (
     event.request.privateChallengeParameters.challenge ===
@@ -198,7 +198,7 @@ export async function addChallengeVerificationResultToEvent(
 }
 
 function assertIsAnswer(
-  answer: unknown
+  answer: unknown,
 ): asserts answer is { secretCode: string; jwt: string } {
   if (
     !answer ||
@@ -235,7 +235,7 @@ async function verifyJwt({
         }
       },
     },
-    { jwksCache }
+    { jwksCache },
   )
     .verify(jwt)
     .then(() => true)
@@ -248,6 +248,6 @@ async function verifyJwt({
 function maskPhoneNumber(phoneNumber: string) {
   const show = phoneNumber.length < 8 ? 2 : 4;
   return `+${new Array(11 - show).fill("*").join("")}${phoneNumber.slice(
-    -show
+    -show,
   )}`;
 }

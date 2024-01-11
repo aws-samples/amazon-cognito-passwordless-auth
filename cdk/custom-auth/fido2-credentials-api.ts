@@ -48,7 +48,7 @@ const allowedRelyingPartyIds = (
 ).split(",");
 const allowedRelyingPartyIdHashes = allowedRelyingPartyIds.map(
   (relyingPartyId) =>
-    createHash("sha256").update(relyingPartyId).digest("base64url")
+    createHash("sha256").update(relyingPartyId).digest("base64url"),
 );
 const relyingPartyName = process.env.RELYING_PARTY_NAME!;
 const allowedApplicationOrigins =
@@ -60,7 +60,7 @@ const allowedOrigins =
 if (!allowedOrigins.length)
   throw new Error("Environment variable ALLOWED_ORIGINS is not set");
 const authenticatorRegistrationTimeout = Number(
-  process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000"
+  process.env.AUTHENTICATOR_REGISTRATION_TIMEOUT ?? "300000",
 );
 const notificationsEnabled = !!process.env.FIDO2_NOTIFICATION_LAMBDA_ARN;
 const allowedKty: Record<number, string> = { 2: "EC", 3: "RSA" };
@@ -124,7 +124,7 @@ const _handler: APIGatewayProxyWithCognitoAuthorizerHandler = async (event) => {
       logger.info("Completing the new authenticator registration ...");
       const storedCredential = await handleCredentialsResponse(
         userHandle,
-        parseBody(event)
+        parseBody(event),
       );
       if (notificationsEnabled) {
         await enqueueFido2Notification({
@@ -283,7 +283,7 @@ async function getExistingCredentialsForUser({
           },
           ExclusiveStartKey: exclusiveStartKey,
           FilterExpression: "#rpId = :rpId",
-        })
+        }),
       );
       Items?.forEach((item) => {
         credentials.push({
@@ -304,7 +304,7 @@ async function getExistingCredentialsForUser({
         rpId,
         createdAt: new Date(credential.createdAt),
         lastSignIn: credential.lastSignIn && new Date(credential.lastSignIn),
-      } as Credential)
+      }) as Credential,
   );
 }
 
@@ -317,7 +317,7 @@ async function deleteCredential({
 }) {
   if (typeof credentialId !== "string") {
     throw new UserFacingError(
-      `credentialId should be a string, received ${typeof credentialId}`
+      `credentialId should be a string, received ${typeof credentialId}`,
     );
   }
   const { Attributes: credential } = await ddbDocClient.send(
@@ -328,7 +328,7 @@ async function deleteCredential({
         sk: `CREDENTIAL#${credentialId}`,
       },
       ReturnValues: "ALL_OLD",
-    })
+    }),
   );
   return credential as StoredCredential;
 }
@@ -344,12 +344,12 @@ async function updateCredential({
 }) {
   if (typeof credentialId !== "string") {
     throw new UserFacingError(
-      `credentialId should be a string, received ${typeof credentialId}`
+      `credentialId should be a string, received ${typeof credentialId}`,
     );
   }
   if (typeof friendlyName !== "string") {
     throw new UserFacingError(
-      `friendlyName should be a string, received ${typeof credentialId}`
+      `friendlyName should be a string, received ${typeof credentialId}`,
     );
   }
   await ddbDocClient
@@ -368,13 +368,13 @@ async function updateCredential({
         ExpressionAttributeValues: {
           ":friendlyName": friendlyName,
         },
-      })
+      }),
     )
     .catch(handleConditionalCheckFailedException("Unknown credential"));
 }
 
 async function storeAuthenticatorChallenge(
-  options: RpPublicKeyCredentialCreationOptions
+  options: RpPublicKeyCredentialCreationOptions,
 ) {
   await ddbDocClient
     .send(
@@ -388,7 +388,7 @@ async function storeAuthenticatorChallenge(
         },
         ConditionExpression:
           "attribute_not_exists(pk) AND attribute_not_exists(sk)",
-      })
+      }),
     )
     .catch(handleConditionalCheckFailedException("Duplicate challenge"));
 }
@@ -458,17 +458,17 @@ interface CompleteCreateCredentialResponse {
 }
 
 function assertBodyIsObject(
-  body: unknown
+  body: unknown,
 ): asserts body is Record<string | number, unknown> {
   if (body === null || typeof body !== "object") {
     throw new UserFacingError(
-      `Expected body to be an object, but got ${typeof body}`
+      `Expected body to be an object, but got ${typeof body}`,
     );
   }
 }
 
 function assertBodyIsCredentialsResponse(
-  body: unknown
+  body: unknown,
 ): asserts body is CompleteCreateCredentialResponse {
   assertBodyIsObject(body);
   ["attestationObjectB64", "clientDataJSON_B64", "friendlyName"].forEach(
@@ -477,26 +477,26 @@ function assertBodyIsCredentialsResponse(
       if (!body[key] || typeof body[key] !== "string") {
         throw new UserFacingError(
           // eslint-disable-next-line security/detect-object-injection
-          `Expected ${key} to be a string, but got ${typeof body[key]}`
+          `Expected ${key} to be a string, but got ${typeof body[key]}`,
         );
       }
-    }
+    },
   );
   if (body.transports) {
     if (!Array.isArray(body.transports)) {
       throw new UserFacingError(
-        `Expected transports to be a string array, but got ${typeof body.transports}`
+        `Expected transports to be a string array, but got ${typeof body.transports}`,
       );
     }
     body.transports.forEach((transport) => {
       if (typeof transport !== "string") {
         throw new UserFacingError(
-          `Expected transport to be a string, but got ${typeof transport}`
+          `Expected transport to be a string, but got ${typeof transport}`,
         );
       }
       if (!["usb", "nfc", "ble", "internal", "hybrid"].includes(transport)) {
         throw new UserFacingError(
-          `Expected transport to be one of "usb", "nfc", "ble", "internal", "hybrid", but got: ${transport}`
+          `Expected transport to be one of "usb", "nfc", "ble", "internal", "hybrid", but got: ${transport}`,
         );
       }
     });
@@ -524,22 +524,22 @@ function assertIsClientData(cd: unknown): asserts cd is {
 
 async function handleCredentialsResponse(
   userId: string,
-  body: unknown
+  body: unknown,
 ): Promise<Credential> {
   assertBodyIsCredentialsResponse(body);
   const clientData: unknown = JSON.parse(
-    Buffer.from(body.clientDataJSON_B64, "base64url").toString()
+    Buffer.from(body.clientDataJSON_B64, "base64url").toString(),
   );
   logger.debug("clientData:", JSON.stringify(clientData));
   assertIsClientData(clientData);
   if (typeof clientData !== "object") {
     throw new UserFacingError(
-      `clientData is not an object: ${JSON.stringify(clientData)}`
+      `clientData is not an object: ${JSON.stringify(clientData)}`,
     );
   }
   if (clientData.type !== "webauthn.create") {
     throw new UserFacingError(
-      `Invalid clientData type: ${JSON.stringify(clientData)}`
+      `Invalid clientData type: ${JSON.stringify(clientData)}`,
     );
   }
 
@@ -553,7 +553,7 @@ async function handleCredentialsResponse(
         },
         ReturnValues: "ALL_OLD",
         ConditionExpression: "attribute_exists(pk) AND attribute_exists(sk)",
-      })
+      }),
     )
     .catch(handleConditionalCheckFailedException("Challenge not found"));
   if (!storedChallenge || (storedChallenge.exp as number) * 1000 < Date.now()) {
@@ -564,12 +564,12 @@ async function handleCredentialsResponse(
     !isValidOrigin(clientData.origin, allowedOrigins, allowedApplicationOrigins)
   ) {
     throw new UserFacingError(
-      `Invalid clientData origin: ${clientData.origin}`
+      `Invalid clientData origin: ${clientData.origin}`,
     );
   }
   const attestation = cborDecode(
     Buffer.from(body.attestationObjectB64, "base64url"),
-    "attestation object"
+    "attestation object",
   );
   logger.debug("CBOR attestation object:", attestation);
   assertIsAttestation(attestation);
@@ -577,7 +577,7 @@ async function handleCredentialsResponse(
   const authData = parseAttestationObjectAuthData(attestation.authData);
   logger.debug("Parsed authData:", JSON.stringify(authData));
   const rpIdIndex = allowedRelyingPartyIdHashes.indexOf(
-    authData.rpIdHash.toString("base64url")
+    authData.rpIdHash.toString("base64url"),
   );
   if (rpIdIndex === -1) {
     throw new UserFacingError("Unrecognized rpIdHash");
@@ -600,14 +600,14 @@ async function handleCredentialsResponse(
     !(
       storedChallenge as { options: { pubKeyCredParams: { alg: number }[] } }
     ).options.pubKeyCredParams.find(
-      (param) => allowedAlg[param.alg] === authData.credentialPublicKey.alg
+      (param) => allowedAlg[param.alg] === authData.credentialPublicKey.alg,
     )
   ) {
     throw new UserFacingError("Unsupported public key alg");
   }
   if (authData.credentialId.length > 1023) {
     throw new UserFacingError(
-      `Credential ID longer than 1023 bytes: ${authData.credentialId.length} bytes`
+      `Credential ID longer than 1023 bytes: ${authData.credentialId.length} bytes`,
     );
   }
   await assertCredentialIsNew(authData.credentialId);
@@ -665,11 +665,11 @@ async function assertCredentialIsNew(credentialId: Buffer) {
       },
       ProjectionExpression: "credentialId",
       Limit: 1,
-    })
+    }),
   );
   if (items && items.length) {
     throw new UserFacingError(
-      `Credential already registered: ${credentialId.toString("base64url")}`
+      `Credential already registered: ${credentialId.toString("base64url")}`,
     );
   }
 }
@@ -725,7 +725,7 @@ async function storeUserCredential({
         },
         ConditionExpression:
           "attribute_not_exists(pk) AND attribute_not_exists(sk)",
-      })
+      }),
     )
     .catch(handleConditionalCheckFailedException("Duplicate credential"));
 }
@@ -859,7 +859,7 @@ function parseBody(event: { body?: string | null; isBase64Encoded: boolean }) {
       ? (JSON.parse(
           event.isBase64Encoded
             ? Buffer.from(event.body, "base64url").toString()
-            : event.body
+            : event.body,
         ) as unknown)
       : {};
   } catch (err) {

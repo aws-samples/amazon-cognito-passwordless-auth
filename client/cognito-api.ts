@@ -80,7 +80,7 @@ export function isErrorResponse(obj: unknown): obj is ErrorResponse {
 }
 
 export function assertIsNotErrorResponse<T>(
-  obj: T | ErrorResponse
+  obj: T | ErrorResponse,
 ): asserts obj is T {
   if (isErrorResponse(obj)) {
     const err = new Error();
@@ -91,7 +91,7 @@ export function assertIsNotErrorResponse<T>(
 }
 
 export function assertIsNotChallengeResponse<T>(
-  obj: T | ChallengeResponse
+  obj: T | ChallengeResponse,
 ): asserts obj is T {
   if (isChallengeResponse(obj)) {
     throw new Error(`Unexpected challenge: ${obj.ChallengeName}`);
@@ -99,7 +99,7 @@ export function assertIsNotChallengeResponse<T>(
 }
 
 export function assertIsNotAuthenticatedResponse<T>(
-  obj: T | AuthenticatedResponse
+  obj: T | AuthenticatedResponse,
 ): asserts obj is T {
   if (isAuthenticatedResponse(obj)) {
     throw new Error("Unexpected authentication response");
@@ -116,7 +116,7 @@ export function isChallengeResponse(obj: unknown): obj is ChallengeResponse {
 }
 
 export function assertIsChallengeResponse(
-  obj: unknown
+  obj: unknown,
 ): asserts obj is ChallengeResponse {
   assertIsNotErrorResponse(obj);
   assertIsNotAuthenticatedResponse(obj);
@@ -126,13 +126,13 @@ export function assertIsChallengeResponse(
 }
 
 export function isAuthenticatedResponse(
-  obj: unknown
+  obj: unknown,
 ): obj is AuthenticatedResponse {
   return !!obj && typeof obj === "object" && "AuthenticationResult" in obj;
 }
 
 export function assertIsAuthenticatedResponse(
-  obj: unknown
+  obj: unknown,
 ): asserts obj is AuthenticatedResponse {
   assertIsNotErrorResponse(obj);
   assertIsNotChallengeResponse(obj);
@@ -142,7 +142,7 @@ export function assertIsAuthenticatedResponse(
 }
 
 export function assertIsSignInResponse(
-  obj: unknown
+  obj: unknown,
 ): asserts obj is AuthenticatedResponse | ChallengeResponse {
   assertIsNotErrorResponse(obj);
   if (!isAuthenticatedResponse(obj) && !isChallengeResponse(obj)) {
@@ -155,7 +155,7 @@ export async function initiateAuth<
     | "CUSTOM_AUTH"
     | "REFRESH_TOKEN_AUTH"
     | "USER_SRP_AUTH"
-    | "USER_PASSWORD_AUTH"
+    | "USER_PASSWORD_AUTH",
 >({
   authflow,
   authParameters,
@@ -192,7 +192,7 @@ export async function initiateAuth<
         },
         ClientMetadata: clientMetadata,
       }),
-    }
+    },
   ).then(extractInitiateAuthResponse(authflow));
 }
 
@@ -236,7 +236,7 @@ export async function respondToAuthChallenge({
         ClientMetadata: clientMetadata,
       }),
       signal: abort,
-    }
+    },
   ).then(extractChallengeResponse);
 }
 
@@ -264,7 +264,7 @@ export async function revokeToken({
         ClientId: clientId,
       }),
       signal: abort,
-    }
+    },
   ).then(throwIfNot2xx);
 }
 
@@ -297,7 +297,7 @@ export async function getId({
           [`${iss.hostname}${iss.pathname}`]: idToken,
         },
       }),
-    }
+    },
   )
     .then(throwIfNot2xx)
     .then((res) => res.json() as Promise<GetIdResponse | ErrorResponse>);
@@ -332,12 +332,14 @@ export async function getCredentialsForIdentity({
           [`${iss.hostname}${iss.pathname}`]: idToken,
         },
       }),
-    }
+    },
   )
     .then(throwIfNot2xx)
     .then(
       (res) =>
-        res.json() as Promise<GetCredentialsForIdentityResponse | ErrorResponse>
+        res.json() as Promise<
+          GetCredentialsForIdentityResponse | ErrorResponse
+        >,
     );
 }
 
@@ -394,7 +396,7 @@ export async function signUp({
         }),
       }),
       signal: abort,
-    }
+    },
   ).then(throwIfNot2xx);
 }
 
@@ -430,7 +432,7 @@ export async function updateUserAttributes({
         })),
       }),
       signal: abort,
-    }
+    },
   ).then(throwIfNot2xx);
 }
 
@@ -463,7 +465,7 @@ export async function getUserAttributeVerificationCode({
         AttributeName: attributeName,
       }),
       signal: abort,
-    }
+    },
   ).then(throwIfNot2xx);
 }
 
@@ -495,7 +497,7 @@ export async function verifyUserAttribute({
         Code: code,
       }),
       signal: abort,
-    }
+    },
   ).then(throwIfNot2xx);
 }
 
@@ -534,7 +536,7 @@ export async function setUserMFAPreference({
         },
       }),
       signal: abort,
-    }
+    },
   ).then(throwIfNot2xx);
 }
 
@@ -565,7 +567,7 @@ export async function handleAuthResponse({
         idToken: authResponse.AuthenticationResult.IdToken,
         accessToken: authResponse.AuthenticationResult.AccessToken,
         expireAt: new Date(
-          Date.now() + authResponse.AuthenticationResult.ExpiresIn * 1000
+          Date.now() + authResponse.AuthenticationResult.ExpiresIn * 1000,
         ),
         refreshToken: authResponse.AuthenticationResult.RefreshToken,
         username,
@@ -606,7 +608,7 @@ function extractInitiateAuthResponse<
     | "CUSTOM_AUTH"
     | "REFRESH_TOKEN_AUTH"
     | "USER_SRP_AUTH"
-    | "USER_PASSWORD_AUTH"
+    | "USER_PASSWORD_AUTH",
 >(authflow: T) {
   return async (res: MinimalResponse) => {
     await throwIfNot2xx(res);
@@ -640,12 +642,12 @@ async function calculateSecretHash(username?: string) {
     new TextEncoder().encode(clientSecret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign", "verify"]
+    ["sign", "verify"],
   );
   const signature = await crypto.subtle.sign(
     "HMAC",
     key,
-    new TextEncoder().encode(`${username}${clientId}`)
+    new TextEncoder().encode(`${username}${clientId}`),
   );
   return bufferToBase64(signature);
 }
