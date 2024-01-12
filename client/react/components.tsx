@@ -470,7 +470,7 @@ function Fido2Recommendation() {
               disabled={status === "STARTING"}
               onClick={() => {
                 setStatus("STARTING");
-                fido2CreateCredential({
+                fido2CreateCredential(undefined, {
                   friendlyName: () => {
                     if (mobileDeviceName) return mobileDeviceName;
                     setStatus("INPUT_NAME");
@@ -799,7 +799,7 @@ function AuthenticatorsManager() {
             onClick={() => {
               setAddingAuthenticatorStatus("STARTING");
               setError(undefined);
-              fido2CreateCredential({
+              fido2CreateCredential(undefined, {
                 friendlyName: () => {
                   if (mobileDeviceName) return mobileDeviceName;
                   setAddingAuthenticatorStatus("INPUT_NAME");

@@ -85,11 +85,28 @@ export interface Config {
    * Overriding history implementation. Default: globalThis.history
    */
   history?: MinimalHistory;
+  /**
+   * Overriding URL implementation. Default: globalThis.URL
+   */
+  URL?: MinimalURL;
+  /**
+   * Overriding TextDecoder implementation. Default: globalThis.TextDecoder
+   */
+  TextDecoder?: MinimalTextDecoder;
 }
 
 export type ConfigWithDefaults = Config &
   Required<
-    Pick<Config, "storage" | "crypto" | "fetch" | "location" | "history">
+    Pick<
+      Config,
+      | "storage"
+      | "crypto"
+      | "fetch"
+      | "location"
+      | "history"
+      | "URL"
+      | "TextDecoder"
+    >
   >;
 
 let config_: ConfigWithDefaults | undefined = undefined;
@@ -102,6 +119,8 @@ export function configure(config?: Config) {
       fetch: config.fetch ?? Defaults.fetch,
       location: config.location ?? Defaults.location,
       history: config.history ?? Defaults.history,
+      URL: config.URL ?? Defaults.URL,
+      TextDecoder: config.TextDecoder ?? Defaults.TextDecoder,
     };
     config_.debug?.("Configuration loaded:", config);
   } else {
@@ -227,6 +246,15 @@ class Defaults {
     if (typeof globalThis.history !== "undefined") return globalThis.history;
     return Defaults.getFailingProxy("history") as MinimalHistory;
   }
+  static get URL(): MinimalURL {
+    if (typeof globalThis.URL !== "undefined") return globalThis.URL;
+    return Defaults.getFailingProxy("URL") as MinimalURL;
+  }
+  static get TextDecoder(): MinimalTextDecoder {
+    if (typeof globalThis.TextDecoder !== "undefined")
+      return globalThis.TextDecoder;
+    return Defaults.getFailingProxy("TextDecoder") as MinimalTextDecoder;
+  }
 }
 
 export interface MinimalResponse {
@@ -261,5 +289,17 @@ export interface MinimalCrypto {
     digest: Crypto["subtle"]["digest"];
     importKey: Crypto["subtle"]["importKey"];
     sign: Crypto["subtle"]["sign"];
+  };
+}
+
+export interface MinimalURL {
+  new (url: string): {
+    href: string;
+    hash: string;
+  };
+}
+export interface MinimalTextDecoder {
+  new (): {
+    decode(buffer: Uint8Array): string;
   };
 }

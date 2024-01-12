@@ -314,7 +314,7 @@ export async function fido2UpdateCredential({
   }).then(throwIfNot2xx);
 }
 
-interface Fido2Options {
+export interface Fido2Options {
   challenge: string;
   timeout?: number;
   userVerification?: UserVerificationRequirement;
@@ -351,7 +351,7 @@ function assertIsFido2Options(o: unknown): asserts o is Fido2Options {
   }
 }
 
-async function fido2getCredential({
+export async function fido2getCredential({
   relyingPartyId,
   challenge,
   credentials,
@@ -484,7 +484,7 @@ export function authenticateWithFido2({
   }
   const abort = new AbortController();
   const signedIn = (async () => {
-    const { debug, fido2 } = configure();
+    const { debug, fido2, TextDecoder } = configure();
     if (!fido2) {
       throw new Error("Missing Fido2 config");
     }
