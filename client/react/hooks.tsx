@@ -221,7 +221,7 @@ function _usePasswordless() {
   }, [setTokens, refreshToken, expireAtTime]);
 
   // If we have some tokens, but not all, attempt a refresh
-  // (`lo`oks like e.g. a developer deleted some keys from storage)
+  // Should only happen in corner cases, e.g. a developer deleted some keys from storage
   if (
     tokens &&
     (!tokens.idToken || !tokens.accessToken || !tokens.expireAt) &&
