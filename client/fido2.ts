@@ -213,7 +213,7 @@ export async function fido2CompleteCreateCredential({
         ({
           ...res,
           createdAt: new Date(res.createdAt),
-        } as StoredCredential)
+        }) as StoredCredential
     );
 }
 

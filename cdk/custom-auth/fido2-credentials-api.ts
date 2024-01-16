@@ -304,7 +304,7 @@ async function getExistingCredentialsForUser({
         rpId,
         createdAt: new Date(credential.createdAt),
         lastSignIn: credential.lastSignIn && new Date(credential.lastSignIn),
-      } as Credential)
+      }) as Credential
   );
 }
 
@@ -870,6 +870,7 @@ function parseBody(event: { body?: string | null; isBase64Encoded: boolean }) {
 
 function cborDecode(b: Buffer, name: string) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     return decodeFirstSync(b) as unknown;
   } catch (err) {
     logger.error(err);

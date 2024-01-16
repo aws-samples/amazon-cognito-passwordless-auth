@@ -196,6 +196,26 @@ NagSuppressions.addResourceSuppressionsByPath(
     },
   ]
 );
+[
+  stack.passwordless.fido2Fn,
+  stack.passwordless.fido2challengeFn,
+  stack.passwordless.fido2NotificationFn,
+  stack.passwordless.preSignUpFn,
+  stack.passwordless.preTokenGenerationFn,
+  stack.passwordless.defineAuthChallengeResponseFn,
+  stack.passwordless.createAuthChallengeFn,
+  stack.passwordless.verifyAuthChallengeResponseFn,
+].forEach(
+  (fn) =>
+    fn &&
+    NagSuppressions.addResourceSuppressions(fn, [
+      {
+        id: "AwsSolutions-L1",
+        reason:
+          "These functions use NODEJS_LATEST runtime pointer, which may lag slightly behind the actual latest runtime.",
+      },
+    ])
+);
 
 cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }));
 

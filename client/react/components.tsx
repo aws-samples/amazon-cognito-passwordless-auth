@@ -218,8 +218,8 @@ export const Passwordless = ({
             : "NO",
         }
       : showSignInOptionsForUser === "LAST_USER"
-      ? lastUser
-      : undefined;
+        ? lastUser
+        : undefined;
 
   return (
     <FlexContainer brand={brand}>
