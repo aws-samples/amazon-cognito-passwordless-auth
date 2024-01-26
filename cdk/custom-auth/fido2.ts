@@ -353,6 +353,14 @@ export async function verifyChallenge({
     throw new Error("Credential is not eligible for backup");
   }
 
+  if (typeof storedCredential.jwk.n != 'string') {
+    storedCredential.jwk.n = Buffer.from(storedCredential.jwk.n as any).toString('base64');
+  }
+  
+  if (typeof storedCredential.jwk.e != 'string') {
+    storedCredential.jwk.e = Buffer.from(storedCredential.jwk.e as any).toString('base64');
+  }
+
   // Verify signature
   const hash = createHash("sha256").update(cData).digest();
   const valid = createVerify("sha256")
