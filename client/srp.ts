@@ -228,7 +228,7 @@ function arrayBufferToBigInt(arrBuf: ArrayBuffer) {
 }
 
 function formatDate(d: Date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat("en-u-hc-h23", {
     weekday: "short",
     year: "numeric",
     month: "short",
