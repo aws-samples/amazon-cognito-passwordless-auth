@@ -803,8 +803,8 @@ function decodeCredentialPublicKey(credentialPublicKey: Buffer) {
         alg: algName,
         kid,
         kty: ktyName,
-        n,
-        e,
+        n: n.toString("base64url"),
+        e: e.toString("base64url"),
       };
       return jwk;
     } else {
