@@ -11,18 +11,18 @@
     "install-passwordless-local": "rm -rf node_modules/amazon-cognito-passwordless-auth && npm i ../.. --install-links --no-save"
   },
   "dependencies": {
-    "@cloudscape-design/global-styles": "^1.0.21",
-    "amazon-cognito-passwordless-auth": "^0.12.1",
+    "@cloudscape-design/global-styles": "^1.0.23",
+    "amazon-cognito-passwordless-auth": "^0.12.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "@types/react": "^18.2.47",
-    "@types/react-dom": "^18.2.18",
+    "@types/react": "^18.2.57",
+    "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
     "s3-spa-upload": "^2.1.5",
     "typescript": "^5.3.3",
-    "vite": "^5.0.11"
+    "vite": "^5.1.3"
   }
 }
