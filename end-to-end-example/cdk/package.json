@@ -10,17 +10,17 @@
     "install-passwordless-local": "rm -rf node_modules/amazon-cognito-passwordless-auth && npm i ../.. --install-links --no-save"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.131",
-    "@types/node": "^20.11.0",
+    "@types/aws-lambda": "^8.10.134",
+    "@types/node": "^20.11.19",
     "@types/tap": "^15.0.11",
-    "esbuild": "^0.19.11",
+    "esbuild": "^0.20.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "amazon-cognito-passwordless-auth": "^0.12.1",
-    "aws-cdk-lib": "^2.118.0",
-    "cdk-nag": "^2.28.6",
+    "amazon-cognito-passwordless-auth": "^0.12.2",
+    "aws-cdk-lib": "^2.128.0",
+    "cdk-nag": "^2.28.40",
     "constructs": "^10.3.0"
   }
 }
