@@ -240,6 +240,55 @@ export async function respondToAuthChallenge({
   ).then(extractChallengeResponse);
 }
 
+/**
+ * Confirms the sign-up of a user in Amazon Cognito.
+ * 
+ * @param params - The parameters for confirming the sign-up.
+ * @param params.username - The username or alias (e-mail, phone number) of the user.
+ * @param params.confirmationCode - The confirmation code received by the user.
+ * @param [params.clientMetadata] - Additional metadata to be passed to the server.
+ * @param [params.abort] - An optional AbortSignal object that can be used to abort the request.
+ * @returns A promise that resolves to the response of the confirmation request.
+ */
+export async function confirmSignUp({
+  username,
+  confirmationCode,
+  clientMetadata,
+  abort,
+}: {
+  username: string;
+  confirmationCode: string;
+  clientMetadata?: Record<string, string>;
+  abort?: AbortSignal;
+}) {
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId, clientSecret } =
+    configure();
+  return fetch(
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
+    {
+      headers: {
+        "x-amz-target": "AWSCognitoIdentityProviderService.ConfirmSignUp",
+        "content-type": "application/x-amz-json-1.1",
+        ...proxyApiHeaders,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        Username: username,
+        ConfirmationCode: confirmationCode,
+        ClientId: clientId,
+        ClientMetadata: clientMetadata,
+        ...(clientSecret && {
+          SecretHash: await calculateSecretHash(username),
+        }),
+      }),
+      signal: abort,
+    }
+  ).then(throwIfNot2xx);
+}
+
+
 export async function revokeToken({
   refreshToken,
   abort,
@@ -301,6 +350,40 @@ export async function getId({
   )
     .then(throwIfNot2xx)
     .then((res) => res.json() as Promise<GetIdResponse | ErrorResponse>);
+}
+
+/**
+ * Retrieves the user attributes from the Cognito Identity Provider.
+ * 
+ * @param abort - An optional `AbortSignal` object that can be used to abort the request.
+ * @returns A promise that resolves to an array of user attributes, where each attribute is represented by an object with `Name` and `Value` properties.
+ */
+export async function getUserAttributes({
+  abort,
+}: {
+  abort?: AbortSignal;
+}): Promise<{ Name: string; Value: string }[]> {
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
+  const tokens = await retrieveTokens();
+  return await fetch(
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
+    {
+      headers: {
+        "x-amz-target":
+          "AWSCognitoIdentityProviderService.GetUserAttributes",
+        "content-type": "application/x-amz-json-1.1",
+        ...proxyApiHeaders,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        AccessToken: tokens?.accessToken,
+      }),
+      signal: abort,
+    }
+  ).then(throwIfNot2xx)
+  .then((res) => res.json() as Promise<{ Name: string; Value: string }[]>)
 }
 
 export async function getCredentialsForIdentity({
