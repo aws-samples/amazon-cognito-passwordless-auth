@@ -360,11 +360,13 @@ export async function getId({
  */
 export async function getUserAttributes({
   abort,
+  accessToken
 }: {
   abort?: AbortSignal;
+  accessToken?: string;
 }): Promise<{ Name: string; Value: string }[]> {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   return await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -378,7 +380,7 @@ export async function getUserAttributes({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
       }),
       signal: abort,
     }
@@ -485,13 +487,15 @@ export async function updateUserAttributes({
   clientMetadata,
   userAttributes,
   abort,
+  accessToken,
 }: {
   userAttributes: { name: string; value: string }[];
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -505,7 +509,7 @@ export async function updateUserAttributes({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         ClientMetadata: clientMetadata,
         UserAttributes: userAttributes.map(({ name, value }) => ({
           Name: name,
@@ -521,13 +525,15 @@ export async function getUserAttributeVerificationCode({
   attributeName,
   clientMetadata,
   abort,
+  accessToken
 }: {
   attributeName: string;
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -541,7 +547,7 @@ export async function getUserAttributeVerificationCode({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         ClientMetadata: clientMetadata,
         AttributeName: attributeName,
       }),
@@ -554,13 +560,15 @@ export async function verifyUserAttribute({
   attributeName,
   code,
   abort,
+  accessToken
 }: {
   attributeName: string;
   code: string;
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -573,7 +581,7 @@ export async function verifyUserAttribute({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         AttributeName: attributeName,
         Code: code,
       }),
@@ -586,13 +594,15 @@ export async function setUserMFAPreference({
   smsMfaSettings,
   softwareTokenMfaSettings,
   abort,
+  accessToken,
 }: {
   smsMfaSettings?: { enabled?: boolean; preferred?: boolean };
   softwareTokenMfaSettings?: { enabled?: boolean; preferred?: boolean };
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -606,7 +616,7 @@ export async function setUserMFAPreference({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         SMSMfaSettings: smsMfaSettings && {
           Enabled: smsMfaSettings.enabled,
           PreferredMfa: smsMfaSettings.preferred,
