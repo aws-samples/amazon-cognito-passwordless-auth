@@ -242,7 +242,7 @@ export async function respondToAuthChallenge({
 
 /**
  * Confirms the sign-up of a user in Amazon Cognito.
- * 
+ *
  * @param params - The parameters for confirming the sign-up.
  * @param params.username - The username or alias (e-mail, phone number) of the user.
  * @param params.confirmationCode - The confirmation code received by the user.
@@ -287,7 +287,6 @@ export async function confirmSignUp({
     }
   ).then(throwIfNot2xx);
 }
-
 
 export async function revokeToken({
   refreshToken,
@@ -354,13 +353,13 @@ export async function getId({
 
 /**
  * Retrieves the user attributes from the Cognito Identity Provider.
- * 
+ *
  * @param abort - An optional `AbortSignal` object that can be used to abort the request.
  * @returns A promise that resolves to an array of user attributes, where each attribute is represented by an object with `Name` and `Value` properties.
  */
 export async function getUserAttributes({
   abort,
-  accessToken
+  accessToken,
 }: {
   abort?: AbortSignal;
   accessToken?: string;
@@ -373,8 +372,7 @@ export async function getUserAttributes({
       : cognitoIdpEndpoint,
     {
       headers: {
-        "x-amz-target":
-          "AWSCognitoIdentityProviderService.GetUserAttributes",
+        "x-amz-target": "AWSCognitoIdentityProviderService.GetUserAttributes",
         "content-type": "application/x-amz-json-1.1",
         ...proxyApiHeaders,
       },
@@ -384,8 +382,9 @@ export async function getUserAttributes({
       }),
       signal: abort,
     }
-  ).then(throwIfNot2xx)
-  .then((res) => res.json() as Promise<{ Name: string; Value: string }[]>)
+  )
+    .then(throwIfNot2xx)
+    .then((res) => res.json() as Promise<{ Name: string; Value: string }[]>);
 }
 
 export async function getCredentialsForIdentity({
@@ -525,7 +524,7 @@ export async function getUserAttributeVerificationCode({
   attributeName,
   clientMetadata,
   abort,
-  accessToken
+  accessToken,
 }: {
   attributeName: string;
   clientMetadata?: Record<string, string>;
@@ -560,7 +559,7 @@ export async function verifyUserAttribute({
   attributeName,
   code,
   abort,
-  accessToken
+  accessToken,
 }: {
   attributeName: string;
   code: string;

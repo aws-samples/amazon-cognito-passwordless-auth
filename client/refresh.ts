@@ -73,8 +73,8 @@ async function _scheduleRefresh({
     );
     abort?.addEventListener("abort", clearScheduledRefresh);
   } else {
-    refreshTokens({ abort, tokensCb, isRefreshingCb, tokens }).catch(
-      (err) => debug?.("Failed to refresh tokens:", err)
+    refreshTokens({ abort, tokensCb, isRefreshingCb, tokens }).catch((err) =>
+      debug?.("Failed to refresh tokens:", err)
     );
   }
   return clearScheduledRefresh;
