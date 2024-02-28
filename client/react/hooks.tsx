@@ -170,10 +170,10 @@ function _usePasswordless() {
     (credentialId: string) =>
       setFido2Credentials(
         (state) =>
-        state?.filter(
-          (remainingAuthenticator) =>
-            credentialId !== remainingAuthenticator.credentialId
-        )
+          state?.filter(
+            (remainingAuthenticator) =>
+              credentialId !== remainingAuthenticator.credentialId
+          )
       ),
     []
   );
