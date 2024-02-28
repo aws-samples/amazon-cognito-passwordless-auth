@@ -168,7 +168,8 @@ function _usePasswordless() {
   );
   const deleteFido2Credential = useCallback(
     (credentialId: string) =>
-      setFido2Credentials((state) =>
+      setFido2Credentials(
+        (state) =>
         state?.filter(
           (remainingAuthenticator) =>
             credentialId !== remainingAuthenticator.credentialId
