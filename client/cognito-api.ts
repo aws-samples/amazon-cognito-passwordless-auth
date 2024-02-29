@@ -240,6 +240,54 @@ export async function respondToAuthChallenge({
   ).then(extractChallengeResponse);
 }
 
+/**
+ * Confirms the sign-up of a user in Amazon Cognito.
+ *
+ * @param params - The parameters for confirming the sign-up.
+ * @param params.username - The username or alias (e-mail, phone number) of the user.
+ * @param params.confirmationCode - The confirmation code received by the user.
+ * @param [params.clientMetadata] - Additional metadata to be passed to the server.
+ * @param [params.abort] - An optional AbortSignal object that can be used to abort the request.
+ * @returns A promise that resolves to the response of the confirmation request.
+ */
+export async function confirmSignUp({
+  username,
+  confirmationCode,
+  clientMetadata,
+  abort,
+}: {
+  username: string;
+  confirmationCode: string;
+  clientMetadata?: Record<string, string>;
+  abort?: AbortSignal;
+}) {
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders, clientId, clientSecret } =
+    configure();
+  return fetch(
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
+    {
+      headers: {
+        "x-amz-target": "AWSCognitoIdentityProviderService.ConfirmSignUp",
+        "content-type": "application/x-amz-json-1.1",
+        ...proxyApiHeaders,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        Username: username,
+        ConfirmationCode: confirmationCode,
+        ClientId: clientId,
+        ClientMetadata: clientMetadata,
+        ...(clientSecret && {
+          SecretHash: await calculateSecretHash(username),
+        }),
+      }),
+      signal: abort,
+    }
+  ).then(throwIfNot2xx);
+}
+
 export async function revokeToken({
   refreshToken,
   abort,
@@ -301,6 +349,42 @@ export async function getId({
   )
     .then(throwIfNot2xx)
     .then((res) => res.json() as Promise<GetIdResponse | ErrorResponse>);
+}
+
+/**
+ * Retrieves the user attributes from the Cognito Identity Provider.
+ *
+ * @param abort - An optional `AbortSignal` object that can be used to abort the request.
+ * @returns A promise that resolves to an array of user attributes, where each attribute is represented by an object with `Name` and `Value` properties.
+ */
+export async function getUserAttributes({
+  abort,
+  accessToken,
+}: {
+  abort?: AbortSignal;
+  accessToken?: string;
+}): Promise<{ Name: string; Value: string }[]> {
+  const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
+  return await fetch(
+    cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
+      ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
+      : cognitoIdpEndpoint,
+    {
+      headers: {
+        "x-amz-target": "AWSCognitoIdentityProviderService.GetUserAttributes",
+        "content-type": "application/x-amz-json-1.1",
+        ...proxyApiHeaders,
+      },
+      method: "POST",
+      body: JSON.stringify({
+        AccessToken: token,
+      }),
+      signal: abort,
+    }
+  )
+    .then(throwIfNot2xx)
+    .then((res) => res.json() as Promise<{ Name: string; Value: string }[]>);
 }
 
 export async function getCredentialsForIdentity({
@@ -402,13 +486,15 @@ export async function updateUserAttributes({
   clientMetadata,
   userAttributes,
   abort,
+  accessToken,
 }: {
   userAttributes: { name: string; value: string }[];
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -422,7 +508,7 @@ export async function updateUserAttributes({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         ClientMetadata: clientMetadata,
         UserAttributes: userAttributes.map(({ name, value }) => ({
           Name: name,
@@ -438,13 +524,15 @@ export async function getUserAttributeVerificationCode({
   attributeName,
   clientMetadata,
   abort,
+  accessToken,
 }: {
   attributeName: string;
   clientMetadata?: Record<string, string>;
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -458,7 +546,7 @@ export async function getUserAttributeVerificationCode({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         ClientMetadata: clientMetadata,
         AttributeName: attributeName,
       }),
@@ -471,13 +559,15 @@ export async function verifyUserAttribute({
   attributeName,
   code,
   abort,
+  accessToken,
 }: {
   attributeName: string;
   code: string;
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -490,7 +580,7 @@ export async function verifyUserAttribute({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         AttributeName: attributeName,
         Code: code,
       }),
@@ -503,13 +593,15 @@ export async function setUserMFAPreference({
   smsMfaSettings,
   softwareTokenMfaSettings,
   abort,
+  accessToken,
 }: {
   smsMfaSettings?: { enabled?: boolean; preferred?: boolean };
   softwareTokenMfaSettings?: { enabled?: boolean; preferred?: boolean };
   abort?: AbortSignal;
+  accessToken?: string;
 }) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
-  const tokens = await retrieveTokens();
+  const token = accessToken ?? (await retrieveTokens())?.accessToken;
   await fetch(
     cognitoIdpEndpoint.match(AWS_REGION_REGEXP)
       ? `https://cognito-idp.${cognitoIdpEndpoint}.amazonaws.com/`
@@ -523,7 +615,7 @@ export async function setUserMFAPreference({
       },
       method: "POST",
       body: JSON.stringify({
-        AccessToken: tokens?.accessToken,
+        AccessToken: token,
         SMSMfaSettings: smsMfaSettings && {
           Enabled: smsMfaSettings.enabled,
           PreferredMfa: smsMfaSettings.preferred,
