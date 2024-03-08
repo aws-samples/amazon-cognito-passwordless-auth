@@ -372,7 +372,7 @@ export async function getUserAttributes({
       : cognitoIdpEndpoint,
     {
       headers: {
-        "x-amz-target": "AWSCognitoIdentityProviderService.GetUserAttributes",
+        "x-amz-target": "AWSCognitoIdentityProviderService.GetUser",
         "content-type": "application/x-amz-json-1.1",
         ...proxyApiHeaders,
       },
