@@ -357,7 +357,7 @@ export async function getId({
  * @param abort - An optional `AbortSignal` object that can be used to abort the request.
  * @returns A promise that resolves to an array of user attributes, where each attribute is represented by an object with `Name` and `Value` properties.
  */
-export async function getUserAttributes({
+export async function getUser({
   abort,
   accessToken,
 }: {
