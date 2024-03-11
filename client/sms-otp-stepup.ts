@@ -33,7 +33,7 @@ export function stepUpAuthenticationWithSmsOtp({
   statusCb,
   currentStatus,
   clientMetadata,
-  accessToken
+  accessToken,
 }: {
   /**
    * Username, or alias (e-mail, phone number)
