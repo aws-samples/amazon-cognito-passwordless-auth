@@ -33,6 +33,7 @@ export function stepUpAuthenticationWithSmsOtp({
   statusCb,
   currentStatus,
   clientMetadata,
+  accessToken,
 }: {
   /**
    * Username, or alias (e-mail, phone number)
@@ -43,6 +44,7 @@ export function stepUpAuthenticationWithSmsOtp({
   statusCb?: (status: BusyState | IdleState) => void;
   currentStatus?: BusyState | IdleState;
   clientMetadata?: Record<string, string>;
+  accessToken?: string;
 }) {
   if (currentStatus && busyState.includes(currentStatus as BusyState)) {
     throw new Error(`Can't sign in while in status ${currentStatus}`);
@@ -52,8 +54,8 @@ export function stepUpAuthenticationWithSmsOtp({
     const { debug } = configure();
     statusCb?.("SIGNING_IN_WITH_OTP");
     try {
-      const { accessToken } = (await retrieveTokens()) ?? {};
-      if (!accessToken) {
+      const token = accessToken ?? (await retrieveTokens())?.accessToken;
+      if (!token) {
         throw new Error(
           "Missing access token. You must be signed-in already for step-up auth"
         );
@@ -105,7 +107,7 @@ export function stepUpAuthenticationWithSmsOtp({
           challengeName: "CUSTOM_CHALLENGE",
           challengeResponses: {
             ANSWER: JSON.stringify({
-              jwt: accessToken,
+              jwt: token,
               secretCode,
             }),
             USERNAME: username,
