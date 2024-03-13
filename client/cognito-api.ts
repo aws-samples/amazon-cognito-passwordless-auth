@@ -363,7 +363,7 @@ export async function getUser({
 }: {
   abort?: AbortSignal;
   accessToken?: string;
-}): Promise<{ Name: string; Value: string }[]> {
+}) {
   const { fetch, cognitoIdpEndpoint, proxyApiHeaders } = configure();
   const token = accessToken ?? (await retrieveTokens())?.accessToken;
   return await fetch(
@@ -382,9 +382,7 @@ export async function getUser({
       }),
       signal: abort,
     }
-  )
-    .then(throwIfNot2xx)
-    .then((res) => res.json() as Promise<{ Name: string; Value: string }[]>);
+  ).then(throwIfNot2xx);
 }
 
 export async function getCredentialsForIdentity({
