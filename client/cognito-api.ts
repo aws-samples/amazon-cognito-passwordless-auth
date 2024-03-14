@@ -73,6 +73,24 @@ interface GetCredentialsForIdentityResponse {
   IdentityId: string;
 }
 
+interface GetUserResponse {
+  MFAOptions: [
+    {
+      AttributeName: string;
+      DeliveryMedium: string;
+    },
+  ];
+  PreferredMfaSetting: string;
+  UserAttributes: [
+    {
+      Name: string;
+      Value: string;
+    },
+  ];
+  UserMFASettingList: [string];
+  Username: string;
+}
+
 export function isErrorResponse(obj: unknown): obj is ErrorResponse {
   return (
     !!obj && typeof obj === "object" && "__type" in obj && "message" in obj
@@ -313,7 +331,9 @@ export async function revokeToken({
       }),
       signal: abort,
     }
-  ).then(throwIfNot2xx);
+  )
+    .then(throwIfNot2xx)
+    .then((res) => res.json() as Promise<GetUserResponse | ErrorResponse>);
 }
 
 export async function getId({
