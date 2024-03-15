@@ -74,20 +74,16 @@ interface GetCredentialsForIdentityResponse {
 }
 
 interface GetUserResponse {
-  MFAOptions: [
-    {
-      AttributeName: string;
-      DeliveryMedium: string;
-    },
-  ];
+  MFAOptions: {
+    AttributeName: string;
+    DeliveryMedium: string;
+  }[];
   PreferredMfaSetting: string;
-  UserAttributes: [
-    {
-      Name: string;
-      Value: string;
-    },
-  ];
-  UserMFASettingList: [string];
+  UserAttributes: {
+    Name: string;
+    Value: string;
+  }[];
+  UserMFASettingList: string[];
   Username: string;
 }
 
