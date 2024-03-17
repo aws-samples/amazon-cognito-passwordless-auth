@@ -327,9 +327,7 @@ export async function revokeToken({
       }),
       signal: abort,
     }
-  )
-    .then(throwIfNot2xx)
-    .then((res) => res.json() as Promise<GetUserResponse | ErrorResponse>);
+  ).then(throwIfNot2xx);
 }
 
 export async function getId({
@@ -398,7 +396,9 @@ export async function getUser({
       }),
       signal: abort,
     }
-  ).then(throwIfNot2xx);
+  )
+    .then(throwIfNot2xx)
+    .then((res) => res.json() as Promise<GetUserResponse | ErrorResponse>);
 }
 
 export async function getCredentialsForIdentity({
