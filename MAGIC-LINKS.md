@@ -3,8 +3,8 @@
 This solution includes components to support signing-in with a Magic Link:
 
 - **AWS Lambda functions** that implement the Amazon Cognito Custom Authentication flow, using **Amazon Simple E-Mail Service (SES)** to send the e-mails to users.
-- Magic Links are signed using an **Amazon Key Management Service (KMS)** assymmetric key. Using AWS KMS enables the feature that Magic Links might be requested in one browser, but will still work when actually opened in another browser (e.g. when a mobile e-mail app opens the link in its integrated browser). Even though the auth session would re-initialize in that case, the KMS signature can be verified to make sure it was _us_ who created the Magic Link.
 - For each Magic Link, cryptographic hashes are stored in an **Amazon DynamoDB** table, so that (1) we can ensure that a Magic Link can only be used once, (2) that a user can have maximally 1 unused Magic Link outstanding, and (3) that a user must wait minimally one minute before allowing him/her to request a new Magic Link. These cryptographic hashes cannot be traced to its corresponding user, except by our Lambda functions (who know the seed).
+- Magic Links are signed using an **Amazon Key Management Service (KMS)** asymmetric key. Using AWS KMS (vs. storing and sending a cryptographically secure random string, i.e. an email-based OTP) allows us to store only non-sensitive data in DynamoDB, so access to the DynamoDB table doesn't allow signing in as specific users by taking OTPs from the table.
 - Front End library functions, to work with this Custom Auth flow––can be used in Web, React, React Native.
 
 <img src="./drawings/magic-link-screenshot.png" alt="Magic Link example" width="300px" style="border: 2px solid lightgray;" />
