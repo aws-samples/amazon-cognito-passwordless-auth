@@ -390,6 +390,10 @@ async function verifyMagicLink(
     logger.error("Attempt to use magic link more than once");
     return false;
   }
+  if (!dbItem.exp || typeof dbItem.exp !== "number" || dbItem.exp < Date.now() / 1000) {
+    logger.error("Magic link expired!");
+    return false;
+  }
   if (!dbItem.kmsKeyId || typeof dbItem.kmsKeyId !== "string") {
     throw new Error("Failed to determine KMS Key ID");
   }
@@ -414,10 +418,6 @@ async function verifyMagicLink(
   logger.debug("Checking message:", parsed);
   if (parsed.userName !== userName) {
     logger.error("Different userName!");
-    return false;
-  }
-  if (parsed.exp < Date.now() / 1000) {
-    logger.error("Magic link expired!");
     return false;
   }
   if (parsed.exp !== dbItem.exp || parsed.iat !== dbItem.iat) {
