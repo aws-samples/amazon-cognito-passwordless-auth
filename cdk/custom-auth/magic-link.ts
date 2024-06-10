@@ -23,8 +23,8 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
-  DeleteCommand,
   PutCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import {
   SESClient,
@@ -222,6 +222,7 @@ async function createAndSendMagicLink(
   logger.debug("Creating new magic link ...");
   const exp = Math.floor(Date.now() / 1000 + config.secondsUntilExpiry);
   const iat = Math.floor(Date.now() / 1000);
+  const used = false;
   const message = Buffer.from(
     JSON.stringify({
       userName: event.userName,
@@ -264,6 +265,7 @@ async function createAndSendMagicLink(
             .update(salt)
             .end(signature)
             .digest(),
+          used,
           iat,
           exp,
           kmsKeyId: kmsKeyId,
@@ -351,11 +353,12 @@ async function verifyMagicLink(
   const [messageB64, signatureB64] = magicLinkFragmentIdentifier.split(".");
   const signature = Buffer.from(signatureB64, "base64url");
 
-  // Read and remove item from DynamoDB
+  // Read and update item from DynamoDB. If the item is 'used' the no update
+  // is performed and no item is returned.
   let dbItem: Record<string, unknown> | undefined = undefined;
   try {
     ({ Attributes: dbItem } = await ddbDocClient.send(
-      new DeleteCommand({
+      new UpdateCommand({
         TableName: requireConfig("dynamodbSecretsTableName"),
         Key: {
           userNameHash: createHash("sha256")
@@ -364,16 +367,19 @@ async function verifyMagicLink(
             .digest(),
         },
         ReturnValues: "ALL_OLD",
+        UpdateExpression: "SET #used = :used",
         ConditionExpression:
-          "attribute_exists(#signatureHash) AND #signatureHash = :signatureHash",
+          "attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_exists(#used) AND #used <> :used",
         ExpressionAttributeNames: {
           "#signatureHash": "signatureHash",
+          "#used": "used",
         },
         ExpressionAttributeValues: {
           ":signatureHash": createHash("sha256")
             .update(requireConfig("salt"))
             .end(signature)
             .digest(),
+          ":used": true,
         },
       })
     ));
