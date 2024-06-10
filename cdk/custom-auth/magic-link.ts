@@ -392,7 +392,7 @@ async function verifyMagicLink(
   }
   assertIsItem(dbItem);
   if (dbItem.exp < Date.now() / 1000) {
-    logger.error("Magic link expired!");
+    logger.error("Magic link expired");
     return false;
   }
   publicKeys[dbItem.kmsKeyId] ??= await downloadPublicKey(dbItem.kmsKeyId);
@@ -415,7 +415,7 @@ async function verifyMagicLink(
   assertIsMessage(parsed);
   logger.debug("Checking message:", parsed);
   if (parsed.userName !== userName) {
-    logger.error("Different userName!");
+    logger.error("Username mismatch");
     return false;
   }
   if (parsed.exp !== dbItem.exp || parsed.iat !== dbItem.iat) {
