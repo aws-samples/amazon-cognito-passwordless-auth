@@ -357,12 +357,13 @@ async function verifyMagicLink(
   // is performed and no item is returned.
   let dbItem: Record<string, unknown> | undefined = undefined;
   try {
+    const salt = requireConfig("salt");
     ({ Attributes: dbItem } = await ddbDocClient.send(
       new UpdateCommand({
         TableName: requireConfig("dynamodbSecretsTableName"),
         Key: {
           userNameHash: createHash("sha256")
-            .update(requireConfig("salt"))
+            .update(salt)
             .end(userName)
             .digest(),
         },
@@ -376,7 +377,7 @@ async function verifyMagicLink(
         },
         ExpressionAttributeValues: {
           ":signatureHash": createHash("sha256")
-            .update(requireConfig("salt"))
+            .update(salt)
             .end(signature)
             .digest(),
           ":used": true,
