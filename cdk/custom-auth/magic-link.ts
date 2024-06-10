@@ -387,15 +387,13 @@ async function verifyMagicLink(
     throw err;
   }
   if (!dbItem) {
-    logger.error("Attempt to use magic link more than once");
+    logger.error("Attempt to use an unknown magic link");
     return false;
   }
-  if (!dbItem.exp || typeof dbItem.exp !== "number" || dbItem.exp < Date.now() / 1000) {
+  assertIsItem(dbItem);
+  if (dbItem.exp < Date.now() / 1000) {
     logger.error("Magic link expired!");
     return false;
-  }
-  if (!dbItem.kmsKeyId || typeof dbItem.kmsKeyId !== "string") {
-    throw new Error("Failed to determine KMS Key ID");
   }
   publicKeys[dbItem.kmsKeyId] ??= await downloadPublicKey(dbItem.kmsKeyId);
   const verifier = createVerify("RSA-SHA512");
@@ -425,6 +423,29 @@ async function verifyMagicLink(
     return false;
   }
   return valid;
+}
+
+function assertIsItem(
+  msg: unknown
+): asserts msg is { userNameHash: string; signatureHash: string; used: boolean, exp: number; iat: number, kmsKeyId: string } {
+  if (
+    !msg ||
+    typeof msg !== "object" ||
+    !("userNameHash" in msg) ||
+    !(msg.userNameHash instanceof Uint8Array) ||
+    !("signatureHash" in msg) ||
+    !(msg.signatureHash instanceof Uint8Array) ||
+    !("used" in msg) ||
+    typeof msg.used !== "boolean" ||
+    !("exp" in msg) ||
+    typeof msg.exp !== "number" ||
+    !("iat" in msg) ||
+    typeof msg.iat !== "number" ||
+    !("kmsKeyId" in msg) ||
+    typeof msg.kmsKeyId !== "string"
+  ) {
+    throw new Error("Invalid dynamodb item");
+  }
 }
 
 function assertIsMessage(
