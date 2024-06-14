@@ -370,12 +370,17 @@ async function verifyMagicLink(
         ReturnValues: "ALL_OLD",
         UpdateExpression: "SET #used = :used",
         ConditionExpression:
-          "attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_exists(#used) AND #used <> :used",
+          "attribute_exists(#userNameHash) AND #userNameHash = :userNameHash AND attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_exists(#used) AND #used <> :used",
         ExpressionAttributeNames: {
+          "#userNameHash": "userNameHash",
           "#signatureHash": "signatureHash",
           "#used": "used",
         },
         ExpressionAttributeValues: {
+          ":userNameHash": createHash("sha256")
+            .update(salt)
+            .end(userName)
+            .digest(),
           ":signatureHash": createHash("sha256")
             .update(salt)
             .end(signature)
