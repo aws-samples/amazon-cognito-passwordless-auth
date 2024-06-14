@@ -222,7 +222,6 @@ async function createAndSendMagicLink(
   logger.debug("Creating new magic link ...");
   const exp = Math.floor(Date.now() / 1000 + config.secondsUntilExpiry);
   const iat = Math.floor(Date.now() / 1000);
-  const used = false;
   const message = Buffer.from(
     JSON.stringify({
       userName: event.userName,
@@ -265,7 +264,6 @@ async function createAndSendMagicLink(
             .update(salt)
             .end(signature)
             .digest(),
-          used,
           iat,
           exp,
           kmsKeyId: kmsKeyId,
@@ -353,39 +351,41 @@ async function verifyMagicLink(
   const [messageB64, signatureB64] = magicLinkFragmentIdentifier.split(".");
   const signature = Buffer.from(signatureB64, "base64url");
 
-  // Read and update item from DynamoDB. If the item is 'used' the no update
-  // is performed and no item is returned.
+  // Read and update item from DynamoDB. If the item has `uat` (used at)
+  // attribute, no update is performed and no item is returned.
   let dbItem: Record<string, unknown> | undefined = undefined;
   try {
     const salt = requireConfig("salt");
+
+    const userNameHash = createHash("sha256")
+      .update(salt)
+      .end(userName)
+      .digest();
+    const signatureHash = createHash("sha256")
+      .update(salt)
+      .end(signature)
+      .digest();
+    const uat = Math.floor(Date.now() / 1000);
+
     ({ Attributes: dbItem } = await ddbDocClient.send(
       new UpdateCommand({
         TableName: requireConfig("dynamodbSecretsTableName"),
         Key: {
-          userNameHash: createHash("sha256")
-            .update(salt)
-            .end(userName)
-            .digest(),
+          userNameHash: userNameHash,
         },
         ReturnValues: "ALL_OLD",
-        UpdateExpression: "SET #used = :used",
+        UpdateExpression: "SET #uat = :uat",
         ConditionExpression:
-          "attribute_exists(#userNameHash) AND #userNameHash = :userNameHash AND attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_exists(#used) AND #used <> :used",
+          "attribute_exists(#userNameHash) AND #userNameHash = :userNameHash AND attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_not_exists(#uat)",
         ExpressionAttributeNames: {
           "#userNameHash": "userNameHash",
           "#signatureHash": "signatureHash",
-          "#used": "used",
+          "#uat": "uat",
         },
         ExpressionAttributeValues: {
-          ":userNameHash": createHash("sha256")
-            .update(salt)
-            .end(userName)
-            .digest(),
-          ":signatureHash": createHash("sha256")
-            .update(salt)
-            .end(signature)
-            .digest(),
-          ":used": true,
+          ":userNameHash": userNameHash,
+          ":signatureHash": signatureHash,
+          ":uat": uat,
         },
       })
     ));
@@ -439,7 +439,8 @@ async function verifyMagicLink(
 
 function assertIsItem(
   msg: unknown
-): asserts msg is { userNameHash: string; signatureHash: string; used: boolean, exp: number; iat: number, kmsKeyId: string } {
+): asserts msg is { userNameHash: string; signatureHash: string; exp: number; iat: number, uat?: number, kmsKeyId: string } {
+  // Required
   if (
     !msg ||
     typeof msg !== "object" ||
@@ -447,8 +448,6 @@ function assertIsItem(
     !(msg.userNameHash instanceof Uint8Array) ||
     !("signatureHash" in msg) ||
     !(msg.signatureHash instanceof Uint8Array) ||
-    !("used" in msg) ||
-    typeof msg.used !== "boolean" ||
     !("exp" in msg) ||
     typeof msg.exp !== "number" ||
     !("iat" in msg) ||
@@ -456,6 +455,11 @@ function assertIsItem(
     !("kmsKeyId" in msg) ||
     typeof msg.kmsKeyId !== "string"
   ) {
+    throw new Error("Invalid dynamodb item");
+  }
+
+  // Optional
+  if ("uat" in msg && typeof msg.uat !== "number") {
     throw new Error("Invalid dynamodb item");
   }
 }
