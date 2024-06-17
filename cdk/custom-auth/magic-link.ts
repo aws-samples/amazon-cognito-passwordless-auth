@@ -371,19 +371,18 @@ async function verifyMagicLink(
       new UpdateCommand({
         TableName: requireConfig("dynamodbSecretsTableName"),
         Key: {
-          userNameHash: userNameHash,
+          userNameHash,
         },
         ReturnValues: "ALL_OLD",
         UpdateExpression: "SET #uat = :uat",
         ConditionExpression:
-          "attribute_exists(#userNameHash) AND #userNameHash = :userNameHash AND attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_not_exists(#uat)",
+          "attribute_exists(#userNameHash) AND attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_not_exists(#uat)",
         ExpressionAttributeNames: {
           "#userNameHash": "userNameHash",
           "#signatureHash": "signatureHash",
           "#uat": "uat",
         },
         ExpressionAttributeValues: {
-          ":userNameHash": userNameHash,
           ":signatureHash": signatureHash,
           ":uat": uat,
         },
@@ -399,10 +398,10 @@ async function verifyMagicLink(
     throw err;
   }
   if (!dbItem) {
-    logger.error("Attempt to use an unknown magic link");
+    logger.error("Attempt to use invalid (potentially superseeded) magic link");
     return false;
   }
-  assertIsItem(dbItem);
+  assertIsMagicLinkRecord(dbItem);
   if (dbItem.exp < Date.now() / 1000) {
     logger.error("Magic link expired");
     return false;
@@ -437,10 +436,14 @@ async function verifyMagicLink(
   return valid;
 }
 
-function assertIsItem(
-  msg: unknown
-): asserts msg is { userNameHash: string; signatureHash: string; exp: number; iat: number, uat?: number, kmsKeyId: string } {
-  // Required
+function assertIsMagicLinkRecord(msg: unknown): asserts msg is {
+  userNameHash: string;
+  signatureHash: string;
+  exp: number;
+  iat: number;
+  kmsKeyId: string;
+  uat?: number;
+} {
   if (
     !msg ||
     typeof msg !== "object" ||
@@ -453,14 +456,10 @@ function assertIsItem(
     !("iat" in msg) ||
     typeof msg.iat !== "number" ||
     !("kmsKeyId" in msg) ||
-    typeof msg.kmsKeyId !== "string"
+    typeof msg.kmsKeyId !== "string" ||
+    ("uat" in msg && typeof msg.uat !== "number")
   ) {
-    throw new Error("Invalid dynamodb item");
-  }
-
-  // Optional
-  if ("uat" in msg && typeof msg.uat !== "number") {
-    throw new Error("Invalid dynamodb item");
+    throw new Error("Invalid magic link record");
   }
 }
 
