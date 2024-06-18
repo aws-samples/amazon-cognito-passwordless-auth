@@ -23,8 +23,8 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
-  DeleteCommand,
   PutCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import {
   SESClient,
@@ -351,29 +351,40 @@ async function verifyMagicLink(
   const [messageB64, signatureB64] = magicLinkFragmentIdentifier.split(".");
   const signature = Buffer.from(signatureB64, "base64url");
 
-  // Read and remove item from DynamoDB
+  // Read and update item from DynamoDB. If the item has `uat` (used at)
+  // attribute, no update is performed and no item is returned.
   let dbItem: Record<string, unknown> | undefined = undefined;
   try {
+    const salt = requireConfig("salt");
+
+    const userNameHash = createHash("sha256")
+      .update(salt)
+      .end(userName)
+      .digest();
+    const signatureHash = createHash("sha256")
+      .update(salt)
+      .end(signature)
+      .digest();
+    const uat = Math.floor(Date.now() / 1000);
+
     ({ Attributes: dbItem } = await ddbDocClient.send(
-      new DeleteCommand({
+      new UpdateCommand({
         TableName: requireConfig("dynamodbSecretsTableName"),
         Key: {
-          userNameHash: createHash("sha256")
-            .update(requireConfig("salt"))
-            .end(userName)
-            .digest(),
+          userNameHash,
         },
         ReturnValues: "ALL_OLD",
+        UpdateExpression: "SET #uat = :uat",
         ConditionExpression:
-          "attribute_exists(#signatureHash) AND #signatureHash = :signatureHash",
+          "attribute_exists(#userNameHash) AND attribute_exists(#signatureHash) AND #signatureHash = :signatureHash AND attribute_not_exists(#uat)",
         ExpressionAttributeNames: {
+          "#userNameHash": "userNameHash",
           "#signatureHash": "signatureHash",
+          "#uat": "uat",
         },
         ExpressionAttributeValues: {
-          ":signatureHash": createHash("sha256")
-            .update(requireConfig("salt"))
-            .end(signature)
-            .digest(),
+          ":signatureHash": signatureHash,
+          ":uat": uat,
         },
       })
     ));
@@ -387,11 +398,13 @@ async function verifyMagicLink(
     throw err;
   }
   if (!dbItem) {
-    logger.error("Attempt to use magic link more than once");
+    logger.error("Attempt to use invalid (potentially superseeded) magic link");
     return false;
   }
-  if (!dbItem.kmsKeyId || typeof dbItem.kmsKeyId !== "string") {
-    throw new Error("Failed to determine KMS Key ID");
+  assertIsMagicLinkRecord(dbItem);
+  if (dbItem.exp < Date.now() / 1000) {
+    logger.error("Magic link expired");
+    return false;
   }
   publicKeys[dbItem.kmsKeyId] ??= await downloadPublicKey(dbItem.kmsKeyId);
   const verifier = createVerify("RSA-SHA512");
@@ -413,11 +426,7 @@ async function verifyMagicLink(
   assertIsMessage(parsed);
   logger.debug("Checking message:", parsed);
   if (parsed.userName !== userName) {
-    logger.error("Different userName!");
-    return false;
-  }
-  if (parsed.exp < Date.now() / 1000) {
-    logger.error("Magic link expired!");
+    logger.error("Username mismatch");
     return false;
   }
   if (parsed.exp !== dbItem.exp || parsed.iat !== dbItem.iat) {
@@ -425,6 +434,33 @@ async function verifyMagicLink(
     return false;
   }
   return valid;
+}
+
+function assertIsMagicLinkRecord(msg: unknown): asserts msg is {
+  userNameHash: string;
+  signatureHash: string;
+  exp: number;
+  iat: number;
+  kmsKeyId: string;
+  uat?: number;
+} {
+  if (
+    !msg ||
+    typeof msg !== "object" ||
+    !("userNameHash" in msg) ||
+    !(msg.userNameHash instanceof Uint8Array) ||
+    !("signatureHash" in msg) ||
+    !(msg.signatureHash instanceof Uint8Array) ||
+    !("exp" in msg) ||
+    typeof msg.exp !== "number" ||
+    !("iat" in msg) ||
+    typeof msg.iat !== "number" ||
+    !("kmsKeyId" in msg) ||
+    typeof msg.kmsKeyId !== "string" ||
+    ("uat" in msg && typeof msg.uat !== "number")
+  ) {
+    throw new Error("Invalid magic link record");
+  }
 }
 
 function assertIsMessage(
