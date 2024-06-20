@@ -39,8 +39,14 @@ Note that in React Native, these sign-in method are not (yet) available:
 
 This library is published as a npm package under `amazon-cognito-passwordless-auth` name. Install it by running the following command:
 
-```
+```shell
 npm install amazon-cognito-passwordless-auth
+```
+
+For usage in React Native, make sure to also install `react-native-passkey`:
+
+```shell
+npm install react-native-passkey@^2.1.1
 ```
 
 #### 4. iOS Setup
