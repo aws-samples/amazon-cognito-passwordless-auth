@@ -43,15 +43,21 @@ Here's a short (11m41s) video that explains and demonstrates the solution:
 
 ## Installation
 
-We've wrapped the sample code in a NPM package for convenient installation and use:
+We've wrapped the sample code in an NPM package for convenient installation and use:
 
 ```shell
 npm install amazon-cognito-passwordless-auth
 ```
 
+The installation contains both the AWS CDK code as well as the front-end code to go with it.
+
 ## Getting Started
 
+### Self-paced workshop
+
 Follow the **self-paced workshop** (duration: 60 minutes) to understand how to use this solution to implement sign-in with FIDO2 (WebAuthn) and Magic Links. The workshop will walk you through all the steps to set up and use this solution: [Implement Passwordless authentication with Amazon Cognito and WebAuthn](https://catalog.workshops.aws/cognito-webauthn-passwordless/en-US)
+
+### End-to-end example
 
 Alternatively, you can deploy the [end-to-end example](./end-to-end-example/) into your own AWS account. You can run the accompanying front end locally, and sign-in with magic links and FIDO2 (WebAuthn), and try SMS OTP Step Up authentication.
 

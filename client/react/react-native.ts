@@ -107,43 +107,37 @@ export async function fido2CreateCredential({
   friendlyName: string;
 }) {
   const config = configure();
-  const response = await fido2StartCreateCredential();
   if (!config.fido2) throw new Error("FIDO2 not configured");
-  const passkey = new Passkey(config.fido2.passkeyDomain, config.fido2.rp.name);
-  const credential = await passkey.register(
-    toBase64String(response.challenge),
-    response.user.id
-  );
-
-  return await fido2CompleteCreateCredential({
+  const response = await fido2StartCreateCredential();
+  const credential = await Passkey.register({
+    ...response,
+    rp: { ...response.rp, id: config.fido2.passkeyDomain },
+  });
+  return fido2CompleteCreateCredential({
     credential: {
-      clientDataJSON_B64: credential.response.rawClientDataJSON,
-      attestationObjectB64: credential.response.rawAttestationObject,
+      clientDataJSON_B64: credential.response.clientDataJSON,
+      attestationObjectB64: credential.response.attestationObject,
     },
     friendlyName,
   });
 }
 
-export async function fido2GetCredential({
-  challenge,
-  username,
-}: {
-  challenge: string;
-  /**
-   * Display name for the user
-   */
-  username: string;
-}) {
+export async function fido2GetCredential({ challenge }: { challenge: string }) {
   const config = configure();
   if (!config.fido2) throw new Error("FIDO2 not configured");
-  const passkey = new Passkey(config.fido2.passkeyDomain, username);
-  const result = await passkey.auth(toBase64String(challenge));
+  const result = await Passkey.authenticate({
+    challenge,
+    rpId: config.fido2.passkeyDomain,
+    extensions: config.fido2.extensions as Record<string, unknown>,
+    timeout: config.fido2.timeout,
+    userVerification: config.fido2.authenticatorSelection?.userVerification,
+  });
   return {
-    credentialIdB64: result.credentialID,
-    authenticatorDataB64: result.response.rawAuthenticatorData,
-    clientDataJSON_B64: result.response.rawClientDataJSON,
+    credentialIdB64: result.id,
+    authenticatorDataB64: result.response.authenticatorData,
+    clientDataJSON_B64: result.response.clientDataJSON,
     signatureB64: result.response.signature,
-    userHandleB64: null,
+    userHandleB64: result.response.userHandle,
   };
 }
 
@@ -159,7 +153,6 @@ export async function loginWithFido2({
     username,
     credentialGetter: ({ challenge }: { challenge: string }) => {
       return fido2GetCredential({
-        username,
         challenge: toBase64String(challenge),
       });
     },
