@@ -9,7 +9,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "install-passwordless-local": "rm -rf node_modules/amazon-cognito-passwordless-auth && npm i ../.. --install-links --no-save",
-    "start": "node ./deploy-spa.cjs"
+    "deploy-frontend": "node ./deploy-spa.cjs"
   },
   "dependencies": {
     "@cloudscape-design/global-styles": "^1.0.27",
