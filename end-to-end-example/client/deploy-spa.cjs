@@ -5,12 +5,11 @@ const { default: s3SpaUpload } = require("s3-spa-upload");
 const fs = require("fs");
 const path = require("path");
 const proc = require("node:child_process");
-const os = require('os');
-
+const os = require("os");
 
 // Is the current platform Windows ?
-const isWindows = os.platform() === 'win32';
-const command = isWindows ? 'npm.cmd' : 'npm';
+const isWindows = os.platform() === "win32";
+const command = isWindows ? "npm.cmd" : "npm";
 
 proc.execFileSync(command, ["run", "build", ...process.argv.slice(2)], {
   cwd: __dirname,
