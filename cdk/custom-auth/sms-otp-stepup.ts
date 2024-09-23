@@ -82,9 +82,10 @@ export async function addChallengeToEvent(
 
 async function createChallenge(event: CreateAuthChallengeTriggerEvent) {
   logger.info("Creating SMS OTP step-up challenge ...");
-  let phoneNumber = event.request.userAttributes.phone_number_verified
-    ? event.request.userAttributes.phone_number
-    : undefined;
+  let phoneNumber =
+    event.request.userAttributes.phone_number_verified === "true"
+      ? event.request.userAttributes.phone_number
+      : undefined;
   if (event.request.userNotFound) {
     logger.info("User not found");
     phoneNumber = `+${[...Buffer.from(event.userName)].join("").slice(0, 10)}`;
