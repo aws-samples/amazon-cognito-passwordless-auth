@@ -92,11 +92,21 @@ export type ConfigWithDefaults = Config &
     Pick<Config, "storage" | "crypto" | "fetch" | "location" | "history">
   >;
 
+type ConfigInput = Omit<Config, "cognitoIdpEndpoint"> &
+  Partial<Pick<Config, "cognitoIdpEndpoint">>;
 let config_: ConfigWithDefaults | undefined = undefined;
-export function configure(config?: Config) {
+export function configure(config?: ConfigInput) {
   if (config) {
+    const cognitoIdpEndpoint =
+      config.cognitoIdpEndpoint || config.userPoolId?.split("_")[0];
+    if (!cognitoIdpEndpoint) {
+      throw new Error(
+        "Invalid configuration provided: either cognitoIdpEndpoint or userPoolId must be provided"
+      );
+    }
     config_ = {
       ...config,
+      cognitoIdpEndpoint,
       crypto: config.crypto ?? Defaults.crypto,
       storage: config.storage ?? Defaults.storage,
       fetch: config.fetch ?? Defaults.fetch,
