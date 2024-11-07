@@ -134,7 +134,8 @@ function checkCurrentLocationForSignInLink() {
     debug?.("Magic link header parsed:", message);
     assertIsMessage(message);
   } catch (err) {
-    debug?.("Ignoring invalid fragment identifier");
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    debug?.(`Ignoring invalid fragment identifier: ${errorMessage}`);
     return;
   }
   if (!message.userName || typeof message.userName !== "string") {
@@ -168,7 +169,9 @@ function assertIsMessage(
     !("iat" in msg) ||
     typeof msg.iat !== "number"
   ) {
-    throw new Error("Invalid magic link");
+    throw new Error(
+      "Invalid magic link, expecting exp, iat, and userName to be present"
+    );
   }
 }
 
