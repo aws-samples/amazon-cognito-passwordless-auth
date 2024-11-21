@@ -125,7 +125,6 @@ export async function addChallengeToEvent(
   await createAndSendMagicLink(event, {
     redirectUri,
   });
-  const email = event.request.userAttributes.email;
   // The event.request.userNotFound is only present in the Lambda trigger if "Prevent user existence errors" is checked
   // in the Cognito app client. If it is *not* checked, the client receives the error, which potentially allows for
   // user enumeration. Additional guardrails are advisable.
@@ -136,7 +135,7 @@ export async function addChallengeToEvent(
   // if you want to use them in your front-end:
   // event.response.publicChallengeParameters = {};
   event.response.privateChallengeParameters = {
-    email: email,
+    challenge: "PROVIDE_MAGIC_LINK", // doesn't matter what this is, as long as there is *something* in the privateChallengeParameters
   };
 }
 
@@ -285,6 +284,8 @@ async function createAndSendMagicLink(
   logger.debug("Sending magic link ...");
   // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client. (see above)
   if (event.request.userNotFound) {
+    logger.debug("Pretending to send magic link ...");
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 200));
     return;
   }
   await config.emailSender({
