@@ -284,6 +284,8 @@ async function createAndSendMagicLink(
   logger.debug("Sending magic link ...");
   // Toggle userNotFound error with "Prevent user existence errors" in the Cognito app client. (see above)
   if (event.request.userNotFound) {
+    logger.debug("Pretending to send magic link ...");
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 200));
     return;
   }
   await config.emailSender({
