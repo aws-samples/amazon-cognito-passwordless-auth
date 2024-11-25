@@ -2,10 +2,10 @@
 
 _**AWS Solution to implement Passwordless authenticaton with Amazon Cognito**_
 
-> NOTE: Amazon Cognito launched native Passwordless support in November 2024 (see [launch blog](https://aws.amazon.com/blogs/aws/improve-your-app-authentication-workflow-with-new-amazon-cognito-features/
-)) and of course using native functionality should be prefered.
+> NOTE: Amazon Cognito launched native Passwordless support in November 2024 (see [launch blog](https://aws.amazon.com/blogs/aws/improve-your-app-authentication-workflow-with-new-amazon-cognito-features/)) and of course using native functionality should be prefered.
 >
 > The solution here may still be of use to you for these reasons:
+>
 > - It supports usernamless FIDO2 sign-in (using discoverable credentials)
 > - It gives you full control of the FIDO2 parameters that are used for the authentication. For example to turn on extensions (such as credProps), or to allow credentials that's don't require `userVerification` but only user presence.
 > - This solution works in the lowest Cognito pricing tier.
