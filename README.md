@@ -2,6 +2,16 @@
 
 _**AWS Solution to implement Passwordless authenticaton with Amazon Cognito**_
 
+> NOTE: Amazon Cognito launched native Passwordless support in November 2024 (see [launch blog](https://aws.amazon.com/blogs/aws/improve-your-app-authentication-workflow-with-new-amazon-cognito-features/
+)) and of course using native functionality should be prefered.
+>
+> The solution here may still be of use to you for these reasons:
+> - It supports usernamless FIDO2 sign-in (using discoverable credentials)
+> - It gives you full control of the FIDO2 parameters that are used for the authentication. For example to turn on extensions (such as credProps), or to allow credentials that's don't require `userVerification` but only user presence.
+> - This solution works in the lowest Cognito pricing tier.
+> - Magic links and SMS based Step-Up auth are not yet natively available and this solution shows how to do it.
+> - Lastly this solution can be used as a demonstration of how FIDO2 works; it may be helpful to be able to look under the hood.
+
 Passwordless authentication improves security, reduces friction and provides better user experience for end-users of customer facing applications. Amazon Cognito provides features to implement custom authentication flows, which can be used to expand authentication factors for your application. This solution demonstrates several patterns to support passwordless authentication and provides reference implementations for these methods:
 
 - **FIDO2**: aka **WebAuthn**, i.e. sign in with Face, Touch, YubiKey, etc. This includes support for **Passkeys** (i.e. usernameless authentication). [FIDO2 - architecture and details](./FIDO2.md).
