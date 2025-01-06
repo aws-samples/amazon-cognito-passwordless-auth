@@ -255,6 +255,7 @@ export function authenticateWithSRP({
   username,
   password,
   smsMfaCode,
+  otpMfaCode,
   newPassword,
   customChallengeAnswer,
   authflow = "USER_SRP_AUTH",
@@ -268,6 +269,7 @@ export function authenticateWithSRP({
   username: string;
   password: string;
   smsMfaCode?: () => Promise<string>;
+  otpMfaCode?: () => Promise<string>;
   newPassword?: () => Promise<string>;
   customChallengeAnswer?: () => Promise<string>;
   authflow?: "USER_SRP_AUTH" | "CUSTOM_AUTH";
@@ -335,6 +337,7 @@ export function authenticateWithSRP({
         authResponse: authResult,
         username,
         smsMfaCode,
+        otpMfaCode,
         newPassword,
         customChallengeAnswer,
         clientMetadata,

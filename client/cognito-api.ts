@@ -30,7 +30,8 @@ type ChallengeName =
   | "CUSTOM_CHALLENGE"
   | "PASSWORD_VERIFIER"
   | "SMS_MFA"
-  | "NEW_PASSWORD_REQUIRED";
+  | "NEW_PASSWORD_REQUIRED"
+  | "SOFTWARE_TOKEN_MFA";
 
 interface ChallengeResponse {
   ChallengeName: ChallengeName;
@@ -648,6 +649,7 @@ export async function handleAuthResponse({
   authResponse,
   username,
   smsMfaCode,
+  otpMfaCode,
   newPassword,
   customChallengeAnswer,
   clientMetadata,
@@ -659,6 +661,7 @@ export async function handleAuthResponse({
    */
   username: string;
   smsMfaCode?: () => Promise<string>;
+  otpMfaCode?: () => Promise<string>;
   newPassword?: () => Promise<string>;
   customChallengeAnswer?: () => Promise<string>;
   clientMetadata?: Record<string, string>;
@@ -688,6 +691,9 @@ export async function handleAuthResponse({
       if (!customChallengeAnswer)
         throw new Error("Missing custom challenge answer");
       responseParameters.ANSWER = await customChallengeAnswer();
+    } else if (authResponse.ChallengeName === "SOFTWARE_TOKEN_MFA") {
+      if (!otpMfaCode) throw new Error("Missing Software MFA Code");
+      responseParameters.SOFTWARE_TOKEN_MFA_CODE = await otpMfaCode();
     } else {
       throw new Error(`Unsupported challenge: ${authResponse.ChallengeName}`);
     }
