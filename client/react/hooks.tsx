@@ -501,6 +501,7 @@ function _usePasswordless() {
       username,
       password,
       smsMfaCode,
+      otpMfaCode,
       clientMetadata,
     }: {
       /**
@@ -509,6 +510,7 @@ function _usePasswordless() {
       username: string;
       password: string;
       smsMfaCode?: () => Promise<string>;
+      otpMfaCode?: () => Promise<string>;
       clientMetadata?: Record<string, string>;
     }) => {
       setLastError(undefined);
@@ -516,6 +518,7 @@ function _usePasswordless() {
         username,
         password,
         smsMfaCode,
+        otpMfaCode,
         clientMetadata,
         statusCb: setSigninInStatus,
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),
@@ -528,6 +531,7 @@ function _usePasswordless() {
       username,
       password,
       smsMfaCode,
+      otpMfaCode,
       clientMetadata,
     }: {
       /**
@@ -536,6 +540,7 @@ function _usePasswordless() {
       username: string;
       password: string;
       smsMfaCode?: () => Promise<string>;
+      otpMfaCode?: () => Promise<string>;
       clientMetadata?: Record<string, string>;
     }) => {
       setLastError(undefined);
@@ -543,6 +548,7 @@ function _usePasswordless() {
         username,
         password,
         smsMfaCode,
+        otpMfaCode,
         clientMetadata,
         statusCb: setSigninInStatus,
         tokensCb: (tokens) => storeTokens(tokens).then(() => setTokens(tokens)),

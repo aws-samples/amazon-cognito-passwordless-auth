@@ -21,6 +21,7 @@ export function authenticateWithPlaintextPassword({
   username,
   password,
   smsMfaCode,
+  otpMfaCode,
   newPassword,
   tokensCb,
   statusCb,
@@ -32,6 +33,7 @@ export function authenticateWithPlaintextPassword({
   username: string;
   password: string;
   smsMfaCode?: () => Promise<string>;
+  otpMfaCode?: () => Promise<string>;
   newPassword?: () => Promise<string>;
   tokensCb?: (tokens: TokensFromSignIn) => void | Promise<void>;
   statusCb?: (status: BusyState | IdleState) => void;
@@ -57,6 +59,7 @@ export function authenticateWithPlaintextPassword({
         authResponse,
         username,
         smsMfaCode,
+        otpMfaCode,
         newPassword,
         clientMetadata,
         abort: abort.signal,
