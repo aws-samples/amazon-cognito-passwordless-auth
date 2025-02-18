@@ -40,8 +40,8 @@
       "types": "./index.d.ts"
     },
     "./cdk": {
-      "default": "./dist/cdk/lib/cognito-passwordless.js",
-      "types": "./cdk.d.ts"
+      "types": "./cdk.d.ts",
+      "default": "./dist/cdk/lib/cognito-passwordless.js"
     },
     "./cognito-api": {
       "import": "./dist/client/cognito-api.js",
