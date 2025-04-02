@@ -166,7 +166,7 @@ async function createEmailContent({
 
 async function sendEmailWithLink({
   emailAddress,
-  content
+  content,
 }: {
   emailAddress: string;
   content: {
@@ -297,7 +297,7 @@ async function createAndSendMagicLink(
       secretLoginLink,
       userAttributes: event.request.userAttributes,
     }),
-    userAttributes: event.request.userAttributes
+    userAttributes: event.request.userAttributes,
   });
   logger.debug("Magic link sent!");
 }
