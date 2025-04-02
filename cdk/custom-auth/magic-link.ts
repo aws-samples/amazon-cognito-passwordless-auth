@@ -41,6 +41,7 @@ import {
   UserFacingError,
   handleConditionalCheckFailedException,
 } from "./common.js";
+import { StringMap } from "aws-lambda/trigger/cognito-user-pool-trigger/_common";
 
 let config = {
   /** Should Magic Link sign-in be enabled? If set to false, clients cannot sign-in with magic links (an error is shown instead when they request a magic link) */
@@ -143,6 +144,7 @@ async function createEmailContent({
   secretLoginLink,
 }: {
   secretLoginLink: string;
+  userAttributes: StringMap;
 }) {
   return {
     html: {
@@ -164,7 +166,7 @@ async function createEmailContent({
 
 async function sendEmailWithLink({
   emailAddress,
-  content,
+  content
 }: {
   emailAddress: string;
   content: {
@@ -172,6 +174,7 @@ async function sendEmailWithLink({
     text: { charSet: string; data: string };
     subject: { charSet: string; data: string };
   };
+  userAttributes: StringMap;
 }) {
   await ses
     .send(
@@ -292,7 +295,9 @@ async function createAndSendMagicLink(
     emailAddress: event.request.userAttributes.email,
     content: await config.contentCreator.call(undefined, {
       secretLoginLink,
+      userAttributes: event.request.userAttributes,
     }),
+    userAttributes: event.request.userAttributes
   });
   logger.debug("Magic link sent!");
 }
