@@ -26,7 +26,7 @@ import {
   UpdateCommand,
   PutCommand,
 } from "@aws-sdk/lib-dynamodb";
-import { decodeAllSync, decodeFirstSync } from "cbor";
+import { decodeAllSync } from "cbor";
 import {
   determineUserHandle,
   logger,
@@ -872,7 +872,7 @@ function cborDecode(b: Buffer, name: string) {
   try {
     const decoded = decodeAllSync(b);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    return decoded[0] as unknown
+    return decoded[0] as unknown;
   } catch (err) {
     logger.error(err);
     throw new UserFacingError(`Invalid ${name}`);
