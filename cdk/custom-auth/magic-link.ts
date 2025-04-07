@@ -143,6 +143,7 @@ async function createEmailContent({
   secretLoginLink,
 }: {
   secretLoginLink: string;
+  userAttributes: { [name: string]: string };
 }) {
   return {
     html: {
@@ -172,6 +173,7 @@ async function sendEmailWithLink({
     text: { charSet: string; data: string };
     subject: { charSet: string; data: string };
   };
+  userAttributes: { [name: string]: string };
 }) {
   await ses
     .send(
@@ -292,7 +294,9 @@ async function createAndSendMagicLink(
     emailAddress: event.request.userAttributes.email,
     content: await config.contentCreator.call(undefined, {
       secretLoginLink,
+      userAttributes: event.request.userAttributes,
     }),
+    userAttributes: event.request.userAttributes,
   });
   logger.debug("Magic link sent!");
 }
