@@ -24,6 +24,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "s3-spa-upload": "^2.1.5",
     "typescript": "^5.4.5",
-    "vite": "^6.2.5"
+    "vite": "^6.2.6"
   }
 }
