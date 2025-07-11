@@ -232,7 +232,7 @@ export class Passwordless extends Construct {
           `PreSignup${id}`,
           {
             entry: join(__dirname, "..", "custom-auth", "pre-signup.js"),
-            runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+            runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
             architecture: cdk.aws_lambda.Architecture.ARM_64,
             bundling: {
               format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -327,7 +327,7 @@ export class Passwordless extends Construct {
       `CreateAuthChallenge${id}`,
       {
         entry: join(__dirname, "..", "custom-auth", "create-auth-challenge.js"),
-        runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+        runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
         architecture: cdk.aws_lambda.Architecture.ARM_64,
         bundling: {
           format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -447,7 +447,7 @@ export class Passwordless extends Construct {
             "custom-auth",
             "verify-auth-challenge-response.js"
           ),
-          runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+          runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
           bundling: {
             format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -505,7 +505,7 @@ export class Passwordless extends Construct {
             "custom-auth",
             "define-auth-challenge.js"
           ),
-          runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+          runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
           bundling: {
             format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -525,7 +525,7 @@ export class Passwordless extends Construct {
         `PreToken${id}`,
         {
           entry: join(__dirname, "..", "custom-auth", "pre-token.js"),
-          runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+          runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
           bundling: {
             format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -624,7 +624,7 @@ export class Passwordless extends Construct {
               "custom-auth",
               "fido2-notification.js"
             ),
-            runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+            runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
             architecture: cdk.aws_lambda.Architecture.ARM_64,
             bundling: {
               format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -670,7 +670,7 @@ export class Passwordless extends Construct {
             "custom-auth",
             "fido2-credentials-api.js"
           ),
-          runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+          runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
           bundling: {
             format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
@@ -719,7 +719,7 @@ export class Passwordless extends Construct {
         `Fido2Challenge${id}`,
         {
           entry: join(__dirname, "..", "custom-auth", "fido2-challenge-api.js"),
-          runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
+          runtime: cdk.aws_lambda.Runtime.NODEJS_22_X,
           architecture: cdk.aws_lambda.Architecture.ARM_64,
           bundling: {
             format: cdk.aws_lambda_nodejs.OutputFormat.ESM,
