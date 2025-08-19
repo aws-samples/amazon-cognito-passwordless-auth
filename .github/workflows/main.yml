@@ -16,6 +16,8 @@ jobs:
           node-version: "18"
       - name: install
         run: npm install --force
+      - name: install react-native-passkey
+        run: npm install --no-save --force react-native-passkey@^2.1.1
       - name: lint
         run: npx eslint --ignore-pattern end-to-end-example .
       - name: prettier
