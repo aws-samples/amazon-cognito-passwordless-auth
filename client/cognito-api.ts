@@ -33,7 +33,7 @@ type ChallengeName =
   | "NEW_PASSWORD_REQUIRED"
   | "SOFTWARE_TOKEN_MFA";
 
-interface ChallengeResponse {
+export interface ChallengeResponse {
   ChallengeName: ChallengeName;
   ChallengeParameters: Record<string, string>;
   Session: Session;
