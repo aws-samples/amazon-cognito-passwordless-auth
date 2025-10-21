@@ -86,7 +86,7 @@ export const requestSignInLink = ({
         );
       }
       statusCb?.("SIGNIN_LINK_REQUESTED");
-      return res.Session;
+      return res;
     } catch (err) {
       debug?.(err);
       currentStatus && statusCb?.("SIGNIN_LINK_REQUEST_FAILED");
